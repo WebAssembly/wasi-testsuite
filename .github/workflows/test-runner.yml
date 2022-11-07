@@ -1,0 +1,41 @@
+name: Linter
+
+on:
+  push:
+    branches:
+      - '*'
+    paths:
+      - 'test-runner/**'
+  pull_request:
+    branches:
+      - '*'
+    paths:
+      - 'test-runner/**'
+
+jobs:
+  lint_test_runner:
+    name: Linters for test runner (Python)
+    strategy:
+      matrix:
+        python_version: ['3.8']
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Initialize Python environment
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python_version }}
+          cache: pip
+      - name: Install dependencies
+        working-directory: test-runner
+        run: pip install -r requirements/dev.txt
+      - name: Run mypy
+        working-directory: test-runner
+        run: mypy wasi_test_runner/__main__.py
+      - name: Run flake8
+        working-directory: test-runner
+        run: flake8
+      - name: Run pylint
+        working-directory: test-runner
+        run: pylint wasi_test_runner
