@@ -1,0 +1,27 @@
+{
+  "name": "@webassembly/wasi-testsuite-core",
+  "version": "1.0.0",
+  "description": "AssemblyScript tests for WebAssembly System Interface layer",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "asc": "asc",
+    "lint": "eslint . --ext .ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/WebAssembly/wasi-testsuite.git"
+  },
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/WebAssembly/wasi-testsuite/issues"
+  },
+  "homepage": "https://github.com/WebAssembly/wasi-testsuite#readme",
+  "devDependencies": {
+    "@assemblyscript/wasi-shim": "^0.1.0",
+    "@typescript-eslint/eslint-plugin": "^5.42.0",
+    "@typescript-eslint/parser": "^5.42.0",
+    "assemblyscript": "^0.22.0",
+    "eslint": "^8.26.0"
+  }
+}

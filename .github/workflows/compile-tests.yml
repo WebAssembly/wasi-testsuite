@@ -1,0 +1,29 @@
+name: Compile tests
+
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - 'main'
+
+jobs:
+  build_core:
+    name: Build core tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Initialize node.js environment
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Build tests
+        working-directory: tests/core
+        run: |
+          npm install
+          ./build.sh
