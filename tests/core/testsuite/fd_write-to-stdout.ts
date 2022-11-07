@@ -15,11 +15,11 @@ const iov = memory.data(sizeof<iovec>());
 store<u32>(iov, utf8buf, 0);
 store<u32>(iov, utf8len, sizeof<usize>());
 
-const out_size = memory.data(sizeof<usize>());
+const outSize = memory.data(sizeof<usize>());
 
-const err = fd_write(1, iov, 1, out_size);
+const err = fd_write(1, iov, 1, outSize);
 __free(utf8buf);
 
-assert(load<usize>(out_size) == message.length);
+assert(load<usize>(outSize) == message.length);
 
 assert(err == errno.SUCCESS);
