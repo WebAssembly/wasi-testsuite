@@ -1,0 +1,7 @@
+[MASTER]
+disable=
+    C0114, # Missing module docstring
+    C0115, # Missing class docstring
+    C0116, # Missing function or method docstring
+[FORMAT]
+max-line-length=120

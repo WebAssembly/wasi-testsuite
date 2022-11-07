@@ -1,0 +1,63 @@
+import logging
+import json
+from typing import List, NamedTuple, TypeVar, Type, Dict, Any, Optional
+
+
+class TestOutput(NamedTuple):
+    exit_code: int
+    stdout: str
+    stderr: str
+
+
+class Failure(NamedTuple):
+    type: str
+    message: str
+
+
+class TestResult(NamedTuple):
+    output: TestOutput
+    is_executed: bool
+    failures: List[Failure]
+
+    @property
+    def failed(self) -> bool:
+        return len(self.failures) > 0
+
+
+T = TypeVar("T", bound="TestConfig")
+
+
+class TestConfig(NamedTuple):
+    args: List[str] = []
+    exit_code: int = 0
+    stdout: Optional[str] = None
+    wasi_functions: List[str] = []
+
+    @classmethod
+    def from_file(cls: Type[T], config_file: str) -> T:
+        default = cls()
+
+        with open(config_file, encoding="utf-8") as file:
+            dict_config = json.load(file)
+
+        cls._validate_dict(dict_config)
+
+        return cls(
+            args=dict_config.get("args", default.args),
+            exit_code=dict_config.get("exit_code", default.exit_code),
+            wasi_functions=dict_config.get("wasi_functions", default.wasi_functions),
+            stdout=dict_config.get("stdout", default.stdout),
+        )
+
+    @classmethod
+    def _validate_dict(cls: Type[T], dict_config: Dict[str, Any]) -> None:
+        for field_name in dict_config:
+            if field_name not in cls._fields:
+                logging.warning("Unknown field in the config file: %s", field_name)
+
+
+class TestCase(NamedTuple):
+    name: str
+    config: TestConfig
+    result: TestResult
+    duration_s: float

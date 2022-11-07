@@ -1,0 +1,4 @@
+-r common.txt
+flake8==5.0.4
+mypy==0.910
+pylint==2.14.3
