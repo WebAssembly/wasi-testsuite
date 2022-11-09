@@ -26,4 +26,4 @@ jobs:
         working-directory: tests/core
         run: |
           npm install
-          ./build.sh
+          npm run build
