@@ -1,3 +1,4 @@
+import * as process from "process"
 import { doesFileHaveExtension, execAsPromise, getPathsInDirectory, mapFileExtension } from "./utility";
 
 async function compileWithAsc(inputFilePath: string, outputFilePath: string) {
@@ -13,4 +14,7 @@ async function compileTests() {
 
 compileTests()
     .then(() => console.log("Tests compiled"))
-    .catch((e) => console.error(`Tests failed to compile: ${e}`));
+    .catch((e) => {
+        console.error(`Tests failed to compile: ${e}`);
+        process.exit(1);
+    });
