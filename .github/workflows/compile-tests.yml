@@ -27,3 +27,40 @@ jobs:
         run: |
           npm install
           npm run build
+  build_libc:
+    name: Build libc tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    env:
+      WASI_VERSION: 16
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Setup WASI SDK download - Linux
+        if: matrix.os == 'ubuntu-latest'
+        run: echo SYSTEM_NAME=linux >> $GITHUB_ENV
+      - name: Setup WASI SDK download - MacOS
+        if: matrix.os == 'macos-latest'
+        run: echo SYSTEM_NAME=macos >> $GITHUB_ENV
+      - name: Setup WASI SDK download - Windows
+        if: matrix.os == 'windows-latest'
+        run: echo SYSTEM_NAME=mingw >> $env:GITHUB_ENV
+      - name: Download WASI SDK
+        working-directory: tests/libc
+        shell: bash
+        run: curl -L -f https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${WASI_VERSION}/wasi-sdk-${WASI_VERSION}.0-${SYSTEM_NAME}.tar.gz --output wasi-sdk.tar.gz
+      - name: Install WASI SDK
+        working-directory: tests/libc
+        shell: bash
+        run: tar xvf wasi-sdk.tar.gz
+      - name: Check formatting
+        if: matrix.os == 'ubuntu-latest'
+        working-directory: tests/libc
+        run: find testsuite -regex '.*\.\(c\|h\)' -print0 | xargs -0 -n1 ./wasi-sdk-${WASI_VERSION}.0/bin/clang-format --style=file --dry-run -Werror
+      - name: Build tests
+        shell: bash
+        working-directory: tests/libc
+        run: CC="./wasi-sdk-${WASI_VERSION}.0/bin/clang" ./build.sh
+
