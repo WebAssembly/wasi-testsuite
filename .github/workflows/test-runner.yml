@@ -15,9 +15,6 @@ on:
 jobs:
   validate_test_runner:
     name: Validation of the test runner (Python)
-    strategy:
-      matrix:
-        python_version: ['3.8']
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
@@ -26,7 +23,7 @@ jobs:
       - name: Initialize Python environment
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python_version }}
+          python-version: '3.10'
           cache: pip
 
       - name: Install dependencies
