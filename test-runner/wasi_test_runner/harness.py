@@ -1,8 +1,8 @@
 from typing import List
 
 
-from .test_reporters import TestReporter
-from .test_executor import TestSuiteExecutor
+from .reporters import TestReporter
+from .executor import TestSuiteExecutor
 from .runtime_adapter import RuntimeAdapter
 from .validators import Validator
 

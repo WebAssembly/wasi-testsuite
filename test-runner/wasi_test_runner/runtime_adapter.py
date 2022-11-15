@@ -2,7 +2,7 @@ import subprocess
 
 from typing import NamedTuple, List
 
-from .test_case import TestOutput
+from .test_case import Output
 
 
 class RuntimeVersion(NamedTuple):
@@ -22,11 +22,11 @@ class RuntimeAdapter:
         )
         return RuntimeVersion(output[0], output[1])
 
-    def run_test(self, test_path: str, args: List[str]) -> TestOutput:
+    def run_test(self, test_path: str, args: List[str]) -> Output:
         args = [
             self._adapter_path,
             "--test-file",
             test_path,
         ] + [a for arg in args for a in ("--args", arg)]
         result = subprocess.run(args, capture_output=True, text=True, check=False)
-        return TestOutput(result.returncode, result.stdout, result.stderr)
+        return Output(result.returncode, result.stdout, result.stderr)

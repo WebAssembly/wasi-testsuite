@@ -4,10 +4,10 @@ from typing import List
 
 
 from .runtime_adapter import RuntimeAdapter
-from .test_harness import run_all_tests
-from .test_reporters import TestReporter
-from .test_reporters.console import ConsoleTestReporter
-from .test_reporters.json import JSONTestReporter
+from .harness import run_all_tests
+from .reporters import TestReporter
+from .reporters.console import ConsoleTestReporter
+from .reporters.json import JSONTestReporter
 from .validators import exit_code_validator, stdout_validator, Validator
 
 

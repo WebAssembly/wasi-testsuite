@@ -9,12 +9,12 @@ from typing import List, cast
 
 from .runtime_adapter import RuntimeAdapter
 from .test_case import (
-    TestResult,
-    TestConfig,
-    TestOutput,
+    Result,
+    Config,
+    Output,
     TestCase,
 )
-from .test_reporters import TestReporter
+from .reporters import TestReporter
 from .test_suite import TestSuite
 from .validators import Validator
 
@@ -48,7 +48,6 @@ class TestSuiteExecutor:  # pylint: disable=too-few-public-methods
 
     def _execute_single_test(self, test_path: str) -> TestCase:
         config = self._read_test_config(test_path)
-
         test_start = time.time()
         test_output = self._runtime.run_test(test_path, config.args)
         elapsed = time.time() - test_start
@@ -60,14 +59,14 @@ class TestSuiteExecutor:  # pylint: disable=too-few-public-methods
             duration_s=elapsed,
         )
 
-    def _validate(self, config: TestConfig, output: TestOutput) -> TestResult:
+    def _validate(self, config: Config, output: Output) -> Result:
         failures = [
             result
             for result in [validator(config, output) for validator in self._validators]
             if result is not None
         ]
 
-        return TestResult(
+        return Result(
             failures=failures,
             is_executed=True,
             output=output,
@@ -80,8 +79,8 @@ class TestSuiteExecutor:  # pylint: disable=too-few-public-methods
         with open(manifest_path, encoding="utf-8") as file:
             return cast(str, json.load(file)["name"])
 
-    def _read_test_config(self, test_path: str) -> TestConfig:
+    def _read_test_config(self, test_path: str) -> Config:
         config_file = re.sub("\\.wasm$", ".json", test_path)
         if os.path.exists(config_file):
-            return TestConfig.from_file(config_file)
-        return TestConfig()
+            return Config.from_file(config_file)
+        return Config()

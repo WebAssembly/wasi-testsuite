@@ -1,4 +1,4 @@
-name: Linter
+name: Test runner
 
 on:
   push:
@@ -13,8 +13,8 @@ on:
       - 'test-runner/**'
 
 jobs:
-  lint_test_runner:
-    name: Linters for test runner (Python)
+  validate_test_runner:
+    name: Validation of the test runner (Python)
     strategy:
       matrix:
         python_version: ['3.8']
@@ -22,20 +22,29 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
+
       - name: Initialize Python environment
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python_version }}
           cache: pip
+
       - name: Install dependencies
         working-directory: test-runner
         run: pip install -r requirements/dev.txt
+
       - name: Run mypy
         working-directory: test-runner
-        run: mypy wasi_test_runner/__main__.py
+        run: mypy wasi_test_runner tests
+
       - name: Run flake8
         working-directory: test-runner
         run: flake8
+
       - name: Run pylint
         working-directory: test-runner
-        run: pylint wasi_test_runner
+        run: pylint wasi_test_runner tests
+
+      - name: Run tests
+        working-directory: test-runner
+        run: PYTHONPATH=. coverage run
