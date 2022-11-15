@@ -3,7 +3,7 @@ import json
 from typing import List, NamedTuple, TypeVar, Type, Dict, Any, Optional
 
 
-class TestOutput(NamedTuple):
+class Output(NamedTuple):
     exit_code: int
     stdout: str
     stderr: str
@@ -14,8 +14,8 @@ class Failure(NamedTuple):
     message: str
 
 
-class TestResult(NamedTuple):
-    output: TestOutput
+class Result(NamedTuple):
+    output: Output
     is_executed: bool
     failures: List[Failure]
 
@@ -24,10 +24,10 @@ class TestResult(NamedTuple):
         return len(self.failures) > 0
 
 
-T = TypeVar("T", bound="TestConfig")
+T = TypeVar("T", bound="Config")
 
 
-class TestConfig(NamedTuple):
+class Config(NamedTuple):
     args: List[str] = []
     exit_code: int = 0
     stdout: Optional[str] = None
@@ -58,6 +58,6 @@ class TestConfig(NamedTuple):
 
 class TestCase(NamedTuple):
     name: str
-    config: TestConfig
-    result: TestResult
+    config: Config
+    result: Result
     duration_s: float

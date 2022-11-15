@@ -1,0 +1,8 @@
+[run]
+branch = True
+command_line = -m pytest tests
+source = wasi_test_runner
+omit = */reporters/*
+
+[report]
+skip_empty = True

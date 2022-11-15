@@ -2,3 +2,5 @@
 flake8==5.0.4
 mypy==0.910
 pylint==2.14.3
+pytest==6.2.5
+coverage==6.3.3

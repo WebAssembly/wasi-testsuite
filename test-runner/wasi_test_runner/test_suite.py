@@ -25,7 +25,13 @@ class TestSuite(NamedTuple):
 
     @property
     def fail_count(self) -> int:
-        return len([1 for test in self.test_cases if test.result.failed])
+        return len(
+            [
+                1
+                for test in self.test_cases
+                if test.result.is_executed and test.result.failed
+            ]
+        )
 
     @property
     def skip_count(self) -> int:
