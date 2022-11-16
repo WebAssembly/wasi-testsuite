@@ -9,8 +9,8 @@ on:
       - '*'
 
 jobs:
-  build_core:
-    name: Build core tests
+  build_assemblyscript:
+    name: Build Assemblyscript tests
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -23,12 +23,12 @@ jobs:
         with:
           node-version: 16
       - name: Build tests
-        working-directory: tests/core
+        working-directory: tests/assemblyscript
         run: |
           npm install
           npm run build
-  build_libc:
-    name: Build libc tests
+  build_c:
+    name: Build C tests
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -48,19 +48,19 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: echo SYSTEM_NAME=mingw >> $env:GITHUB_ENV
       - name: Download WASI SDK
-        working-directory: tests/libc
+        working-directory: tests/c
         shell: bash
         run: curl -L -f https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${WASI_VERSION}/wasi-sdk-${WASI_VERSION}.0-${SYSTEM_NAME}.tar.gz --output wasi-sdk.tar.gz
       - name: Install WASI SDK
-        working-directory: tests/libc
+        working-directory: tests/c
         shell: bash
         run: tar xvf wasi-sdk.tar.gz
       - name: Check formatting
         if: matrix.os == 'ubuntu-latest'
-        working-directory: tests/libc
+        working-directory: tests/c
         run: find testsuite -regex '.*\.\(c\|h\)' -print0 | xargs -0 -n1 ./wasi-sdk-${WASI_VERSION}.0/bin/clang-format --style=file --dry-run -Werror
       - name: Build tests
         shell: bash
-        working-directory: tests/libc
+        working-directory: tests/c
         run: CC="./wasi-sdk-${WASI_VERSION}.0/bin/clang" ./build.sh
 

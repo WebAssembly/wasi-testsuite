@@ -1,5 +1,5 @@
 {
-  "name": "@webassembly/wasi-testsuite-core",
+  "name": "@webassembly/wasi-testsuite-assemblyscript",
   "version": "1.0.0",
   "description": "AssemblyScript tests for WebAssembly System Interface layer",
   "main": "index.js",
