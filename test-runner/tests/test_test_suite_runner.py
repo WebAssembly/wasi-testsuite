@@ -2,7 +2,7 @@ from typing import Any
 from unittest.mock import ANY, MagicMock, Mock, patch, mock_open
 
 import wasi_test_runner.test_case as tc
-from wasi_test_runner import executor
+import wasi_test_runner.test_suite_runner as tsr
 
 
 def get_mock_open() -> Mock:
@@ -24,7 +24,7 @@ def get_mock_open() -> Mock:
 # pylint: disable-msg=too-many-locals
 @patch("builtins.open", get_mock_open())
 @patch("os.path.exists", Mock(return_value=True))
-def test_executor_end_to_end() -> None:
+def test_runner_end_to_end() -> None:
     test_paths = ["test1.wasm", "test2.wasm", "test3.wasm"]
 
     failures = [tc.Failure("a", "b"), tc.Failure("x", "y"), tc.Failure("x", "z")]
@@ -63,9 +63,7 @@ def test_executor_end_to_end() -> None:
     reporters = [Mock(), Mock()]
 
     with patch("glob.glob", return_value=test_paths):
-        suite = executor.TestSuiteExecutor("my-path", runtime, validators).run(  # type: ignore
-            reporters  # type: ignore
-        )
+        suite = tsr.run_tests_from_test_suite("my-path", runtime, validators, reporters)  # type: ignore
 
     # Assert manifest was read correctly
     assert suite.name == "test-suite"
@@ -93,7 +91,7 @@ def test_executor_end_to_end() -> None:
 
 
 @patch("os.path.exists", Mock(return_value=False))
-def test_executor_should_use_path_for_name_if_manifest_does_not_exist() -> None:
-    suite = executor.TestSuiteExecutor("my-path", Mock(), []).run([])
+def test_runner_should_use_path_for_name_if_manifest_does_not_exist() -> None:
+    suite = tsr.run_tests_from_test_suite("my-path", Mock(), [], [])
 
     assert suite.name == "my-path"

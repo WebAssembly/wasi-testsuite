@@ -1,8 +1,7 @@
 from typing import List
 
-
 from .reporters import TestReporter
-from .executor import TestSuiteExecutor
+from .test_suite_runner import run_tests_from_test_suite
 from .runtime_adapter import RuntimeAdapter
 from .validators import Validator
 
@@ -16,8 +15,8 @@ def run_all_tests(
     ret = 0
 
     for test_suite_path in test_suite_paths:
-        test_suite = TestSuiteExecutor(test_suite_path, runtime, validators).run(
-            reporters
+        test_suite = run_tests_from_test_suite(
+            test_suite_path, runtime, validators, reporters
         )
         for reporter in reporters:
             reporter.report_test_suite(test_suite)
