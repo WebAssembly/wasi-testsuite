@@ -1,0 +1,11 @@
+name: Run all tests
+description: Runs all the tests defined in this repository
+
+runs:
+  using: composite
+  steps:
+    - name: Setup git
+      shell: bash
+      run: |
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config user.name "github-actions[bot]"

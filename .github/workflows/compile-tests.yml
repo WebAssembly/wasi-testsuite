@@ -3,7 +3,7 @@ name: Compile tests
 on:
   push:
     branches:
-      - '*'
+      - main
   pull_request:
     branches:
       - '*'
@@ -18,15 +18,26 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
+
       - name: Initialize node.js environment
         uses: actions/setup-node@v3
         with:
           node-version: 16
+
       - name: Build tests
         working-directory: tests/assemblyscript
         run: |
           npm install
           npm run build
+
+      - name: Upload precompiled tests
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v3
+        with:
+          name: assemblyscript-testsuite
+          path: tests/assemblyscript/testsuite
+          if-no-files-found: error
+
   build_c:
     name: Build C tests
     runs-on: ${{ matrix.os }}
@@ -38,29 +49,80 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
+
       - name: Setup WASI SDK download - Linux
         if: matrix.os == 'ubuntu-latest'
         run: echo SYSTEM_NAME=linux >> $GITHUB_ENV
+
       - name: Setup WASI SDK download - MacOS
         if: matrix.os == 'macos-latest'
         run: echo SYSTEM_NAME=macos >> $GITHUB_ENV
+
       - name: Setup WASI SDK download - Windows
         if: matrix.os == 'windows-latest'
         run: echo SYSTEM_NAME=mingw >> $env:GITHUB_ENV
+
       - name: Download WASI SDK
         working-directory: tests/c
         shell: bash
         run: curl -L -f https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${WASI_VERSION}/wasi-sdk-${WASI_VERSION}.0-${SYSTEM_NAME}.tar.gz --output wasi-sdk.tar.gz
+
       - name: Install WASI SDK
         working-directory: tests/c
         shell: bash
         run: tar xvf wasi-sdk.tar.gz
+
       - name: Check formatting
         if: matrix.os == 'ubuntu-latest'
         working-directory: tests/c
         run: find testsuite -regex '.*\.\(c\|h\)' -print0 | xargs -0 -n1 ./wasi-sdk-${WASI_VERSION}.0/bin/clang-format --style=file --dry-run -Werror
+
       - name: Build tests
         shell: bash
         working-directory: tests/c
         run: CC="./wasi-sdk-${WASI_VERSION}.0/bin/clang" ./build.sh
 
+      - name: Upload precompiled tests
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v3
+        with:
+          name: c-testsuite
+          path: tests/c/testsuite
+          if-no-files-found: error
+
+  upload_test_binaries:
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    needs: [build_assemblyscript, build_c]
+    strategy:
+      max-parallel: 1
+      matrix:
+        suite: [assemblyscript, c]
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: prod/testsuite-base
+
+      - name: Configure git
+        uses: ./.github/actions/git-config
+
+      - name: Merge main branch changes
+        run: git merge ${{ github.sha }}
+
+      - name: Remove existing binaries
+        run: git rm tests/${{ matrix.suite }}/testsuite/*.wasm
+
+      - name: Download ${{ matrix.suite }} test binaries
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ matrix.suite }}-testsuite
+          path: ./tests/${{ matrix.suite }}/testsuite
+
+      - name: Publish changes to consumer branch
+        shell: bash
+        run: |
+          git add tests/${{ matrix.suite }}/testsuite/*.wasm -f
+          git diff --quiet --cached || git commit -m "Update test binaries for ${{ matrix.suite }} test suite"
+          git push
