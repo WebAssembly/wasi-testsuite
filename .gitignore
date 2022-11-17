@@ -1,2 +1,3 @@
 *.wasm
+_test_cache/
 .DS_Store

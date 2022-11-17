@@ -3,6 +3,7 @@ import sys
 from typing import List
 
 
+from .test_suite_location import get_test_suite_location
 from .runtime_adapter import RuntimeAdapter
 from .harness import run_all_tests
 from .reporters import TestReporter
@@ -21,7 +22,7 @@ def main() -> int:
         "--test-suite",
         required=True,
         nargs="+",
-        help="Locations of suites (directories with *.wasm test files).",
+        help="Locations of suites (directories with *.wasm test files or urls to ZIP archives).",
     )
     parser.add_argument(
         "-r", "--runtime-adapter", required=True, help="Path to a runtime adapter."
@@ -47,7 +48,7 @@ def main() -> int:
 
     return run_all_tests(
         RuntimeAdapter(options.runtime_adapter),
-        options.test_suite,
+        [get_test_suite_location(suite) for suite in options.test_suite],
         validators,
         reporters,
     )
