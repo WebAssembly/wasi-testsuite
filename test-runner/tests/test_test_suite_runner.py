@@ -11,7 +11,7 @@ def get_mock_open() -> Mock:
             "my-path/manifest.json": '{"name": "test-suite"}',
             "test1.json": "{}",
             "test2.json": '{"exit_code": 1, "args": ["a", "b"]}',
-            "test3.json": '{"stdout": "output"}',
+            "test3.json": '{"stdout": "output", "env": {"x": "1"}}',
         }
         if filename in file_content:
             return mock_open(read_data=file_content[filename]).return_value
@@ -42,7 +42,7 @@ def test_runner_end_to_end() -> None:
     expected_config = [
         tc.Config(),
         tc.Config(args=["a", "b"], exit_code=1),
-        tc.Config(stdout="output"),
+        tc.Config(stdout="output", env={"x": "1"}),
     ]
 
     expected_test_cases = [
@@ -75,7 +75,7 @@ def test_runner_end_to_end() -> None:
     # Assert test runner calls
     assert runtime.run_test.call_count == 3
     for test_path, config in zip(test_paths, expected_config):
-        runtime.run_test.assert_any_call(test_path, config.args)
+        runtime.run_test.assert_any_call(test_path, config.args, config.env)
 
     # Assert reporters calls
     for reporter in reporters:

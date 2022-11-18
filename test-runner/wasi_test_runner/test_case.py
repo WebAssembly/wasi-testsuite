@@ -29,6 +29,7 @@ T = TypeVar("T", bound="Config")
 
 class Config(NamedTuple):
     args: List[str] = []
+    env: Dict[str, str] = {}
     exit_code: int = 0
     stdout: Optional[str] = None
     wasi_functions: List[str] = []
@@ -44,6 +45,7 @@ class Config(NamedTuple):
 
         return cls(
             args=dict_config.get("args", default.args),
+            env=dict_config.get("env", default.env),
             exit_code=dict_config.get("exit_code", default.exit_code),
             wasi_functions=dict_config.get("wasi_functions", default.wasi_functions),
             stdout=dict_config.get("stdout", default.stdout),
