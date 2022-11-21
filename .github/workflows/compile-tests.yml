@@ -112,7 +112,7 @@ jobs:
         run: git merge ${{ github.sha }}
 
       - name: Remove existing binaries
-        run: git rm tests/${{ matrix.suite }}/testsuite/*.wasm
+        run: git rm --ignore-unmatch tests/${{ matrix.suite }}/testsuite/*.wasm
 
       - name: Download ${{ matrix.suite }} test binaries
         uses: actions/download-artifact@v3
