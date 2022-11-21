@@ -31,7 +31,7 @@ class RuntimeAdapter:
                 "--test-file",
                 test_path,
             ]
-            + [a for arg in args for a in ("--args", arg)]
+            + [a for arg in args for a in ("--arg", arg)]
             + [e for env in self._env_to_list(env_variables) for e in ("--env", env)]
         )
         result = subprocess.run(args, capture_output=True, text=True, check=False)
