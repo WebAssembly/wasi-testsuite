@@ -2,7 +2,7 @@
 
 TEST_FILE=
 ARGS=()
-ENV=()
+PROG_ARGS=()
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -16,12 +16,17 @@ while [[ $# -gt 0 ]]; do
         shift
         ;;
     --arg)
-        ARGS+=("$2")
+        PROG_ARGS+=("$2")
         shift
         shift
         ;;
     --env)
-        ENV+=("--env" "$2")
+        ARGS+=("--env" "$2")
+        shift
+        shift
+        ;;
+    --dir)
+        ARGS+=("--dir" "$2")
         shift
         shift
         ;;
@@ -32,4 +37,4 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-wasmtime $TEST_FILE "${ENV[@]}" "${ARGS[@]}"
+wasmtime $TEST_FILE "${PROG_ARGS[@]}" "${ARGS[@]}"

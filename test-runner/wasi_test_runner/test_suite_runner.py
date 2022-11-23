@@ -49,7 +49,7 @@ def _execute_single_test(
 ) -> TestCase:
     config = _read_test_config(test_path)
     test_start = time.time()
-    test_output = runtime.run_test(test_path, config.args, config.env)
+    test_output = runtime.run_test(test_path, config.args, config.env, config.dirs)
     elapsed = time.time() - test_start
 
     return TestCase(

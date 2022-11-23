@@ -9,7 +9,7 @@ def get_mock_open() -> Mock:
     def open_mock(filename: str, *_args: Any, **_kwargs: Any) -> Any:
         file_content = {
             "my-path/manifest.json": '{"name": "test-suite"}',
-            "test1.json": "{}",
+            "test1.json": '{"dirs": [".", "deep/dir"]}',
             "test2.json": '{"exit_code": 1, "args": ["a", "b"]}',
             "test3.json": '{"stdout": "output", "env": {"x": "1"}}',
         }
@@ -40,7 +40,7 @@ def test_runner_end_to_end() -> None:
         tc.Result(outputs[2], True, [failures[0], failures[2]]),
     ]
     expected_config = [
-        tc.Config(),
+        tc.Config(dirs=[".", "deep/dir"]),
         tc.Config(args=["a", "b"], exit_code=1),
         tc.Config(stdout="output", env={"x": "1"}),
     ]
@@ -75,7 +75,9 @@ def test_runner_end_to_end() -> None:
     # Assert test runner calls
     assert runtime.run_test.call_count == 3
     for test_path, config in zip(test_paths, expected_config):
-        runtime.run_test.assert_any_call(test_path, config.args, config.env)
+        runtime.run_test.assert_any_call(
+            test_path, config.args, config.env, config.dirs
+        )
 
     # Assert reporters calls
     for reporter in reporters:
