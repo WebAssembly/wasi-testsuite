@@ -1,0 +1,6 @@
+# Accessing precompiled binaries for tests
+The main branch (`main`) of the repository contains test runner and source files for tests, but it does not include precompiled binaries that are used to run tests. Test binaries can be large and might affect developers who are willing to contribute to this repository, but don't have a fast internet connection.
+
+Not providing test binaries however affects users who want just to run tests (e.g. on CI). The repository contains build scripts to compile all the tests, but compilation requires installing dependencies (tests are written in multiple languages, and each of them needs a different set of dependencies). Installing dependencies might not be straightforward on all the systems, so we need to provide users with precompiled binaries.
+
+To maintain both a positive developer experience and smooth onboarding for users who want to test their runtime, we created a `prod/testsuite-base` branch that is a fork of the `main` branch, but it also includes all the precompiled tests. The binaries are located in the test source directories (`tests/*/testsuite/*.wasm`). The branch is updated for every change in the `main` branch (see `upload_test_binaries` in the [`compile-tests`](../.github/workflows/compile-tests.yml) workflow).
