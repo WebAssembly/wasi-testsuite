@@ -11,6 +11,7 @@ The adapter executable must accept the following command line parameters and exe
 * `--version` - prints to standard output name and version of the runtime in the following format: `<NAME> <VERSION>`
 * `--env <NAME=VAL>` - passes environment variable to WASM module. The parameter can be used multiple times in one call.
 * `--arg <ARG>` - passes argument `<ARG>` to WASM module. The parameter can be used multiple times in one call.
+* `--dir <DIRECTORY>` - grants access to the `<DIRECTORY>` host directory. The parameter can be used multiple times in one call.
 * `--test-file <PATH>` - runs WASM module located in `<PATH>`
 
 The adapter must return exit code to the environment that was passed as an argument to the `proc_exit` function in WASM code. This can be verified by running the following code:
