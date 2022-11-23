@@ -31,6 +31,7 @@ class Config(NamedTuple):
     args: List[str] = []
     env: Dict[str, str] = {}
     exit_code: int = 0
+    dirs: List[str] = []
     stdout: Optional[str] = None
     wasi_functions: List[str] = []
 
@@ -47,6 +48,7 @@ class Config(NamedTuple):
             args=dict_config.get("args", default.args),
             env=dict_config.get("env", default.env),
             exit_code=dict_config.get("exit_code", default.exit_code),
+            dirs=dict_config.get("dirs", default.dirs),
             wasi_functions=dict_config.get("wasi_functions", default.wasi_functions),
             stdout=dict_config.get("stdout", default.stdout),
         )
