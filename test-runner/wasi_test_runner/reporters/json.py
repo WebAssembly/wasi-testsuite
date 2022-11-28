@@ -1,5 +1,5 @@
 import json
-
+from datetime import datetime
 from typing import List
 
 
@@ -11,6 +11,7 @@ from ..runtime_adapter import RuntimeVersion
 class JSONTestReporter(TestReporter):
     def __init__(self, output_path: str) -> None:
         super().__init__()
+        self._start_timestamp = datetime.utcnow()
         self._output_path = output_path
         self._test_suites: List[TestSuite] = []
 
@@ -46,9 +47,17 @@ class JSONTestReporter(TestReporter):
         with open(self._output_path, "w", encoding="UTF-8") as file:
             json.dump(
                 {
+                    "execution": {
+                        "start_timestamp": self._to_iso8601(self._start_timestamp),
+                        "finish_timestamp": self._to_iso8601(datetime.utcnow())
+                    },
                     "runtime": {"name": version.name, "version": version.version},
                     "results": results,
                 },
                 file,
                 default=str,
             )
+
+    @staticmethod
+    def _to_iso8601(timestamp: datetime) -> str:
+        return f"{timestamp.isoformat()[:-3]}Z"
