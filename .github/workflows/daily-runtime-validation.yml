@@ -1,0 +1,70 @@
+name: Daily runtime validation
+
+on:
+  schedule:
+    - cron: 0 0 * * *
+
+jobs:
+  run_tests:
+    strategy:
+      max-parallel: 1
+      matrix:
+        runtime: [wasmtime, wasm-micro-runtime]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: prod/testsuite-base
+
+      - name: Initialize Python environment
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: pip
+
+      - name: Install dependencies
+        working-directory: test-runner
+        run: pip install -r requirements.txt
+
+      - name: Install wasmtime
+        if: matrix.runtime == 'wasmtime'
+        run: |
+          curl https://wasmtime.dev/install.sh -sSf | bash
+          echo "$HOME/.wasmtime/bin" >> $GITHUB_PATH
+
+      - name: Install WASM Micro Runtime
+        if: matrix.runtime == 'wasm-micro-runtime'
+        run: |
+          git clone https://github.com/bytecodealliance/wasm-micro-runtime.git
+          cd wasm-micro-runtime/product-mini/platforms/linux/
+          mkdir build && cd build
+          cmake .. -DWAMR_BUILD_BULK_MEMORY=1 -DWAMR_BUILD_SHARED_MEMORY=1
+          make
+          echo "$GITHUB_WORKSPACE/wasm-micro-runtime/product-mini/platforms/linux/build" >> $GITHUB_PATH
+
+      - name: Get current timestamp
+        run: echo "date=$(date +'%Y-%m-%d_%H_%M')" >> $GITHUB_ENV
+
+      - name: Run tests on ${{ matrix.runtime }}
+        run: |
+          mkdir -p test_results
+          python3 test-runner/wasi_test_runner.py \
+            -r ./adapters/${{ matrix.runtime }}.sh \
+            --json-output-location results.json \
+            -t tests/assemblyscript/testsuite \
+            -t tests/c/testsuite
+
+      - name: Configure git
+        uses: ./.github/actions/git-config
+
+      - name: Upload test results
+        run: |
+          git checkout prod/daily-test-results
+          mkdir -p results/${{ matrix.runtime }}
+          cp results.json results/${{ matrix.runtime }}/${{ env.date }}.json
+          cp results.json results/${{ matrix.runtime }}/latest.json
+          git add results
+          git commit -m 'Update daily test results for ${{ matrix.runtime }}'
+          git push
