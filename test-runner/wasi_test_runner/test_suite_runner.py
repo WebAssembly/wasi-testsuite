@@ -2,6 +2,7 @@ import glob
 import json
 import os
 import re
+import shutil
 import time
 
 from datetime import datetime
@@ -27,6 +28,8 @@ def run_tests_from_test_suite(
 ) -> TestSuite:
     test_cases: List[TestCase] = []
     test_start = datetime.now()
+
+    _cleanup_test_output(test_suite_path)
 
     for test_path in glob.glob(os.path.join(test_suite_path, "*.wasm")):
         test_case = _execute_single_test(runtime, validators, test_path)
@@ -83,3 +86,13 @@ def _read_manifest(test_suite_path: str) -> str:
         return test_suite_path
     with open(manifest_path, encoding="utf-8") as file:
         return cast(str, json.load(file)["name"])
+
+
+def _cleanup_test_output(test_suite_path: str) -> None:
+    for test_output_file in glob.glob(
+        os.path.join(test_suite_path, "**", "*.cleanup"), recursive=True
+    ):
+        if os.path.isfile(test_output_file):
+            os.remove(test_output_file)
+        elif os.path.isdir(test_output_file):
+            shutil.rmtree(test_output_file)

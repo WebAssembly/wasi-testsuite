@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
   int written;
   int fd;
   struct stat buf;
-  char *test_file = "fs-tests.dir/writeable/test_pwrite_pread.txt";
+  char *test_file = "fs-tests.dir/writeable/test_pwrite_pread.txt.cleanup";
   char *full_content = "very long text";
   int full_content_len = strlen(full_content);
   const char *sub_content = "test";
