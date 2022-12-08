@@ -3,12 +3,13 @@ use wasi_tests::{assert_errno, open_scratch_directory, TESTCONFIG};
 
 unsafe fn test_dangling_symlink(dir_fd: wasi::Fd) {
     if TESTCONFIG.support_dangling_filesystem() {
+        const SYMLINK_NAME: &str = "dangling_symlink_symlink.cleanup";
         // First create a dangling symlink.
-        wasi::path_symlink("target", dir_fd, "symlink").expect("creating a symlink");
+        wasi::path_symlink("target", dir_fd, SYMLINK_NAME).expect("creating a symlink");
 
         // Try to open it as a directory with O_NOFOLLOW.
         assert_errno!(
-            wasi::path_open(dir_fd, 0, "symlink", wasi::OFLAGS_DIRECTORY, 0, 0, 0)
+            wasi::path_open(dir_fd, 0, SYMLINK_NAME, wasi::OFLAGS_DIRECTORY, 0, 0, 0)
                 .expect_err("opening a dangling symlink as a directory")
                 .raw_error(),
             wasi::ERRNO_NOTDIR,
@@ -17,14 +18,14 @@ unsafe fn test_dangling_symlink(dir_fd: wasi::Fd) {
 
         // Try to open it as a file with O_NOFOLLOW.
         assert_errno!(
-            wasi::path_open(dir_fd, 0, "symlink", 0, 0, 0, 0)
+            wasi::path_open(dir_fd, 0, SYMLINK_NAME, 0, 0, 0, 0)
                 .expect_err("opening a dangling symlink as a file")
                 .raw_error(),
             wasi::ERRNO_LOOP
         );
 
         // Clean up.
-        wasi::path_unlink_file(dir_fd, "symlink").expect("failed to remove file");
+        wasi::path_unlink_file(dir_fd, SYMLINK_NAME).expect("failed to remove file");
     }
 }
 

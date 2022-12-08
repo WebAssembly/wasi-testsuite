@@ -2,11 +2,12 @@ use std::{env, process};
 use wasi_tests::{open_scratch_directory, TESTCONFIG};
 
 unsafe fn test_fd_advise(dir_fd: wasi::Fd) {
+    const FILE_NAME: &str = "fd_advise_file.cleanup";
     // Create a file in the scratch directory.
     let file_fd = wasi::path_open(
         dir_fd,
         0,
-        "file",
+        FILE_NAME,
         wasi::OFLAGS_CREAT,
         wasi::RIGHTS_FD_READ
             | wasi::RIGHTS_FD_WRITE
@@ -49,7 +50,7 @@ unsafe fn test_fd_advise(dir_fd: wasi::Fd) {
     }
 
     wasi::fd_close(file_fd).expect("failed to close");
-    wasi::path_unlink_file(dir_fd, "file").expect("failed to unlink");
+    wasi::path_unlink_file(dir_fd, FILE_NAME).expect("failed to unlink");
 }
 fn main() {
     let mut args = env::args();

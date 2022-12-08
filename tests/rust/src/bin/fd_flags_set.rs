@@ -2,7 +2,7 @@ use std::{env, process};
 use wasi_tests::open_scratch_directory;
 
 unsafe fn test_fd_fdstat_set_flags(dir_fd: wasi::Fd) {
-    const FILE_NAME: &str = "file";
+    const FILE_NAME: &str = "fd_flags_set_file.cleanup";
     let data = &[0u8; 100];
 
     let file_fd = wasi::path_open(
