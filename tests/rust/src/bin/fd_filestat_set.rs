@@ -2,11 +2,12 @@ use std::{env, process};
 use wasi_tests::open_scratch_directory;
 
 unsafe fn test_fd_filestat_set(dir_fd: wasi::Fd) {
+    const FILE_NAME: &str = "fd_filestat_set_file.cleanup";
     // Create a file in the scratch directory.
     let file_fd = wasi::path_open(
         dir_fd,
         0,
-        "file",
+        FILE_NAME,
         wasi::OFLAGS_CREAT,
         wasi::RIGHTS_FD_READ
             | wasi::RIGHTS_FD_WRITE
@@ -47,7 +48,7 @@ unsafe fn test_fd_filestat_set(dir_fd: wasi::Fd) {
     // assert_eq!(status, wasi::EINVAL, "ATIM & ATIM_NOW can't both be set");
 
     wasi::fd_close(file_fd).expect("failed to close fd");
-    wasi::path_unlink_file(dir_fd, "file").expect("failed to remove dir");
+    wasi::path_unlink_file(dir_fd, FILE_NAME).expect("failed to remove dir");
 }
 fn main() {
     let mut args = env::args();

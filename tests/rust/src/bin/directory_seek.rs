@@ -2,14 +2,15 @@ use std::{env, process};
 use wasi_tests::{assert_errno, open_scratch_directory};
 
 unsafe fn test_directory_seek(dir_fd: wasi::Fd) {
+    const DIR_NAME: &str = "directory_seek_dir.cleanup";
     // Create a directory in the scratch directory.
-    wasi::path_create_directory(dir_fd, "dir").expect("failed to make directory");
+    wasi::path_create_directory(dir_fd, DIR_NAME).expect("failed to make directory");
 
     // Open the directory and attempt to request rights for seeking.
     let fd = wasi::path_open(
         dir_fd,
         0,
-        "dir",
+        DIR_NAME,
         wasi::OFLAGS_DIRECTORY,
         wasi::RIGHTS_FD_SEEK,
         0,
@@ -44,7 +45,7 @@ unsafe fn test_directory_seek(dir_fd: wasi::Fd) {
 
     // Clean up.
     wasi::fd_close(fd).expect("failed to close fd");
-    wasi::path_remove_directory(dir_fd, "dir").expect("failed to remove dir");
+    wasi::path_remove_directory(dir_fd, DIR_NAME).expect("failed to remove dir");
 }
 
 fn main() {

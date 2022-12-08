@@ -1,4 +1,5 @@
 use std::{env, mem, process, slice, str};
+use wasi::path_create_directory;
 use wasi_tests::open_scratch_directory;
 
 const BUF_LEN: usize = 256;
@@ -50,6 +51,28 @@ impl<'a> Iterator for ReadDir<'a> {
             DirEntry { dirent, name }.into()
         }
     }
+}
+
+unsafe fn create_tmp_dir(dir_fd: wasi::Fd, name: &str) -> wasi::Fd {
+    path_create_directory(dir_fd, name).expect("failed to create dir");
+    wasi::path_open(
+        dir_fd,
+        0,
+        name,
+        wasi::OFLAGS_DIRECTORY,
+        wasi::RIGHTS_FD_FILESTAT_GET
+            | wasi::RIGHTS_FD_READDIR
+            | wasi::RIGHTS_PATH_CREATE_FILE
+            | wasi::RIGHTS_PATH_OPEN
+            | wasi::RIGHTS_PATH_UNLINK_FILE,
+        wasi::RIGHTS_FD_READ
+            | wasi::RIGHTS_FD_WRITE
+            | wasi::RIGHTS_FD_READDIR
+            | wasi::RIGHTS_FD_FILESTAT_GET
+            | wasi::RIGHTS_FD_SEEK,
+        0,
+    )
+    .expect("failed to open dir")
 }
 
 /// Return the entries plus a bool indicating EOF.
@@ -199,7 +222,7 @@ fn main() {
     };
 
     // Open scratch directory
-    let dir_fd = match open_scratch_directory(&arg) {
+    let base_dir_fd = match open_scratch_directory(&arg) {
         Ok(dir_fd) => dir_fd,
         Err(err) => {
             eprintln!("{}", err);
@@ -207,7 +230,17 @@ fn main() {
         }
     };
 
+    const DIR_NAME: &str = "fd_readdir_dir.cleanup";
+    let dir_fd;
+    unsafe {
+        dir_fd = create_tmp_dir(base_dir_fd, DIR_NAME);
+    }
+
     // Run the tests.
     unsafe { test_fd_readdir(dir_fd) }
     unsafe { test_fd_readdir_lots(dir_fd) }
+
+    unsafe {
+        wasi::path_remove_directory(base_dir_fd, DIR_NAME).expect("failed to remove dir")
+    }
 }
