@@ -59,6 +59,10 @@ Here is some additional information for developers who are willing to contribute
 - [`.github`](.github) - CI workflow definitions.
 - [`doc`](doc) - additional documentation.
 
+### Cleaning up temporary resources
+
+Some of the tests (e.g. [pwrite-with-access](./tests/c/testsuite/pwrite-with-access.c)) generate output artifacts and their existence can affect consecutive test executions. Tests should clean up the artifacts they generate, but there might be cases where the test fails early. Test runner will automatically delete all the files and directories in the test suite directory with the `.cleanup` suffix.
+
 ### Programming languages for tests
 
 The repository currently consists of tests implemented in the following languages:
@@ -68,9 +72,12 @@ The repository currently consists of tests implemented in the following language
 
 The list of supported languages can be extended if needed.
 
+### Test
+
 ### Branch structure
 
 Apart from development branches for various features, we identify the following branches as critical (i.e. they won't be removed or force-updated):
 
 - `main` - main branch of the repository. Use this branch for development (e.g. updating test cases, modifying test runner)
 - `prod/testsuite-base` - the branch is an up-to-date fork of the `main` branch but it also includes precompiled binaries. Use this branch for simply running tests and validating WASM runtimes (see [doc](doc/precompiled-binaries.md) for details).
+- `prod/daily-test-results` - the branch contains daily test results for supported WASM runtimes (at the moment, we only execute tests on wasmtime and WAMR). In the future we intend to publish those results to the website to provide users with additional input for selecting the runtime.
