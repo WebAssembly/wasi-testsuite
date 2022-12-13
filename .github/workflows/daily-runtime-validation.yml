@@ -48,8 +48,8 @@ jobs:
         run: echo "date=$(date +'%Y-%m-%d_%H_%M')" >> $GITHUB_ENV
 
       - name: Run tests on ${{ matrix.runtime }}
+        continue-on-error: true
         run: |
-          mkdir -p test_results
           python3 test-runner/wasi_test_runner.py \
             -r ./adapters/${{ matrix.runtime }}.sh \
             --json-output-location results.json \
