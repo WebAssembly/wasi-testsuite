@@ -45,7 +45,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     env:
-      WASI_VERSION: 16
+      WASI_VERSION: 17
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
