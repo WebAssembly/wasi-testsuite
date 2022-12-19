@@ -1,5 +1,6 @@
 from typing import List
 
+from .filters import TestFilter
 from .reporters import TestReporter
 from .test_suite_runner import run_tests_from_test_suite
 from .runtime_adapter import RuntimeAdapter
@@ -11,12 +12,13 @@ def run_all_tests(
     test_suite_paths: List[str],
     validators: List[Validator],
     reporters: List[TestReporter],
+    filters: List[TestFilter],
 ) -> int:
     ret = 0
 
     for test_suite_path in test_suite_paths:
         test_suite = run_tests_from_test_suite(
-            test_suite_path, runtime, validators, reporters
+            test_suite_path, runtime, validators, reporters, filters,
         )
         for reporter in reporters:
             reporter.report_test_suite(test_suite)

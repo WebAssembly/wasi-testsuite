@@ -5,6 +5,8 @@ from typing import List
 
 from .runtime_adapter import RuntimeAdapter
 from .harness import run_all_tests
+from .filters import TestFilter
+from .filters import JSONTestFilter
 from .reporters import TestReporter
 from .reporters.console import ConsoleTestReporter
 from .reporters.json import JSONTestReporter
@@ -22,6 +24,14 @@ def main() -> int:
         required=True,
         nargs="+",
         help="Locations of suites (directories with *.wasm test files).",
+    )
+    parser.add_argument(
+        "-f",
+        "--filter",
+        required=False,
+        nargs="+",
+        default=[],
+        help="Locations of test filters (JSON files).",
     )
     parser.add_argument(
         "-r", "--runtime-adapter", required=True, help="Path to a runtime adapter."
@@ -45,11 +55,16 @@ def main() -> int:
 
     validators: List[Validator] = [exit_code_validator, stdout_validator]
 
+    filters: List[TestFilter] = []
+    for filt in options.filter:
+        filters.append(JSONTestFilter(filt))
+
     return run_all_tests(
         RuntimeAdapter(options.runtime_adapter),
         options.test_suite,
         validators,
         reporters,
+        filters,
     )
 
 
