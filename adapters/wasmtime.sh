@@ -37,4 +37,4 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-wasmtime $TEST_FILE "${PROG_ARGS[@]}" "${ARGS[@]}"
+wasmtime $TEST_FILE "${ARGS[@]}" "${PROG_ARGS[@]}"

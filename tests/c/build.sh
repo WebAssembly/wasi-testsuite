@@ -1,4 +1,5 @@
 #!/bin/bash
+set -ueo pipefail
 
 CC=${CC:=clang}
 
