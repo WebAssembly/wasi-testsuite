@@ -11,7 +11,7 @@ class TestFilter(ABC):
         pass
 
 
-class JSONTestFilter(TestFilter):
+class JSONTestExcludeFilter(TestFilter):
     def __init__(self, filename: str) -> None:
         with open(filename, encoding="utf-8") as file:
             self.filter_dict = json.load(file)
