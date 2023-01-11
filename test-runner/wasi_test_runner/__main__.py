@@ -6,7 +6,7 @@ from typing import List
 from .runtime_adapter import RuntimeAdapter
 from .harness import run_all_tests
 from .filters import TestFilter
-from .filters import JSONTestFilter
+from .filters import JSONTestExcludeFilter
 from .reporters import TestReporter
 from .reporters.console import ConsoleTestReporter
 from .reporters.json import JSONTestReporter
@@ -27,11 +27,11 @@ def main() -> int:
     )
     parser.add_argument(
         "-f",
-        "--filter",
+        "--exclude-filter",
         required=False,
         nargs="+",
         default=[],
-        help="Locations of test filters (JSON files).",
+        help="Locations of test exclude filters (JSON files).",
     )
     parser.add_argument(
         "-r", "--runtime-adapter", required=True, help="Path to a runtime adapter."
@@ -56,8 +56,8 @@ def main() -> int:
     validators: List[Validator] = [exit_code_validator, stdout_validator]
 
     filters: List[TestFilter] = []
-    for filt in options.filter:
-        filters.append(JSONTestFilter(filt))
+    for filt in options.exclude_filter:
+        filters.append(JSONTestExcludeFilter(filt))
 
     return run_all_tests(
         RuntimeAdapter(options.runtime_adapter),
