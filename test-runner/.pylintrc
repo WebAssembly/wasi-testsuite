@@ -3,5 +3,6 @@ disable=
     C0114, # Missing module docstring
     C0115, # Missing class docstring
     C0116, # Missing function or method docstring
+    R0903, # Too few public methods
 [FORMAT]
 max-line-length=120

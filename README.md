@@ -38,6 +38,16 @@ python3 test-runner/wasi_test_runner.py                                         
     -r adapters/wasmtime.sh # path to a runtime adapter
 ```
 
+Optionally you can specify test cases to skip with the `--exclude-filter` option.
+
+```bash
+python3 test-runner/wasi_test_runner.py                                                  \
+    -t ./tests/assemblyscript/testsuite/ `# path to folders containing .wasm test files` \
+       ./tests/c/testsuite/                                                              \
+    --exclude-filter examples/skip.json                                                  \
+    -r adapters/wasmtime.sh # path to a runtime adapter
+```
+
 ## Contributing
 
 All contributions are very welcome. Contributors can help with:

@@ -54,6 +54,7 @@ class ConsoleTestReporter(TestReporter):
             print(f"  Total: {suite.test_count}")
             self._print_pass(f"  Passed:  {suite.pass_count}")
             self._print_fail(f"  Failed:  {suite.fail_count}")
+            self._print_skip(f"  Skipped: {suite.skip_count}")
             print("")
 
         print(

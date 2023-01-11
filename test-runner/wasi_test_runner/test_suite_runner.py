@@ -8,6 +8,7 @@ import time
 from datetime import datetime
 from typing import List, cast
 
+from .filters import TestFilter
 from .runtime_adapter import RuntimeAdapter
 from .test_case import (
     Result,
@@ -25,14 +26,26 @@ def run_tests_from_test_suite(
     runtime: RuntimeAdapter,
     validators: List[Validator],
     reporters: List[TestReporter],
+    filters: List[TestFilter],
 ) -> TestSuite:
     test_cases: List[TestCase] = []
     test_start = datetime.now()
 
     _cleanup_test_output(test_suite_path)
 
+    test_suite_name = _read_manifest(test_suite_path)
+
     for test_path in glob.glob(os.path.join(test_suite_path, "*.wasm")):
-        test_case = _execute_single_test(runtime, validators, test_path)
+        test_name = os.path.splitext(os.path.basename(test_path))[0]
+        for filt in filters:
+            # for now, just drop the skip reason string. it might be
+            # useful to make reporters report it.
+            skip, _ = filt.should_skip(test_suite_name, test_name)
+            if skip:
+                test_case = _skip_single_test(runtime, validators, test_path)
+                break
+        else:
+            test_case = _execute_single_test(runtime, validators, test_path)
         test_cases.append(test_case)
         for reporter in reporters:
             reporter.report_test(test_case)
@@ -40,10 +53,22 @@ def run_tests_from_test_suite(
     elapsed = (datetime.now() - test_start).total_seconds()
 
     return TestSuite(
-        name=_read_manifest(test_suite_path),
+        name=test_suite_name,
         time=test_start,
         duration_s=elapsed,
         test_cases=test_cases,
+    )
+
+
+def _skip_single_test(
+    _runtime: RuntimeAdapter, _validators: List[Validator], test_path: str
+) -> TestCase:
+    config = _read_test_config(test_path)
+    return TestCase(
+        name=os.path.splitext(os.path.basename(test_path))[0],
+        config=config,
+        result=Result(output=Output(0, "", ""), is_executed=False, failures=[]),
+        duration_s=0,
     )
 
 

@@ -62,8 +62,12 @@ def test_runner_end_to_end() -> None:
 
     reporters = [Mock(), Mock()]
 
+    filt = Mock()
+    filt.should_skip.return_value = (False, None)
+    filters = [filt]
+
     with patch("glob.glob", return_value=test_paths):
-        suite = tsr.run_tests_from_test_suite("my-path", runtime, validators, reporters)  # type: ignore
+        suite = tsr.run_tests_from_test_suite("my-path", runtime, validators, reporters, filters)  # type: ignore
 
     # Assert manifest was read correctly
     assert suite.name == "test-suite"
@@ -91,9 +95,15 @@ def test_runner_end_to_end() -> None:
         for config, output in zip(expected_config, outputs):
             validator.assert_any_call(config, output)
 
+    # Assert filter calls
+    for filt in filters:
+        assert filt.should_skip.call_count == 3
+        for test_case in expected_test_cases:
+            filt.should_skip.assert_any_call(suite.name, test_case.name)
+
 
 @patch("os.path.exists", Mock(return_value=False))
 def test_runner_should_use_path_for_name_if_manifest_does_not_exist() -> None:
-    suite = tsr.run_tests_from_test_suite("my-path", Mock(), [], [])
+    suite = tsr.run_tests_from_test_suite("my-path", Mock(), [], [], [])
 
     assert suite.name == "my-path"
