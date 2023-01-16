@@ -1,5 +1,7 @@
 import * as process from "process";
+import { cpus } from "os";
 import { doesFileHaveExtension, execAsPromise, getFileModifiedTimestamp, getPathsInDirectory, mapFileExtension } from "./utility";
+import Bottleneck from "bottleneck";
 
 async function compileWithAsc(inputFilePath: string, outputFilePath: string) {
     console.log(`Compiling ${inputFilePath}`);
@@ -42,8 +44,16 @@ async function compileTests() {
     }
 }
 
-compileTests()
-    .then(() => console.log("Tests compiled"))
+const limiter = new Bottleneck({
+    maxConcurrent: process.env.npm_config_concurrency ? parseInt(process.env.npm_config_concurrency) : cpus().length,
+    minTime: process.env.npm_config_mintime ? parseInt(process.env.npm_config_mintime) : 500
+});
+
+const wrapped = limiter.wrap(compileTests);
+wrapped()
+    .then(() => {
+        console.log("Tests compiled")
+    })
     .catch((e) => {
         console.error(`Tests failed to compile:`);
         console.error(e);
