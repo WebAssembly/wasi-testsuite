@@ -1,10 +1,10 @@
 import {
-    fd_write,
-    iovec,
-    errno
-} from '@assemblyscript/wasi-shim/assembly/bindings/wasi_snapshot_preview1';
+  fd_write,
+  iovec,
+  errno,
+} from "@assemblyscript/wasi-shim/assembly/bindings/wasi_snapshot_preview1";
 
-const message = 'hello';
+const message = "hello";
 
 const utf8len = <usize>String.UTF8.byteLength(message);
 const utf8buf = __alloc(utf8len);
