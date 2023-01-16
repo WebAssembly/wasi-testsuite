@@ -1,7 +1,7 @@
 import {
-    random_get,
-    errno
-} from '@assemblyscript/wasi-shim/assembly/bindings/wasi_snapshot_preview1';
+  random_get,
+  errno,
+} from "@assemblyscript/wasi-shim/assembly/bindings/wasi_snapshot_preview1";
 
 const bufSize = 0;
 const buf = __alloc(bufSize);
