@@ -8,8 +8,8 @@
     "asc": "asc",
     "lint": "eslint . --ext .ts",
     "build": "ts-node buildscripts/build.ts",
-    "prettier-format-check": "npx prettier --config .prettierrc '**/*.ts' --check",
-    "prettier-format-apply": "npx prettier --config .prettierrc '**/*.ts' --write"
+    "prettier-format-check": "npx prettier --config .prettierrc '**/*.ts' --check --no-error-on-unmatched-pattern",
+    "prettier-format-apply": "npx prettier --config .prettierrc '**/*.ts' --write --no-error-on-unmatched-pattern"
   },
   "repository": {
     "type": "git",
