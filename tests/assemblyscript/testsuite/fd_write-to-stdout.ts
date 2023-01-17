@@ -1,8 +1,4 @@
-import {
-  fd_write,
-  iovec,
-  errno,
-} from "@assemblyscript/wasi-shim/assembly/bindings/wasi_snapshot_preview1";
+import { fd_write, iovec, errno } from "@assemblyscript/wasi-shim/assembly/bindings/wasi_snapshot_preview1";
 
 const message = "hello";
 

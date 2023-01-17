@@ -1,7 +1,4 @@
-import {
-  environ_sizes_get,
-  errno,
-} from "@assemblyscript/wasi-shim/assembly/bindings/wasi_snapshot_preview1";
+import { environ_sizes_get, errno } from "@assemblyscript/wasi-shim/assembly/bindings/wasi_snapshot_preview1";
 
 const buf = memory.data(sizeof<usize>());
 
