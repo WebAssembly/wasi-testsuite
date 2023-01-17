@@ -1,7 +1,7 @@
 import {
-  environ_sizes_get,
-  environ_get,
-  errno,
+    environ_sizes_get,
+    environ_get,
+    errno,
 } from "@assemblyscript/wasi-shim/assembly/bindings/wasi_snapshot_preview1";
 
 const dataBuf = memory.data(sizeof<usize>() * 2);
@@ -23,8 +23,8 @@ assert(err == errno.SUCCESS);
 const expected = ["a=text", 'b=escap " ing', "c=new\nline"];
 
 for (let i = 0; i < <i32>envCount; ++i) {
-  const ptr = load<usize>(envBuf + i * sizeof<usize>());
-  const str = String.UTF8.decodeUnsafe(ptr, ptr + envBufSize - envBuf, true);
-  assert(str == expected[i]);
+    const ptr = load<usize>(envBuf + i * sizeof<usize>());
+    const str = String.UTF8.decodeUnsafe(ptr, ptr + envBufSize - envBuf, true);
+    assert(str == expected[i]);
 }
 __free(envBuf);
