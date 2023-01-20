@@ -1,0 +1,5 @@
+{
+    "WASI C tests": {
+        "stat-dev-ino": "d_ino is known broken in this combination of engine and wasi-sdk version."
+    }
+}
