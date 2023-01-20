@@ -1,0 +1,24 @@
+name: Daily test update
+
+on:
+  schedule:
+    - cron: 0 0 * * *
+  workflow_dispatch:
+
+jobs:
+  update_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: prod/testsuite-all
+
+      - name: Configure git
+        uses: ./.github/actions/git-config
+
+      - name: Update proposal tests
+        run: |
+          ./scripts/update-proposal-tests.sh
+          git push
