@@ -31,7 +31,7 @@ function build_wasi-threads()
     CC=$WASI_SDK_DIR/bin/clang make -j 15 THREAD_MODEL=posix
     SYSROOT=$(pwd)/sysroot
     popd
-    CC="$WASI_SDK_DIR/bin/clang -D_REENTRANT -matomics -Wl,--import-memory -Wl,--shared-memory --sysroot=$SYSROOT --target=wasm32-wasi-pthread" ./build.sh
+    CC="$WASI_SDK_DIR/bin/clang -D_REENTRANT -matomics -Wl,--import-memory -Wl,--shared-memory --sysroot=$SYSROOT --target=wasm32-wasi-threads -Wno-error=implicit-function-declaration" ./build.sh
 }
 
 function update_repo()
