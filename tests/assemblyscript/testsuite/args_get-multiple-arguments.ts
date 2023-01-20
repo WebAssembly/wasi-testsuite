@@ -1,9 +1,4 @@
-import {
-    args_sizes_get,
-    args_get,
-    errno
-} from '@assemblyscript/wasi-shim/assembly/bindings/wasi_snapshot_preview1';
-
+import { args_sizes_get, args_get, errno } from "@assemblyscript/wasi-shim/assembly/bindings/wasi_snapshot_preview1";
 
 const dataBuf = memory.data(sizeof<usize>() * 2);
 
@@ -21,7 +16,7 @@ const argBuf = __alloc(argBufSize);
 err = args_get(argBuf, argBuf + ptrsSize);
 assert(err == errno.SUCCESS);
 
-const expected = ["first", "the \"second\" arg", "3"];
+const expected = ["first", 'the "second" arg', "3"];
 
 for (let i = 1; i < <i32>argCount; ++i) {
     const ptr = load<usize>(argBuf + i * sizeof<usize>());

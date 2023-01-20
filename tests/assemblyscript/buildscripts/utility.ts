@@ -18,7 +18,7 @@ export function getFileModifiedTimestamp(filePath: string): number | undefined {
 }
 
 export function getPathsInDirectory(directory: string): string[] {
-    return fs.readdirSync(directory).map(filepath => path.join(directory, filepath));
+    return fs.readdirSync(directory).map((filepath) => path.join(directory, filepath));
 }
 
 export function doesFileHaveExtension(filepath: string, extension: string): boolean {

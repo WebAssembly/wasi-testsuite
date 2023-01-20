@@ -24,6 +24,11 @@ jobs:
         with:
           node-version: 16
 
+      - name: Check prettier codestyle
+        working-directory: tests/assemblyscript
+        run: |
+          npm run prettier-format-check
+
       - name: Build tests
         working-directory: tests/assemblyscript
         run: |
