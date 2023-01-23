@@ -38,7 +38,7 @@ class ConsoleTestReporter(TestReporter):
     def finalize(self, version: RuntimeVersion) -> None:
         print("")
         print("===== Test results =====")
-        print(f"Runtime: {version.name} v{version.version}")
+        print(f"Runtime: {version.name} {version.version}")
 
         total_skip = total_pass = total_fail = pass_suite = 0
 
