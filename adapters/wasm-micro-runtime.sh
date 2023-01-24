@@ -9,7 +9,7 @@ ARGS=()
 DIR=()
 ENV=()
 
-IWASM=iwasm
+IWASM="${TEST_RUNTIME_EXE:-iwasm}"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
