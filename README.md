@@ -48,6 +48,16 @@ python3 test-runner/wasi_test_runner.py                                         
     -r adapters/wasmtime.sh # path to a runtime adapter
 ```
 
+The default executable in the adapter used for test execution can be
+overridden using `TEST_RUNTIME_EXE` variable. This only works with adapters defined in
+[adapters/](adapters/), and might not work with 3rd party adapters.
+
+```bash
+TEST_RUNTIME_EXE="wasmtime --wasm-features all" python3 test-runner/wasi_test_runner.py                                                  \
+    -t ./tests/assemblyscript/testsuite/ \
+    -r adapters/wasmtime.sh
+```
+
 ## Contributing
 
 All contributions are very welcome. Contributors can help with:

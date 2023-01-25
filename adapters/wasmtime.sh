@@ -4,6 +4,8 @@ TEST_FILE=
 ARGS=()
 PROG_ARGS=()
 
+WASMTIME="${TEST_RUNTIME_EXE:-wasmtime}"
+
 while [[ $# -gt 0 ]]; do
     case $1 in
     --version)
@@ -37,4 +39,4 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-wasmtime $TEST_FILE "${ARGS[@]}" "${PROG_ARGS[@]}"
+$WASMTIME $TEST_FILE "${ARGS[@]}" "${PROG_ARGS[@]}"
