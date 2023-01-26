@@ -1,4 +1,5 @@
 import subprocess
+from shutil import which
 from pathlib import Path
 from typing import Dict, NamedTuple, List
 
@@ -13,10 +14,14 @@ class RuntimeVersion(NamedTuple):
 class RuntimeAdapter:
     def __init__(self, adapter_path: str) -> None:
         self._adapter_path = self._abs(adapter_path)
+        # invoke the adapter with a configured shell runner. Default to bash.
+        # e.g. this is needed to point GHA's Windows runner to bash executable
+        self._shell = which('bash')
 
     def get_version(self) -> RuntimeVersion:
         output = (
-            subprocess.check_output([self._adapter_path, "--version"], encoding="UTF-8")
+            # use the configured shell binary
+            subprocess.check_output([self._shell, self._adapter_path, "--version"], encoding="UTF-8")
             .strip()
             .split(" ")
         )
@@ -31,6 +36,8 @@ class RuntimeAdapter:
     ) -> Output:
         args = (
             [
+                # use the configured shell binary
+                self._shell,
                 self._adapter_path,
                 "--test-file",
                 self._abs(test_path),
