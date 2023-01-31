@@ -11,7 +11,8 @@ from typing import List, cast
 from .filters import TestFilter
 from .runtime_adapter import RuntimeAdapter
 from .test_case import (
-    Result,
+    Executed,
+    Skipped,
     Config,
     Output,
     TestCase,
@@ -38,11 +39,13 @@ def run_tests_from_test_suite(
     for test_path in glob.glob(os.path.join(test_suite_path, "*.wasm")):
         test_name = os.path.splitext(os.path.basename(test_path))[0]
         for filt in filters:
-            # for now, just drop the skip reason string. it might be
-            # useful to make reporters report it.
-            skip, _ = filt.should_skip(test_suite_name, test_name)
+            skip, reason = filt.should_skip(test_suite_name, test_name)
             if skip:
-                test_case = _skip_single_test(runtime, validators, test_path)
+                # Given the type of should_skip, "if skip" implies reason
+                # is str. But mypy doesn't seem to recognize it. Use an
+                # explicit cast for now.
+                reason = cast(str, reason)
+                test_case = _skip_single_test(runtime, validators, test_path, reason)
                 break
         else:
             test_case = _execute_single_test(runtime, validators, test_path)
@@ -61,13 +64,13 @@ def run_tests_from_test_suite(
 
 
 def _skip_single_test(
-    _runtime: RuntimeAdapter, _validators: List[Validator], test_path: str
+    _runtime: RuntimeAdapter, _validators: List[Validator], test_path: str, reason: str
 ) -> TestCase:
     config = _read_test_config(test_path)
     return TestCase(
         name=os.path.splitext(os.path.basename(test_path))[0],
         config=config,
-        result=Result(output=Output(0, "", ""), is_executed=False, failures=[]),
+        result=Skipped(reason),
         duration_s=0,
     )
 
@@ -88,14 +91,14 @@ def _execute_single_test(
     )
 
 
-def _validate(validators: List[Validator], config: Config, output: Output) -> Result:
+def _validate(validators: List[Validator], config: Config, output: Output) -> Executed:
     failures = [
         result
         for result in [validator(config, output) for validator in validators]
         if result is not None
     ]
 
-    return Result(failures=failures, is_executed=True, output=output)
+    return Executed(failures=failures, output=output)
 
 
 def _read_test_config(test_path: str) -> Config:

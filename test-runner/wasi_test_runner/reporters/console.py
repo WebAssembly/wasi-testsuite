@@ -2,7 +2,7 @@ from typing import List
 from colorama import Fore, init
 
 from . import TestReporter
-from ..test_case import TestCase
+from ..test_case import TestCase, Skipped
 from ..test_suite import TestSuite
 from ..runtime_adapter import RuntimeVersion
 
@@ -19,7 +19,9 @@ class ConsoleTestReporter(TestReporter):
         self._colored = colored
 
     def report_test(self, test: TestCase) -> None:
-        if test.result.failed:
+        if isinstance(test.result, Skipped):
+            self._print_skip(f"Test {test.name} skipped: {test.result.reason}")
+        elif test.result.failures:
             self._print_fail(f"Test {test.name} failed")
             for reason in test.result.failures:
                 self._print_fail(f"  [{reason.type}] {reason.message}")
@@ -27,10 +29,8 @@ class ConsoleTestReporter(TestReporter):
             print(test.result.output.stdout)
             print("STDERR:")
             print(test.result.output.stderr)
-        elif test.result.is_executed:
-            self._print_pass(f"Test {test.name} passed")
         else:
-            self._print_skip(f"Test {test.name} skipped")
+            self._print_pass(f"Test {test.name} passed")
 
     def report_test_suite(self, test_suite: TestSuite) -> None:
         self._test_suites.append(test_suite)

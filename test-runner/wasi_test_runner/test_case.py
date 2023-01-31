@@ -1,6 +1,6 @@
 import logging
 import json
-from typing import List, NamedTuple, TypeVar, Type, Dict, Any, Optional
+from typing import List, NamedTuple, TypeVar, Type, Dict, Any, Optional, Union
 
 
 class Output(NamedTuple):
@@ -14,14 +14,16 @@ class Failure(NamedTuple):
     message: str
 
 
-class Result(NamedTuple):
+class Executed(NamedTuple):
     output: Output
-    is_executed: bool
     failures: List[Failure]
 
-    @property
-    def failed(self) -> bool:
-        return len(self.failures) > 0
+
+class Skipped(NamedTuple):
+    reason: str
+
+
+Result = Union[Executed, Skipped]
 
 
 T = TypeVar("T", bound="Config")
