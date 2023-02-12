@@ -51,7 +51,7 @@ jobs:
         continue-on-error: true
         run: |
           python3 test-runner/wasi_test_runner.py \
-            -r ./adapters/${{ matrix.runtime }}.sh \
+            -r ./adapters/${{ matrix.runtime }}.py \
             --json-output-location results.json \
             -t tests/assemblyscript/testsuite \
             -t tests/c/testsuite
