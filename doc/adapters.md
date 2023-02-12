@@ -4,7 +4,7 @@ The test runner is designed to support different types of WebAssembly runtimes. 
 
 WASI test runner is designed to support as many WASM runtimes as possible, therefore runtime peculiarities aren't hardcoded in the runner.
 
-In order to integrate WASM runtime with a test runner, the user has to provide a `runtime adapter`. It's an executable file that takes command-line arguments and translates them to a runtime call.
+In order to integrate WASM runtime with a test runner, the user has to provide a `runtime adapter`. It's a *Python script* that takes command-line arguments and translates them to a runtime call. The reason for using a Python script over a generic "she-bang" executable, is to ensure cross-platform compatibility, such an executable is expected to be a python a script.
 
 ## Interface
 The adapter executable must accept the following command line parameters and execute actions associated with those parameters:
@@ -37,14 +37,14 @@ and check if the exit code is equal to `13`. There are also two test cases in As
 Print runtime version:
 
 ```bash
-$ ./adapter.sh --version
+$ ./adapter.py --version
 wasmtime-cli 1.0.1
 ```
 
 Run WASM module:
 
 ```bash
-$ ./adapter.sh --arg a1 --arg a2 --env E1=env1 --env E2=env2 --test-file test.wasm
+$ ./adapter.py --arg a1 --arg a2 --env E1=env1 --env E2=env2 --test-file test.wasm
 # Expected to start test.wasm module with E1=env1 and E2=env2
 # environment variables defined and arguments a1, a2 passed to
 # the module.
