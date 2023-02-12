@@ -17,7 +17,8 @@ parser.add_argument("--dir", action="append", default=[])
 args = parser.parse_args()
 
 if args.version:
-    subprocess.run(WASMTIME + ["--version"])
+    # ensure no args when version is queried
+    subprocess.run(WASMTIME[0:1] + ["--version"])
     sys.exit(0)
 
 TEST_FILE = args.test_file
