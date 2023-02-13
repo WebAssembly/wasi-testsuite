@@ -1,4 +1,5 @@
 import subprocess
+import sys
 from pathlib import Path
 from typing import Dict, NamedTuple, List
 
@@ -16,7 +17,7 @@ class RuntimeAdapter:
 
     def get_version(self) -> RuntimeVersion:
         output = (
-            subprocess.check_output([self._adapter_path, "--version"], encoding="UTF-8")
+            subprocess.check_output([sys.executable, self._adapter_path, "--version"], encoding="UTF-8")
             .strip()
             .split(" ")
         )
@@ -31,6 +32,7 @@ class RuntimeAdapter:
     ) -> Output:
         args = (
             [
+                sys.executable,
                 self._adapter_path,
                 "--test-file",
                 self._abs(test_path),
