@@ -35,7 +35,7 @@ python3 -m pip install -r test-runner/requirements.txt
 python3 test-runner/wasi_test_runner.py                                                  \
     -t ./tests/assemblyscript/testsuite/ `# path to folders containing .wasm test files` \
        ./tests/c/testsuite/                                                              \
-    -r adapters/wasmtime.sh # path to a runtime adapter
+    -r adapters/wasmtime.py # path to a runtime adapter
 ```
 
 Optionally you can specify test cases to skip with the `--exclude-filter` option.
@@ -45,7 +45,7 @@ python3 test-runner/wasi_test_runner.py                                         
     -t ./tests/assemblyscript/testsuite/ `# path to folders containing .wasm test files` \
        ./tests/c/testsuite/                                                              \
     --exclude-filter examples/skip.json                                                  \
-    -r adapters/wasmtime.sh # path to a runtime adapter
+    -r adapters/wasmtime.py # path to a runtime adapter
 ```
 
 The default executable in the adapter used for test execution can be
@@ -55,7 +55,7 @@ overridden using `TEST_RUNTIME_EXE` variable. This only works with adapters defi
 ```bash
 TEST_RUNTIME_EXE="wasmtime --wasm-features all" python3 test-runner/wasi_test_runner.py                                                  \
     -t ./tests/assemblyscript/testsuite/ \
-    -r adapters/wasmtime.sh
+    -r adapters/wasmtime.py
 ```
 
 ## Contributing
