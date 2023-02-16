@@ -9,7 +9,7 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        runtime: [wasmtime, wasm-micro-runtime]
+        runtime: [wasmtime, wasm-micro-runtime, wazero]
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
@@ -44,6 +44,12 @@ jobs:
           make
           echo "$GITHUB_WORKSPACE/wasm-micro-runtime/product-mini/platforms/linux/build" >> $GITHUB_PATH
 
+      - name: Install wazero
+        if: matrix.runtime == 'wazero'
+        run: |
+          go install github.com/tetratelabs/wazero/cmd/wazero@main
+          echo "$(go env GOPATH)/bin/wazero" >> $GITHUB_PATH
+
       - name: Get current timestamp
         run: echo "date=$(date +'%Y-%m-%d_%H_%M')" >> $GITHUB_ENV
 
@@ -54,7 +60,8 @@ jobs:
             -r ./adapters/${{ matrix.runtime }}.py \
             --json-output-location results.json \
             -t tests/assemblyscript/testsuite \
-            -t tests/c/testsuite
+            -t tests/c/testsuite \
+            -t tests/rust/testsuite
 
       - name: Configure git
         uses: ./.github/actions/git-config
