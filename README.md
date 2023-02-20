@@ -3,7 +3,7 @@
 This repository contains tests for WebAssembly System Interface (WASI) and a test executor for running WASI tests on a selected WebAssembly runtime.
 
 WASI is a modular collection of standardized APIs. Currently, WASI has not reached a v1 with a defined set of APIs.
-However, a snapshot of experimental APIs exists ([`wasi_snapshot_preview1`](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md)).
+However, a snapshot of experimental APIs exists ([`wasi_snapshot_preview1`](https://github.com/WebAssembly/WASI/blob/main/legacy/preview1/docs.md)).
 The repository only holds tests of APIs included in this snapshot. It does not include tests for other in-progress proposals or other experimental APIs.
 
 The test executor included in the repository can however be used to run tests defined for proposals along with tests defined in this repository.
