@@ -19,7 +19,7 @@ class TestSuite(NamedTuple):
             [
                 1
                 for test in self.test_cases
-                if isinstance(test.result, ExecutedResult) and not test.result.failures
+                if isinstance(test.result, ExecutedResult) and not test.result.failed
             ]
         )
 
@@ -29,7 +29,7 @@ class TestSuite(NamedTuple):
             [
                 1
                 for test in self.test_cases
-                if isinstance(test.result, ExecutedResult) and test.result.failures
+                if isinstance(test.result, ExecutedResult) and test.result.failed
             ]
         )
 

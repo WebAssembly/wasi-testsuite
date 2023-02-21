@@ -21,7 +21,7 @@ class ConsoleTestReporter(TestReporter):
     def report_test(self, test: TestCase) -> None:
         if isinstance(test.result, Skipped):
             self._print_skip(f"Test {test.name} skipped: {test.result.reason}")
-        elif test.result.failures:
+        elif test.result.failed:
             self._print_fail(f"Test {test.name} failed")
             for reason in test.result.failures:
                 self._print_fail(f"  [{reason.type}] {reason.message}")
