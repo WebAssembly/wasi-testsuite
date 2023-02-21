@@ -11,8 +11,8 @@ from typing import List, cast
 from .filters import TestFilter
 from .runtime_adapter import RuntimeAdapter
 from .test_case import (
-    Executed,
-    Skipped,
+    ExecutedResult,
+    SkippedResult,
     Config,
     Output,
     TestCase,
@@ -70,7 +70,7 @@ def _skip_single_test(
     return TestCase(
         name=os.path.splitext(os.path.basename(test_path))[0],
         config=config,
-        result=Skipped(reason),
+        result=SkippedResult(reason),
         duration_s=0,
     )
 
@@ -91,14 +91,14 @@ def _execute_single_test(
     )
 
 
-def _validate(validators: List[Validator], config: Config, output: Output) -> Executed:
+def _validate(validators: List[Validator], config: Config, output: Output) -> ExecutedResult:
     failures = [
         result
         for result in [validator(config, output) for validator in validators]
         if result is not None
     ]
 
-    return Executed(failures=failures, output=output)
+    return ExecutedResult(failures=failures, output=output)
 
 
 def _read_test_config(test_path: str) -> Config:

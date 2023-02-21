@@ -14,16 +14,16 @@ class Failure(NamedTuple):
     message: str
 
 
-class Executed(NamedTuple):
+class ExecutedResult(NamedTuple):
     output: Output
     failures: List[Failure]
 
 
-class Skipped(NamedTuple):
+class SkippedResult(NamedTuple):
     reason: str
 
 
-Result = Union[Executed, Skipped]
+Result = Union[ExecutedResult, SkippedResult]
 
 
 T = TypeVar("T", bound="Config")

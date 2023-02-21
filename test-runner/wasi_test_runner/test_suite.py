@@ -1,6 +1,6 @@
 from typing import NamedTuple, List
 from datetime import datetime
-from .test_case import TestCase, Executed, Skipped
+from .test_case import TestCase, ExecutedResult, SkippedResult
 
 
 class TestSuite(NamedTuple):
@@ -19,7 +19,7 @@ class TestSuite(NamedTuple):
             [
                 1
                 for test in self.test_cases
-                if isinstance(test.result, Executed) and not test.result.failures
+                if isinstance(test.result, ExecutedResult) and not test.result.failures
             ]
         )
 
@@ -29,10 +29,10 @@ class TestSuite(NamedTuple):
             [
                 1
                 for test in self.test_cases
-                if isinstance(test.result, Executed) and test.result.failures
+                if isinstance(test.result, ExecutedResult) and test.result.failures
             ]
         )
 
     @property
     def skip_count(self) -> int:
-        return len([1 for test in self.test_cases if isinstance(test.result, Skipped)])
+        return len([1 for test in self.test_cases if isinstance(test.result, SkippedResult)])
