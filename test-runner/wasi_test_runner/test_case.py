@@ -18,6 +18,10 @@ class ExecutedResult(NamedTuple):
     output: Output
     failures: List[Failure]
 
+    @property
+    def failed(self) -> bool:
+        return len(self.failures) > 0
+
 
 class SkippedResult(NamedTuple):
     reason: str
