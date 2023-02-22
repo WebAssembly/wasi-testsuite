@@ -18,6 +18,10 @@ jobs:
       - name: Configure git
         uses: ./.github/actions/git-config
 
+      - name: Install dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y wabt
+
       - name: Update proposal tests
         run: |
           ./scripts/update-proposal-tests.sh
