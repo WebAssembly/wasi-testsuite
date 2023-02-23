@@ -3,7 +3,7 @@
 This repository contains tests for WebAssembly System Interface (WASI) and a test executor for running WASI tests on a selected WebAssembly runtime.
 
 WASI is a modular collection of standardized APIs. Currently, WASI has not reached a v1 with a defined set of APIs.
-However, a snapshot of experimental APIs exists ([`wasi_snapshot_preview1`](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md)).
+However, a snapshot of experimental APIs exists ([`wasi_snapshot_preview1`](https://github.com/WebAssembly/WASI/blob/main/legacy/preview1/docs.md)).
 The repository only holds tests of APIs included in this snapshot. It does not include tests for other in-progress proposals or other experimental APIs.
 
 The test executor included in the repository can however be used to run tests defined for proposals along with tests defined in this repository.
@@ -35,6 +35,7 @@ python3 -m pip install -r test-runner/requirements.txt
 python3 test-runner/wasi_test_runner.py                                                  \
     -t ./tests/assemblyscript/testsuite/ `# path to folders containing .wasm test files` \
        ./tests/c/testsuite/                                                              \
+       ./tests/rust/testsuite/                                                           \
     -r adapters/wasmtime.py # path to a runtime adapter
 ```
 
@@ -44,6 +45,7 @@ Optionally you can specify test cases to skip with the `--exclude-filter` option
 python3 test-runner/wasi_test_runner.py                                                  \
     -t ./tests/assemblyscript/testsuite/ `# path to folders containing .wasm test files` \
        ./tests/c/testsuite/                                                              \
+       ./tests/rust/testsuite/                                                           \
     --exclude-filter examples/skip.json                                                  \
     -r adapters/wasmtime.py # path to a runtime adapter
 ```
@@ -88,7 +90,8 @@ Some of the tests (e.g. [pwrite-with-access](./tests/c/testsuite/pwrite-with-acc
 The repository currently consists of tests implemented in the following languages:
 
 - `C` (with [`wasi-libc`](https://github.com/WebAssembly/wasi-libc))
-- `AssemblyScript`.
+- `AssemblyScript`
+- `Rust`
 
 The list of supported languages can be extended if needed.
 
