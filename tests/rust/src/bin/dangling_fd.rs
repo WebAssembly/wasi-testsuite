@@ -9,8 +9,7 @@ unsafe fn test_dangling_fd(dir_fd: wasi::Fd) {
         // and then try creating it again
         let fd = wasi::path_open(dir_fd, 0, FILE_NAME, wasi::OFLAGS_CREAT, 0, 0, 0).unwrap();
         wasi::fd_close(fd).unwrap();
-        let file_fd =
-            wasi::path_open(dir_fd, 0, FILE_NAME, 0, 0, 0, 0).expect("failed to open");
+        let file_fd = wasi::path_open(dir_fd, 0, FILE_NAME, 0, 0, 0, 0).expect("failed to open");
         assert!(
             file_fd > libc::STDERR_FILENO as wasi::Fd,
             "file descriptor range check",
@@ -21,9 +20,8 @@ unsafe fn test_dangling_fd(dir_fd: wasi::Fd) {
 
         // Now, repeat the same process but for a directory
         wasi::path_create_directory(dir_fd, DIR_NAME).expect("failed to create dir");
-        let subdir_fd =
-            wasi::path_open(dir_fd, 0, DIR_NAME, wasi::OFLAGS_DIRECTORY, 0, 0, 0)
-                .expect("failed to open dir");
+        let subdir_fd = wasi::path_open(dir_fd, 0, DIR_NAME, wasi::OFLAGS_DIRECTORY, 0, 0, 0)
+            .expect("failed to open dir");
         assert!(
             subdir_fd > libc::STDERR_FILENO as wasi::Fd,
             "file descriptor range check",

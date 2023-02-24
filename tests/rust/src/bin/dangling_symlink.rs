@@ -10,8 +10,7 @@ unsafe fn test_dangling_symlink(dir_fd: wasi::Fd) {
         // Try to open it as a directory with O_NOFOLLOW.
         assert_errno!(
             wasi::path_open(dir_fd, 0, SYMLINK_NAME, wasi::OFLAGS_DIRECTORY, 0, 0, 0)
-                .expect_err("opening a dangling symlink as a directory")
-                .raw_error(),
+                .expect_err("opening a dangling symlink as a directory"),
             wasi::ERRNO_NOTDIR,
             wasi::ERRNO_LOOP
         );
@@ -19,8 +18,7 @@ unsafe fn test_dangling_symlink(dir_fd: wasi::Fd) {
         // Try to open it as a file with O_NOFOLLOW.
         assert_errno!(
             wasi::path_open(dir_fd, 0, SYMLINK_NAME, 0, 0, 0, 0)
-                .expect_err("opening a dangling symlink as a file")
-                .raw_error(),
+                .expect_err("opening a dangling symlink as a file"),
             wasi::ERRNO_LOOP
         );
 
