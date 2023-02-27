@@ -240,7 +240,5 @@ fn main() {
     unsafe { test_fd_readdir(dir_fd) }
     unsafe { test_fd_readdir_lots(dir_fd) }
 
-    unsafe {
-        wasi::path_remove_directory(base_dir_fd, DIR_NAME).expect("failed to remove dir")
-    }
+    unsafe { wasi::path_remove_directory(base_dir_fd, DIR_NAME).expect("failed to remove dir") }
 }
