@@ -9,7 +9,7 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        runtime: [wasmtime, wasm-micro-runtime]
+        runtime: [wasmtime, wasm-micro-runtime, wasmedge]
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
@@ -43,6 +43,17 @@ jobs:
           cmake .. -DWAMR_BUILD_BULK_MEMORY=1 -DWAMR_BUILD_SHARED_MEMORY=1
           make
           echo "$GITHUB_WORKSPACE/wasm-micro-runtime/product-mini/platforms/linux/build" >> $GITHUB_PATH
+
+      - name: Install WasmEdge
+        if: matrix.runtime == 'wasmedge'
+        run: |
+          sudo apt install -y software-properties-common cmake libboost-all-dev
+          sudo apt install -y clang
+          git clone https://github.com/WasmEdge/WasmEdge.git
+          cd WasmEdge
+          mkdir -p build && cd build
+          cmake -DWASMEDGE_BUILD_AOT_RUNTIME=OFF .. && make -j
+          echo "$GITHUB_WORKSPACE/WasmEdge/build/tools/wasmedge" >> $GITHUB_PATH
 
       - name: Get current timestamp
         run: echo "date=$(date +'%Y-%m-%d_%H_%M')" >> $GITHUB_ENV
