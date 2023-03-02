@@ -60,8 +60,8 @@ jobs:
             -r ./adapters/${{ matrix.runtime }}.py \
             --json-output-location results.json \
             -t tests/assemblyscript/testsuite \
-            -t tests/c/testsuite \
-            -t tests/rust/testsuite
+               tests/rust/testsuite \
+               tests/c/testsuite
 
       - name: Configure git
         uses: ./.github/actions/git-config
