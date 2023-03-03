@@ -51,7 +51,7 @@ jobs:
           cd wazero
           go install ./cmd/wazero
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
-          cp .github/wasi_testsuite_adapter.py ./adapters/wazero.py
+          cp .github/wasi_testsuite_adapter.py ../adapters/wazero.py
 
       - name: Get current timestamp
         run: echo "date=$(date +'%Y-%m-%d_%H_%M')" >> $GITHUB_ENV
