@@ -1,6 +1,5 @@
 use std::{env, mem, process, slice, str};
-use wasi::path_create_directory;
-use wasi_tests::open_scratch_directory;
+use wasi_tests::{create_tmp_dir, open_scratch_directory};
 
 const BUF_LEN: usize = 256;
 
@@ -51,28 +50,6 @@ impl<'a> Iterator for ReadDir<'a> {
             DirEntry { dirent, name }.into()
         }
     }
-}
-
-unsafe fn create_tmp_dir(dir_fd: wasi::Fd, name: &str) -> wasi::Fd {
-    path_create_directory(dir_fd, name).expect("failed to create dir");
-    wasi::path_open(
-        dir_fd,
-        0,
-        name,
-        wasi::OFLAGS_DIRECTORY,
-        wasi::RIGHTS_FD_FILESTAT_GET
-            | wasi::RIGHTS_FD_READDIR
-            | wasi::RIGHTS_PATH_CREATE_FILE
-            | wasi::RIGHTS_PATH_OPEN
-            | wasi::RIGHTS_PATH_UNLINK_FILE,
-        wasi::RIGHTS_FD_READ
-            | wasi::RIGHTS_FD_WRITE
-            | wasi::RIGHTS_FD_READDIR
-            | wasi::RIGHTS_FD_FILESTAT_GET
-            | wasi::RIGHTS_FD_SEEK,
-        0,
-    )
-    .expect("failed to open dir")
 }
 
 /// Return the entries plus a bool indicating EOF.
