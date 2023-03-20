@@ -17,6 +17,7 @@ unsafe fn test_dangling_fd(dir_fd: wasi::Fd) {
         wasi::path_unlink_file(dir_fd, FILE_NAME).expect("failed to unlink");
         let fd = wasi::path_open(dir_fd, 0, FILE_NAME, wasi::OFLAGS_CREAT, 0, 0, 0).unwrap();
         wasi::fd_close(fd).unwrap();
+        wasi::path_unlink_file(dir_fd, FILE_NAME).expect("failed to unlink");
 
         // Now, repeat the same process but for a directory
         wasi::path_create_directory(dir_fd, DIR_NAME).expect("failed to create dir");
