@@ -54,6 +54,7 @@ jobs:
           mkdir -p build && cd build
           cmake -DWASMEDGE_BUILD_AOT_RUNTIME=OFF .. && make -j
           echo "$GITHUB_WORKSPACE/WasmEdge/build/tools/wasmedge" >> $GITHUB_PATH
+          cp .github/scripts/wasi-testsuite-adapter.py ../adapters/wasmedge.py
 
       - name: Get current timestamp
         run: echo "date=$(date +'%Y-%m-%d_%H_%M')" >> $GITHUB_ENV
