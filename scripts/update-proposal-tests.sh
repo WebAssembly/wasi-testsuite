@@ -5,7 +5,7 @@ REPOS=(
     "wasi-threads"
 )
 
-WASI_VERSION=16
+WASI_VERSION=20
 WASI_SDK_DIR=$(pwd)/wasi-sdk
 BASE_BRANCH="prod/testsuite-base"
 PROPOSALS_DIR="tests/proposals"
@@ -25,13 +25,7 @@ function install_wasi_sdk()
 
 function build_wasi-threads()
 {
-    # Compile wasi-libc with thread support as it's not available yet in wasi-sdk
-    git clone https://github.com/WebAssembly/wasi-libc.git
-    pushd wasi-libc
-    CC=$WASI_SDK_DIR/bin/clang make -j 15 THREAD_MODEL=posix
-    SYSROOT=$(pwd)/sysroot
-    popd
-    CC="$WASI_SDK_DIR/bin/clang -D_REENTRANT -matomics -Wl,--import-memory -Wl,--shared-memory --sysroot=$SYSROOT --target=wasm32-wasi-threads -Wno-error=implicit-function-declaration" ./build.sh
+    CC="$WASI_SDK_DIR/bin/clang -pthread -Wl,--import-memory --target=wasm32-wasi-threads" ./build.sh
 }
 
 function update_repo()
