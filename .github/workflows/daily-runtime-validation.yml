@@ -9,7 +9,7 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        runtime: [wasmtime, wasm-micro-runtime]
+        runtime: [wasmtime, wasm-micro-runtime, wazero]
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
@@ -43,6 +43,15 @@ jobs:
           cmake .. -DWAMR_BUILD_BULK_MEMORY=1 -DWAMR_BUILD_SHARED_MEMORY=1
           make
           echo "$GITHUB_WORKSPACE/wasm-micro-runtime/product-mini/platforms/linux/build" >> $GITHUB_PATH
+
+      - name: Install wazero
+        if: matrix.runtime == 'wazero'
+        run: |
+          git clone git@github.com:tetratelabs/wazero.git
+          cd wazero
+          go install ./cmd/wazero
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+          cp .github/wasi_testsuite_adapter.py ../adapters/wazero.py
 
       - name: Get current timestamp
         run: echo "date=$(date +'%Y-%m-%d_%H_%M')" >> $GITHUB_ENV
