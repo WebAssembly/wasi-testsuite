@@ -47,7 +47,7 @@ jobs:
       - name: Install wazero
         if: matrix.runtime == 'wazero'
         run: |
-          git clone git@github.com:tetratelabs/wazero.git
+          git clone https://github.com/tetratelabs/wazero.git
           cd wazero
           go install ./cmd/wazero
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
