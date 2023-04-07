@@ -9,7 +9,7 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        runtime: [wasmtime, wasm-micro-runtime, wasmedge]
+        runtime: [wasmtime, wasm-micro-runtime, wazero, wasmedge]
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
@@ -55,6 +55,15 @@ jobs:
           cmake -DWASMEDGE_BUILD_AOT_RUNTIME=OFF .. && make -j
           echo "$GITHUB_WORKSPACE/WasmEdge/build/tools/wasmedge" >> $GITHUB_PATH
           cp .github/scripts/wasi-testsuite-adapter.py ../adapters/wasmedge.py
+
+      - name: Install wazero
+        if: matrix.runtime == 'wazero'
+        run: |
+          git clone https://github.com/tetratelabs/wazero.git
+          cd wazero
+          go install ./cmd/wazero
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+          cp .github/wasi_testsuite_adapter.py ../adapters/wazero.py
 
       - name: Get current timestamp
         run: echo "date=$(date +'%Y-%m-%d_%H_%M')" >> $GITHUB_ENV
