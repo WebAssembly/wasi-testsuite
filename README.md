@@ -1,43 +1,53 @@
-# WASI tests
+# `wasi-testsuite`
 
-This repository contains tests for WebAssembly System Interface (WASI) and a test executor for running WASI tests on a selected WebAssembly runtime.
+This repository contains tests for WebAssembly System Interface (WASI) and a test executor for running WASI tests against a selected WebAssembly runtime.
 
-WASI is a modular collection of standardized APIs. Currently, WASI has not reached a v1 with a defined set of APIs.
-However, a snapshot of experimental APIs exists ([`wasi_snapshot_preview1`](https://github.com/WebAssembly/WASI/blob/main/legacy/preview1/docs.md)).
-The repository only holds tests of APIs included in this snapshot. It does not include tests for other in-progress proposals or other experimental APIs.
+WASI is a modular collection of standardized APIs. Currently, WASI has not reached version 1.0
+stability but a snapshot of experimental APIs does exist ([`wasi_snapshot_preview1`]). This
+repository only holds tests of APIs included in this snapshot. It does not include tests for other
+in-progress proposals or other experimental APIs, though the test executor can run tests from other repositories (e.g., see the [wasi-threads] tests).
 
-The test executor included in the repository can however be used to run tests defined for proposals along with tests defined in this repository.
+[`wasi_snapshot_preview1`]: https://github.com/WebAssembly/WASI/blob/main/legacy/preview1/docs.md
+[wasi-threads]: https://github.com/WebAssembly/wasi-threads/tree/main/test
+
+The test executor matches execution output against a JSON specification. Writing your own test
+executor is quite simple; see the [specification] document for the details.
+
+[specification]: doc/specification.md
 
 ## Getting started
 
-1. Clone repository
-   Use `prod/testsuite-base` branch as it already includes precompiled test binaries (see [Branch structure](#branch-structure) paragraph).
+1. Clone the repository; use the `prod/testsuite-base` branch as it already includes precompiled
+   test binaries (see [branch structure](#branch-structure)):
 
-```bash
-git clone --branch prod/testsuite-base git@github.com:WebAssembly/wasi-testsuite.git
-```
-
-2. Make sure there's already an adapter for the runtime in the [`adapters`](adapters) directory; if not, create one (see [the doc](doc/adapters.md) for details).
-3. Install python3
-   1. Ubuntu
+   ```bash
+   git clone --branch prod/testsuite-base git@github.com:WebAssembly/wasi-testsuite.git
    ```
-   $ sudo apt install python3 python3-pip
+
+2. Make sure there is already an adapter for the runtime in the [`adapters`](adapters) directory; if
+   not, create one (see [the doc](doc/adapters.md) for details).
+
+3. Install `python3` (e.g., on Ubuntu):
+
+   ```bash
+   sudo apt install python3 python3-pip
    ```
-4. Install test runner dependencies:
 
-```bash
-python3 -m pip install -r test-runner/requirements.txt
-```
+4. Install the test runner dependencies:
 
-5. Execute test suites from this repository
+   ```bash
+   python3 -m pip install -r test-runner/requirements.txt
+   ```
 
-```bash
-python3 test-runner/wasi_test_runner.py                                                  \
-    -t ./tests/assemblyscript/testsuite/ `# path to folders containing .wasm test files` \
-       ./tests/c/testsuite/                                                              \
-       ./tests/rust/testsuite/                                                           \
-    -r adapters/wasmtime.py # path to a runtime adapter
-```
+5. Execute the test suites from this repository:
+
+   ```bash
+   python3 test-runner/wasi_test_runner.py                                                  \
+      -t ./tests/assemblyscript/testsuite/ `# path to folders containing .wasm test files` \
+         ./tests/c/testsuite/                                                              \
+         ./tests/rust/testsuite/                                                           \
+      -r adapters/wasmtime.py # path to a runtime adapter
+   ```
 
 Optionally you can specify test cases to skip with the `--exclude-filter` option.
 
@@ -83,7 +93,11 @@ Here is some additional information for developers who are willing to contribute
 
 ### Cleaning up temporary resources
 
-Some of the tests (e.g. [pwrite-with-access](./tests/c/testsuite/pwrite-with-access.c)) generate output artifacts and their existence can affect consecutive test executions. Tests should clean up the artifacts they generate, but there might be cases where the test fails early. Test runner will automatically delete all the files and directories in the test suite directory with the `.cleanup` suffix.
+Some of the tests (e.g. [pwrite-with-access](./tests/c/testsuite/pwrite-with-access.c)) generate
+output artifacts and their existence can affect consecutive test executions. Tests should clean up
+the artifacts they generate, but there might be cases where the test fails early. The test runner
+will automatically delete all the files and directories in the test suite directory with the
+`.cleanup` suffix.
 
 ### Programming languages for tests
 
@@ -94,8 +108,6 @@ The repository currently consists of tests implemented in the following language
 - `Rust`
 
 The list of supported languages can be extended if needed.
-
-### Test
 
 ### Branch structure
 
