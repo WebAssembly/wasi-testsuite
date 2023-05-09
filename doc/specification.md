@@ -9,7 +9,7 @@ way to verify that the tests indeed passed.
 ### Configuration
 
 Before executing anything, a test executor is expected to:
-- find all `*.wasm` and `*.wat` files in a given subdirectory &mdash; these are the _test cases_
+- find all `*.wasm` files in a given subdirectory &mdash; these are the _test cases_
 - for each test case, look for a `.json` file in the same directory matching the base name (e.g.,
   `foo.json` for `foo.wasm`) &mdash; parse this _specification_
 - if no `.json` file is present, use a default specification; a (conceptual) default specification
