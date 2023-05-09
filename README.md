@@ -11,9 +11,11 @@ in-progress proposals or other experimental APIs, though the test executor can r
 [wasi-threads]: https://github.com/WebAssembly/wasi-threads/tree/main/test
 
 The test executor matches execution output against a JSON specification. Writing your own test
-executor is quite simple; see the [specification] document for the details and the [reference Python implementation](../test-runner).
+executor is quite simple; see the [specification] document for the details and the reference Python
+[implementation].
 
 [specification]: doc/specification.md
+[implementation]: ./test-runner
 
 ## Getting started
 
