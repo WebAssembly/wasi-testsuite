@@ -2,9 +2,9 @@
 
 This document describes how to use the JSON test specifications to write your own test executor for
 [`wasi-testsuite`](..). The test executor included in this project provides a completely-usable
-reference implementation, but projects with other requirements may want to run the tests in their
-own way (e.g., no Python dependency). The JSON test specifications provide a simple way to verify
-that the tests indeed passed.
+reference [implementation](../test-runner), but projects with other requirements may want to run the
+tests in their own way (e.g., no Python dependency). The JSON test specifications provide a simple
+way to verify that the tests indeed passed.
 
 ### Configuration
 
