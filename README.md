@@ -23,7 +23,7 @@ executor is quite simple; see the [specification] document for the details and t
    test binaries (see [branch structure](#branch-structure)):
 
    ```bash
-   git clone --branch prod/testsuite-base git@github.com:WebAssembly/wasi-testsuite.git
+   git clone --branch prod/testsuite-base https://github.com/WebAssembly/wasi-testsuite
    ```
 
 2. Make sure there is already an adapter for the runtime in the [`adapters`](adapters) directory; if
