@@ -9,8 +9,13 @@ const dataBuf = memory.data(sizeof<usize>() * 2);
 let err = environ_sizes_get(dataBuf, dataBuf + sizeof<usize>());
 assert(err == errno.SUCCESS);
 
+const expected = new Set<String>();
+expected.add("a=text");
+expected.add('b=escap " ing');
+expected.add("c=new\nline");
+
 const envCount = load<usize>(dataBuf);
-assert(envCount == 3);
+assert(envCount == expected.size);
 
 const dataSize = load<usize>(dataBuf, sizeof<usize>());
 const ptrsSize = envCount * sizeof<usize>();
@@ -20,11 +25,10 @@ const envBuf = __alloc(envBufSize);
 err = environ_get(envBuf, envBuf + ptrsSize);
 assert(err == errno.SUCCESS);
 
-const expected = ["a=text", 'b=escap " ing', "c=new\nline"];
-
 for (let i = 0; i < <i32>envCount; ++i) {
     const ptr = load<usize>(envBuf + i * sizeof<usize>());
     const str = String.UTF8.decodeUnsafe(ptr, ptr + envBufSize - envBuf, true);
-    assert(str == expected[i]);
+    assert(expected.has(str));
+    expected.delete(str);
 }
 __free(envBuf);
