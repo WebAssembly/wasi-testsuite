@@ -10,6 +10,8 @@ way to verify that the tests indeed passed.
 
 Before executing anything, a test executor is expected to:
 - find all `*.wasm` files in a given subdirectory &mdash; these are the _test cases_
+- find all `*.cleanup` files in a given subdirectory and remove them &mdash; these are test
+  artifacts that can be generated during testing
 - for each test case, look for a `.json` file in the same directory matching the base name (e.g.,
   `foo.json` for `foo.wasm`) &mdash; parse this _specification_
 - if no `.json` file is present, use a default specification; a (conceptual) default specification
