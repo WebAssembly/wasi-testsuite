@@ -1,5 +1,6 @@
 pub mod config;
 use once_cell::sync::Lazy;
+use wasi::path_create_directory;
 
 pub static TESTCONFIG: Lazy<config::TestConfig> = Lazy::new(config::TestConfig::from_env);
 
@@ -8,6 +9,47 @@ pub static TESTCONFIG: Lazy<config::TestConfig> = Lazy::new(config::TestConfig::
 pub const STDIN_FD: wasi::Fd = 0x0;
 pub const STDOUT_FD: wasi::Fd = 0x1;
 pub const STDERR_FD: wasi::Fd = 0x2;
+
+pub unsafe fn create_tmp_dir(dir_fd: wasi::Fd, name: &str) -> wasi::Fd {
+    path_create_directory(dir_fd, name).expect("failed to create dir");
+    wasi::path_open(
+        dir_fd,
+        0,
+        name,
+        wasi::OFLAGS_DIRECTORY,
+        wasi::RIGHTS_FD_FILESTAT_GET
+            | wasi::RIGHTS_FD_READDIR
+            | wasi::RIGHTS_PATH_CREATE_FILE
+            | wasi::RIGHTS_PATH_CREATE_DIRECTORY
+            | wasi::RIGHTS_PATH_REMOVE_DIRECTORY
+            | wasi::RIGHTS_PATH_OPEN
+            | wasi::RIGHTS_PATH_UNLINK_FILE
+            | wasi::RIGHTS_PATH_LINK_SOURCE
+            | wasi::RIGHTS_PATH_LINK_TARGET
+            | wasi::RIGHTS_PATH_READLINK
+            | wasi::RIGHTS_PATH_RENAME_SOURCE
+            | wasi::RIGHTS_PATH_RENAME_TARGET
+            | wasi::RIGHTS_PATH_FILESTAT_GET
+            | wasi::RIGHTS_PATH_FILESTAT_SET_SIZE
+            | wasi::RIGHTS_PATH_FILESTAT_SET_TIMES
+            | wasi::RIGHTS_PATH_SYMLINK
+            | wasi::RIGHTS_PATH_REMOVE_DIRECTORY,
+        wasi::RIGHTS_FD_READ
+            | wasi::RIGHTS_FD_WRITE
+            | wasi::RIGHTS_FD_READDIR
+            | wasi::RIGHTS_FD_FILESTAT_GET
+            | wasi::RIGHTS_FD_SEEK
+            | wasi::RIGHTS_FD_FDSTAT_SET_FLAGS
+            | wasi::RIGHTS_FD_SYNC
+            | wasi::RIGHTS_FD_TELL
+            | wasi::RIGHTS_FD_ADVISE
+            | wasi::RIGHTS_FD_ALLOCATE
+            | wasi::RIGHTS_FD_FILESTAT_SET_SIZE
+            | wasi::RIGHTS_FD_FILESTAT_SET_TIMES,
+        0,
+    )
+    .expect("failed to open dir")
+}
 
 /// Opens a fresh file descriptor for `path` where `path` should be a preopened
 /// directory.
