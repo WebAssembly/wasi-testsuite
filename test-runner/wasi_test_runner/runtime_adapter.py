@@ -48,6 +48,7 @@ class RuntimeAdapter:
             text=True,
             check=False,
             cwd=Path(test_path).parent,
+            timeout=3.
         )
         return Output(result.returncode, result.stdout, result.stderr)
 

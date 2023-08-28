@@ -3,6 +3,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import time
 
 from datetime import datetime
@@ -12,6 +13,8 @@ from .filters import TestFilter
 from .runtime_adapter import RuntimeAdapter
 from .test_case import (
     Result,
+    SkippedResult,
+    TimedoutResult,
     Config,
     Output,
     TestCase,
@@ -67,7 +70,7 @@ def _skip_single_test(
     return TestCase(
         name=os.path.splitext(os.path.basename(test_path))[0],
         config=config,
-        result=Result(output=Output(0, "", ""), is_executed=False, failures=[]),
+        result=SkippedResult(),
         duration_s=0,
     )
 
@@ -77,13 +80,17 @@ def _execute_single_test(
 ) -> TestCase:
     config = _read_test_config(test_path)
     test_start = time.time()
-    test_output = runtime.run_test(test_path, config.args, config.env, config.dirs)
+    try:
+        test_output = runtime.run_test(test_path, config.args, config.env, config.dirs)
+        result=_validate(validators, config, test_output)
+    except subprocess.TimeoutExpired:
+        result=TimedoutResult()
     elapsed = time.time() - test_start
 
     return TestCase(
         name=os.path.splitext(os.path.basename(test_path))[0],
         config=config,
-        result=_validate(validators, config, test_output),
+        result=result,
         duration_s=elapsed,
     )
 

@@ -24,6 +24,14 @@ class Result(NamedTuple):
         return len(self.failures) > 0
 
 
+class TimedoutResult(NamedTuple):
+    pass
+
+
+class SkippedResult(NamedTuple):
+    pass
+
+
 T = TypeVar("T", bound="Config")
 
 
