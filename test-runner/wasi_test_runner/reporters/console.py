@@ -11,6 +11,7 @@ class ConsoleTestReporter(TestReporter):
     _PASS_COLOR: str = Fore.GREEN
     _FAIL_COLOR: str = Fore.RED
     _SKIP_COLOR: str = Fore.LIGHTBLACK_EX
+    _RESET_COLOR: str = Fore.RESET
 
     def __init__(self, colored: bool = True) -> None:
         super().__init__()
@@ -72,7 +73,8 @@ class ConsoleTestReporter(TestReporter):
         if skip_count:
             items.append(f"{self._skip_color}{skip_count} skipped")
 
-        items.append(f"{skip_count} total")
+        total = fail_count + pass_count + skip_count
+        items.append(f"{self._reset_color}{total} total")
         return ", ".join(items)
 
     def _print_fail(self, text: str) -> None:
@@ -95,3 +97,7 @@ class ConsoleTestReporter(TestReporter):
     @property
     def _fail_color(self) -> str:
         return self._FAIL_COLOR if self._colored else ""
+
+    @property
+    def _reset_color(self) -> str:
+        return self._RESET_COLOR if self._colored else ""
