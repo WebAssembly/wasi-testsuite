@@ -17,7 +17,9 @@ class RuntimeAdapter:
 
     def get_version(self) -> RuntimeVersion:
         output = (
-            subprocess.check_output([sys.executable, self._adapter_path, "--version"], encoding="UTF-8")
+            subprocess.check_output(
+                [sys.executable, self._adapter_path, "--version"], encoding="UTF-8"
+            )
             .strip()
             .split(" ")
         )
@@ -42,20 +44,20 @@ class RuntimeAdapter:
             + [e for env in self._env_to_list(env_variables) for e in ("--env", env)]
         )
 
-        p = subprocess.Popen(
+        with subprocess.Popen(
             args,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
             cwd=Path(test_path).parent,
-        )
-        try:
-            out, err = p.communicate(timeout=3)
-        except subprocess.TimeoutExpired:
-            p.terminate()
-            p.wait()
-            raise
-        return Output(p.returncode, out, err)
+        ) as proc:
+            try:
+                out, err = proc.communicate(timeout=3)
+            except subprocess.TimeoutExpired:
+                proc.terminate()
+                proc.wait()
+                raise
+            return Output(proc.returncode, out, err)
 
     @staticmethod
     def _abs(path: str) -> str:
