@@ -1,6 +1,6 @@
 import logging
 import json
-from typing import List, NamedTuple, TypeVar, Type, Dict, Any, Optional
+from typing import List, NamedTuple, TypeVar, Type, Dict, Any, Optional, Union
 
 
 class Output(NamedTuple):
@@ -71,5 +71,5 @@ class Config(NamedTuple):
 class TestCase(NamedTuple):
     name: str
     config: Config
-    result: Result
+    result: Union[Result | SkippedResult | TimedoutResult]
     duration_s: float

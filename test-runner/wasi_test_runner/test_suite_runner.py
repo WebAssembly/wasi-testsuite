@@ -7,7 +7,7 @@ import subprocess
 import time
 
 from datetime import datetime
-from typing import List, cast
+from typing import List, cast, Union
 
 from .filters import TestFilter
 from .runtime_adapter import RuntimeAdapter
@@ -82,9 +82,9 @@ def _execute_single_test(
     test_start = time.time()
     try:
         test_output = runtime.run_test(test_path, config.args, config.env, config.dirs)
-        result=_validate(validators, config, test_output)
+        result: Union[Result | TimedoutResult] = _validate(validators, config, test_output)
     except subprocess.TimeoutExpired:
-        result=TimedoutResult()
+        result = TimedoutResult()
     elapsed = time.time() - test_start
 
     return TestCase(
