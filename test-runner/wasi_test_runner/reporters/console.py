@@ -80,7 +80,7 @@ class ConsoleTestReporter(TestReporter):
         if timedout_count:
             items.append(f"{self._fail_color}{timedout_count} timed out")
 
-        total = fail_count + pass_count + skip_count
+        total = fail_count + pass_count + skip_count + timedout_count
         items.append(f"{self._reset_color}{total} total")
         return ", ".join(items)
 
