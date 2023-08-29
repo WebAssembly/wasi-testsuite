@@ -102,7 +102,7 @@ def _validate(validators: List[Validator], config: Config, output: Output) -> Re
         if result is not None
     ]
 
-    return Result(failures=failures, is_executed=True, output=output)
+    return Result(failures=failures, output=output)
 
 
 def _read_test_config(test_path: str) -> Config:

@@ -16,7 +16,6 @@ class Failure(NamedTuple):
 
 class Result(NamedTuple):
     output: Output
-    is_executed: bool
     failures: List[Failure]
 
     @property
