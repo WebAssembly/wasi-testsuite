@@ -71,6 +71,14 @@ unsafe fn test_renumber(dir_fd: wasi::Fd) {
         "expected fd_to have the same fdstat as fd_from"
     );
 
+    // Try renumbering to an invalid destination fd (fd_from is invalid at this point)
+    assert_errno!(
+        wasi::fd_renumber(fd_to, fd_from).expect_err(
+            "fd_renumber should not allow renumbering to invalid destination file descriptors",
+        ),
+        wasi::ERRNO_BADF
+    );
+
     wasi::fd_close(fd_to).expect("closing a file");
 
     wasi::path_unlink_file(dir_fd, "file1").expect("removing a file");
