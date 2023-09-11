@@ -16,7 +16,8 @@ unsafe fn test_interesting_paths(dir_fd: wasi::Fd, arg: &str) {
     assert_errno!(
         wasi::path_open(dir_fd, 0, "/dir/nested/file", 0, 0, 0, 0)
             .expect_err("opening a file with an absolute path"),
-        wasi::ERRNO_PERM
+        wasi::ERRNO_PERM,
+        wasi::ERRNO_NOTCAPABLE
     );
 
     // Now open it with a path containing "..".
@@ -83,7 +84,8 @@ unsafe fn test_interesting_paths(dir_fd: wasi::Fd, arg: &str) {
     assert_errno!(
         wasi::path_open(dir_fd, 0, &bad_path, 0, 0, 0, 0)
             .expect_err("opening a file with too many \"..\"s in the path should fail"),
-        wasi::ERRNO_PERM
+        wasi::ERRNO_PERM,
+        wasi::ERRNO_NOTCAPABLE
     );
     wasi::path_unlink_file(dir_fd, "dir/nested/file")
         .expect("unlink_file on a symlink should succeed");
