@@ -184,7 +184,8 @@ unsafe fn test_path_link(dir_fd: wasi::Fd) {
                 "link",
             )
             .expect_err("calling path_link with LOOKUPFLAGS_SYMLINK_FOLLOW should fail"),
-            wasi::ERRNO_INVAL
+            wasi::ERRNO_INVAL,
+            wasi::ERRNO_NOENT
         );
 
         wasi::path_unlink_file(dir_fd, "symlink").expect("removing a symlink");

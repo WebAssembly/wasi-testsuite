@@ -39,6 +39,11 @@ pub unsafe fn create_tmp_dir(dir_fd: wasi::Fd, name: &str) -> wasi::Fd {
             | wasi::RIGHTS_FD_READDIR
             | wasi::RIGHTS_FD_FILESTAT_GET
             | wasi::RIGHTS_FD_SEEK
+            | wasi::RIGHTS_PATH_LINK_SOURCE
+            | wasi::RIGHTS_PATH_LINK_TARGET
+            | wasi::RIGHTS_PATH_OPEN
+            | wasi::RIGHTS_PATH_UNLINK_FILE
+            | wasi::RIGHTS_PATH_FILESTAT_GET
             | wasi::RIGHTS_FD_FDSTAT_SET_FLAGS
             | wasi::RIGHTS_FD_SYNC
             | wasi::RIGHTS_FD_TELL
