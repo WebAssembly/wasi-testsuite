@@ -1,5 +1,5 @@
 use std::{env, process};
-use wasi_tests::{assert_errno, create_file, create_tmp_dir, open_scratch_directory};
+use wasi_tests::{create_file, create_tmp_dir, open_scratch_directory};
 
 unsafe fn test_readlink(dir_fd: wasi::Fd) {
     // Create a file in the scratch directory.
@@ -20,12 +20,14 @@ unsafe fn test_readlink(dir_fd: wasi::Fd) {
         "the remaining bytes should be untouched"
     );
 
-    // Read link into smaller buffer than the actual link's length
+    // Read link into smaller buffer than the actual link's length. The first
+    // buf_len bytes of the link content should be placed in the buffer
     let buf = &mut [0u8; 4];
-    let err = wasi::path_readlink(dir_fd, "symlink", buf.as_mut_ptr(), buf.len())
-        .err()
-        .expect("readlink with too-small buffer should fail");
-    assert_errno!(err, wasi::ERRNO_RANGE);
+    let bufused = wasi::path_readlink(dir_fd, "symlink", buf.as_mut_ptr(), buf.len())
+        .expect("readlink with buffer smaller than link content failed");
+
+    assert_eq!(bufused, 4, "should use 4 bytes of the buffer");
+    assert_eq!(&buf[..4], b"targ", "buffer should contain 'targ'");
 
     // Clean up.
     wasi::path_unlink_file(dir_fd, "target").expect("removing a file");

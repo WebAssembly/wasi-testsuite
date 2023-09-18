@@ -9,7 +9,8 @@ unsafe fn test_dirfd_not_dir(dir_fd: wasi::Fd) {
     assert_errno!(
         wasi::path_open(file_fd, 0, "foo", wasi::OFLAGS_CREAT, 0, 0, 0)
             .expect_err("non-directory base fd should get ERRNO_NOTDIR"),
-        wasi::ERRNO_NOTDIR
+        wasi::ERRNO_NOTDIR,
+        wasi::ERRNO_NOTCAPABLE
     );
     wasi::fd_close(file_fd).expect("closing a file");
     wasi::path_unlink_file(dir_fd, "file").expect("removing a file");
