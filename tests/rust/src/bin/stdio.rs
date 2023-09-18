@@ -15,7 +15,7 @@ unsafe fn test_stdio(dir_fd: wasi::Fd) {
         wasi::fd_fdstat_get(*stdio_from_fd).expect_err("stdio_from_fd is not closed");
 
         // Cleanup
-        wasi::path_unlink_file(dir_fd, "file").expect("failed to remove file");
+        wasi::path_unlink_file(dir_fd, TEST_FILENAME).expect("failed to remove file");
     }
 }
 
