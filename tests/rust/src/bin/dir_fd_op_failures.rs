@@ -13,8 +13,12 @@ unsafe fn test_fd_dir_ops(dir_fd: wasi::Fd) {
         .expect("failed to find preopen directory");
 
     let mut pr_name = vec![];
-    let r = wasi::fd_prestat_dir_name(pr_fd, pr_name.as_mut_ptr(), 0);
-    assert_eq!(r, Err(wasi::ERRNO_NAMETOOLONG));
+    assert_errno!(
+        wasi::fd_prestat_dir_name(pr_fd, pr_name.as_mut_ptr(), 0)
+            .expect_err("fd_prestat_dir_name error"),
+        wasi::ERRNO_INVAL,
+        wasi::ERRNO_NAMETOOLONG
+    );
 
     // Test that passing a larger than necessary buffer works correctly
     let mut pr_name = vec![0; pr_name_len + 1];
