@@ -34,6 +34,7 @@ unsafe fn test_fd_dir_ops(dir_fd: wasi::Fd) {
     // On posix, this fails with ERRNO_ISDIR
     assert_errno!(
         wasi::fd_read(dir_fd, &[iovec]).expect_err("fd_read error"),
+        wasi::ERRNO_ISDIR,
         wasi::ERRNO_BADF,
         wasi::ERRNO_NOTCAPABLE
     );
@@ -41,6 +42,7 @@ unsafe fn test_fd_dir_ops(dir_fd: wasi::Fd) {
     // On posix, this fails with ERRNO_ISDIR
     assert_errno!(
         wasi::fd_pread(dir_fd, &[iovec], 0).expect_err("fd_pread error"),
+        wasi::ERRNO_ISDIR,
         wasi::ERRNO_BADF,
         wasi::ERRNO_NOTCAPABLE
     );
@@ -51,14 +53,18 @@ unsafe fn test_fd_dir_ops(dir_fd: wasi::Fd) {
         buf_len: write_buf.len(),
     };
 
+    // On posix, this fails with ERRNO_ISDIR
     assert_errno!(
         wasi::fd_write(dir_fd, &[ciovec]).expect_err("fd_write error"),
+        wasi::ERRNO_ISDIR,
         wasi::ERRNO_BADF,
         wasi::ERRNO_NOTCAPABLE
     );
 
+    // On posix, this fails with ERRNO_ISDIR
     assert_errno!(
         wasi::fd_pwrite(dir_fd, &[ciovec], 0).expect_err("fd_pwrite error"),
+        wasi::ERRNO_ISDIR,
         wasi::ERRNO_BADF,
         wasi::ERRNO_NOTCAPABLE
     );
@@ -66,6 +72,7 @@ unsafe fn test_fd_dir_ops(dir_fd: wasi::Fd) {
     // Divergence from posix: lseek(dirfd) will return 0
     assert_errno!(
         wasi::fd_seek(dir_fd, 0, wasi::WHENCE_CUR).expect_err("fd_seek WHENCE_CUR error"),
+        wasi::ERRNO_ISDIR,
         wasi::ERRNO_BADF,
         wasi::ERRNO_NOTCAPABLE
     );
@@ -73,6 +80,7 @@ unsafe fn test_fd_dir_ops(dir_fd: wasi::Fd) {
     // Divergence from posix: lseek(dirfd) will return 0
     assert_errno!(
         wasi::fd_seek(dir_fd, 0, wasi::WHENCE_SET).expect_err("fd_seek WHENCE_SET error"),
+        wasi::ERRNO_ISDIR,
         wasi::ERRNO_BADF,
         wasi::ERRNO_NOTCAPABLE
     );
@@ -80,6 +88,7 @@ unsafe fn test_fd_dir_ops(dir_fd: wasi::Fd) {
     // Divergence from posix: lseek(dirfd) will return 0
     assert_errno!(
         wasi::fd_seek(dir_fd, 0, wasi::WHENCE_END).expect_err("fd_seek WHENCE_END error"),
+        wasi::ERRNO_ISDIR,
         wasi::ERRNO_BADF,
         wasi::ERRNO_NOTCAPABLE
     );
@@ -87,6 +96,7 @@ unsafe fn test_fd_dir_ops(dir_fd: wasi::Fd) {
     // Tell isnt in posix, its basically lseek with WHENCE_CUR above
     assert_errno!(
         wasi::fd_tell(dir_fd).expect_err("fd_tell error"),
+        wasi::ERRNO_ISDIR,
         wasi::ERRNO_BADF,
         wasi::ERRNO_NOTCAPABLE
     );
@@ -95,6 +105,7 @@ unsafe fn test_fd_dir_ops(dir_fd: wasi::Fd) {
     // not available on mac os.
     assert_errno!(
         wasi::fd_allocate(dir_fd, 0, 0).expect_err("fd_allocate error"),
+        wasi::ERRNO_ISDIR,
         wasi::ERRNO_BADF,
         wasi::ERRNO_NOTCAPABLE
     );
@@ -102,6 +113,8 @@ unsafe fn test_fd_dir_ops(dir_fd: wasi::Fd) {
     // ftruncate(dirfd, 1) will fail with errno EINVAL on posix.
     assert_errno!(
         wasi::fd_filestat_set_size(dir_fd, 0).expect_err("fd_filestat_set_size error"),
+        wasi::ERRNO_ISDIR,
+        wasi::ERRNO_INVAL,
         wasi::ERRNO_BADF,
         wasi::ERRNO_NOTCAPABLE
     );
