@@ -104,7 +104,7 @@ unsafe fn test_fd_dir_ops(dir_fd: wasi::Fd) {
     // fallocate(dirfd, FALLOC_FL_ZERO_RANGE, 0, 1) will fail with errno EBADF on linux.
     // not available on mac os.
     assert_errno!(
-        wasi::fd_allocate(dir_fd, 0, 0).expect_err("fd_allocate error"),
+        wasi::fd_allocate(dir_fd, 0, 1).expect_err("fd_allocate error"),
         wasi::ERRNO_ISDIR,
         wasi::ERRNO_BADF,
         wasi::ERRNO_NOTCAPABLE
