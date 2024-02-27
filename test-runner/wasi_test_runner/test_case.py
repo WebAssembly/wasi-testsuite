@@ -37,10 +37,19 @@ class Config(NamedTuple):
 
     @classmethod
     def from_file(cls: Type[T], config_file: str) -> T:
-        default = cls()
-
         with open(config_file, encoding="utf-8") as file:
             dict_config = json.load(file)
+            return cls.from_dict(dict_config)
+
+    @classmethod
+    def _validate_dict(cls: Type[T], dict_config: Dict[str, Any]) -> None:
+        for field_name in dict_config:
+            if field_name not in cls._fields:
+                logging.warning("Unknown field in the config file: %s", field_name)
+
+    @classmethod
+    def from_dict(cls: Type[T], dict_config: Dict[str, Any]) -> T:
+        default = cls()
 
         cls._validate_dict(dict_config)
 
@@ -52,12 +61,6 @@ class Config(NamedTuple):
             wasi_functions=dict_config.get("wasi_functions", default.wasi_functions),
             stdout=dict_config.get("stdout", default.stdout),
         )
-
-    @classmethod
-    def _validate_dict(cls: Type[T], dict_config: Dict[str, Any]) -> None:
-        for field_name in dict_config:
-            if field_name not in cls._fields:
-                logging.warning("Unknown field in the config file: %s", field_name)
 
 
 class TestCase(NamedTuple):
