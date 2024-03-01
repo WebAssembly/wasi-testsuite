@@ -1,0 +1,16 @@
+{
+    "WASI C tests": {
+        "stat-dev-ino": {
+            "dirs": [
+                "fs-tests.dir"
+            ],
+            "env": {
+                "TEST_VAR": "test"
+            },
+            "args": [
+                "fs-tests.dir",
+                "test_arg"
+            ]
+        }
+    }
+}
