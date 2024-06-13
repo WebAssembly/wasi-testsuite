@@ -62,6 +62,21 @@ python3 test-runner/wasi_test_runner.py                                         
     -r adapters/wasmtime.py # path to a runtime adapter
 ```
 
+You can also optionally override test configs with the `--config-override`
+option:
+
+```bash
+python3 test-runner/wasi_test_runner.py                                                  \
+    -t ./tests/assemblyscript/testsuite/ # path to folders containing .wasm test files   \
+       ./tests/c/testsuite/                                                              \
+       ./tests/rust/testsuite/                                                           \
+    --config-override examples/config_override.json                                      \
+    -r adapters/wasmtime.py # path to a runtime adapter
+```
+
+This can be useful for passing additional environment variables to certain
+tests without modifying the test config files.
+
 The default executable in the adapter used for test execution can be
 overridden using `TEST_RUNTIME_EXE` variable. This only works with adapters defined in
 [adapters/](adapters/), and might not work with 3rd party adapters.
