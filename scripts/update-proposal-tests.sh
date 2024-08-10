@@ -5,7 +5,7 @@ REPOS=(
     "wasi-threads"
 )
 
-WASI_VERSION=20
+WASI_VERSION=22
 WASI_SDK_DIR=$(pwd)/wasi-sdk
 BASE_BRANCH="prod/testsuite-base"
 PROPOSALS_DIR="tests/proposals"
@@ -25,7 +25,7 @@ function install_wasi_sdk()
 
 function build_wasi-threads()
 {
-    CC="$WASI_SDK_DIR/bin/clang -pthread -Wl,--import-memory --target=wasm32-wasi-threads" ./build.sh
+    CC="$WASI_SDK_DIR/bin/clang -pthread -Wl,--import-memory -Wl,--export-memory --target=wasm32-wasi-threads" ./build.sh
 }
 
 function update_repo()
