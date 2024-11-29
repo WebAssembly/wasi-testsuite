@@ -32,6 +32,11 @@ The adapter must return exit code to the environment that was passed as an argum
 and check if the exit code is equal to `13`. There are also two test cases in Assembly Script test suite that verify the behavior:
 * [proc_exit-failure](../tests/assemblyscript/testsuite/proc_exit-failure.ts)
 * [proc_exit-success](../tests/assemblyscript/testsuite/proc_exit-success.ts)
+
+On a timeout, the test runner sends SIGTERM singal to the adapter process.
+When receiving the signal, the adapter process should clean up and exit
+as soon as possible.
+
 ### Examples:
 
 Print runtime version:
