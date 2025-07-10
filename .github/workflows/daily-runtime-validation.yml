@@ -47,15 +47,10 @@ jobs:
       - name: Install WasmEdge
         if: matrix.runtime == 'wasmedge'
         run: |
-          sudo apt install -y software-properties-common cmake libboost-all-dev
-          sudo apt install -y clang
+          curl -sSf https://raw.githubusercontent.com/WasmEdge/WasmEdge/master/utils/install.sh | bash  -s -- -p ./wasmedge-install
+          echo "$GITHUB_WORKSPACE/wasmedge-install/bin/" >> $GITHUB_PATH
           git clone https://github.com/WasmEdge/WasmEdge.git
-          cd WasmEdge
-          mkdir -p build && cd build
-          cmake -DWASMEDGE_BUILD_AOT_RUNTIME=OFF .. && make -j4
-          echo "$GITHUB_WORKSPACE/WasmEdge/build/tools/wasmedge" >> $GITHUB_PATH
-          cd ..
-          cp .github/scripts/wasi-testsuite-adapter.py ../adapters/wasmedge.py
+          cp WasmEdge/.github/scripts/wasi-testsuite-adapter.py ./adapters/wasmedge.py
 
       - name: Install wazero
         if: matrix.runtime == 'wazero'
