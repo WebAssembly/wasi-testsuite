@@ -1,6 +1,6 @@
 #!/bin/bash
 set -ueo pipefail
 
-cargo build --target=wasm32-wasi
+cargo build --target=wasm32-wasip1
 
-cp target/wasm32-wasi/debug/*.wasm testsuite/
+cp target/wasm32-wasip1/debug/*.wasm testsuite/
