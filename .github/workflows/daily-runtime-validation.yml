@@ -65,6 +65,7 @@ jobs:
         if: matrix.runtime == 'pywasm-runtime'
         run: |
           pip install pywasm
+          wget -O ./adapters/pywasm-runtime.py https://raw.githubusercontent.com/mohanson/pywasm/refs/heads/master/script/wasi_testsuite_adapter.py
 
       - name: Get current timestamp
         run: echo "date=$(date +'%Y-%m-%d_%H_%M')" >> $GITHUB_ENV
