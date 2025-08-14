@@ -82,22 +82,26 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest, windows-11-arm]
     env:
-      WASI_VERSION: 17
+      WASI_VERSION: 27
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
 
       - name: Setup WASI SDK download - Linux
         if: matrix.os == 'ubuntu-latest'
-        run: echo SYSTEM_NAME=linux >> $GITHUB_ENV
+        run: echo SYSTEM_NAME=x86_64-linux >> $GITHUB_ENV
 
       - name: Setup WASI SDK download - MacOS
         if: matrix.os == 'macos-latest'
-        run: echo SYSTEM_NAME=macos >> $GITHUB_ENV
+        run: echo SYSTEM_NAME=arm64-macos >> $GITHUB_ENV
 
-      - name: Setup WASI SDK download - Windows
-        if: startsWith(matrix.os, 'windows')
-        run: echo SYSTEM_NAME=mingw >> $env:GITHUB_ENV
+      - name: Setup WASI SDK download - Windows (x86)
+        if: matrix.os == 'windows-latest'
+        run: echo SYSTEM_NAME=x86_64-windows >> $env:GITHUB_ENV
+
+      - name: Setup WASI SDK download - Windows (ARM)
+        if: matrix.os == 'windows-11-arm'
+        run: echo SYSTEM_NAME=arm64-windows >> $env:GITHUB_ENV
 
       - name: Download WASI SDK
         working-directory: tests/c
@@ -112,12 +116,12 @@ jobs:
       - name: Check formatting
         if: matrix.os == 'ubuntu-latest'
         working-directory: tests/c
-        run: find testsuite -regex '.*\.\(c\|h\)' -print0 | xargs -0 -n1 ./wasi-sdk-${WASI_VERSION}.0/bin/clang-format --style=file --dry-run -Werror
+        run: find testsuite -regex '.*\.\(c\|h\)' -print0 | xargs -0 -n1 ./wasi-sdk-${WASI_VERSION}.0-${SYSTEM_NAME}/bin/clang-format --style=file --dry-run -Werror
 
       - name: Build tests
         shell: bash
         working-directory: tests/c
-        run: CC="./wasi-sdk-${WASI_VERSION}.0/bin/clang" ./build.sh
+        run: CC="./wasi-sdk-${WASI_VERSION}.0-${SYSTEM_NAME}/bin/clang" ./build.sh
 
       - name: Upload precompiled tests
         if: matrix.os == 'ubuntu-latest'
