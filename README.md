@@ -46,7 +46,7 @@ executor is quite simple; see the [specification] document for the details and t
    ```bash
    python3 test-runner/wasi_test_runner.py                                                  \
       -t ./tests/assemblyscript/testsuite/ `# path to folders containing .wasm test files` \
-         ./tests/c/testsuite/                                                              \
+         ./tests/c/testsuite/wasm32-wasip1                                                 \
          ./tests/rust/testsuite/                                                           \
       -r adapters/wasmtime.py # path to a runtime adapter
    ```
@@ -56,7 +56,7 @@ Optionally you can specify test cases to skip with the `--exclude-filter` option
 ```bash
 python3 test-runner/wasi_test_runner.py                                                  \
     -t ./tests/assemblyscript/testsuite/ `# path to folders containing .wasm test files` \
-       ./tests/c/testsuite/                                                              \
+       ./tests/c/testsuite/wasm32-wasip1                                                 \
        ./tests/rust/testsuite/                                                           \
     --exclude-filter examples/skip.json                                                  \
     -r adapters/wasmtime.py # path to a runtime adapter
@@ -95,7 +95,7 @@ Here is some additional information for developers who are willing to contribute
 
 ### Cleaning up temporary resources
 
-Some of the tests (e.g. [pwrite-with-access](./tests/c/testsuite/pwrite-with-access.c)) generate
+Some of the tests (e.g. [pwrite-with-access](./tests/c/src/pwrite-with-access.c)) generate
 output artifacts and their existence can affect consecutive test executions. Tests should clean up
 the artifacts they generate, but there might be cases where the test fails early. The test runner
 will automatically delete all the files and directories in the test suite directory with the

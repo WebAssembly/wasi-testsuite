@@ -78,7 +78,7 @@ jobs:
             --json-output-location results.json \
             -t tests/assemblyscript/testsuite/wasm32-wasip1 \
                tests/rust/testsuite \
-               tests/c/testsuite
+               tests/c/testsuite/wasm32-wasip1
 
       - name: Configure git
         uses: ./.github/actions/git-config

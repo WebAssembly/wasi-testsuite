@@ -111,7 +111,7 @@ jobs:
       - name: Build tests
         shell: bash
         working-directory: tests/c
-        run: CC="./wasi-sdk-${WASI_VERSION}.0-${SYSTEM_NAME}/bin/clang" ./build.sh
+        run: CC="./wasi-sdk-${WASI_VERSION}.0-${SYSTEM_NAME}/bin/clang" ./build.py
 
       - name: Upload precompiled tests
         if: matrix.os == 'ubuntu-latest'

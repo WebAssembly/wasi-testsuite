@@ -1,2 +1,3 @@
 *.wasm
 .DS_Store
+/tests/c/testsuite/
