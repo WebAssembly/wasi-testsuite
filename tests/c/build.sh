@@ -8,6 +8,6 @@ for input in testsuite/*.c; do
 
   if [ "$input" -nt "$output" ]; then
     echo "Compiling $input"
-    $CC "$input" -o "$output"
+    $CC --target=wasm32-wasip1 "$input" -o "$output"
   fi
 done
