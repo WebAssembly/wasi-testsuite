@@ -5,7 +5,7 @@
 #include <sys/socket.h>
 
 int main() {
-  int fd = 3;
+  int fd = 420;
   assert(shutdown(fd, SHUT_RD) != 0);
   assert(errno == EBADF);
 
