@@ -25,7 +25,7 @@ function isBinaryOutdated(srcPath: string, wasmPath: string): boolean {
 }
 
 async function compileTests() {
-    const testSuiteFiles = getPathsInDirectory("testsuite");
+    const testSuiteFiles = getPathsInDirectory("src");
     const pendingCompilations = testSuiteFiles
         .filter((filePath) => doesFileHaveExtension(filePath, "ts"))
         .map((filePath) => ({

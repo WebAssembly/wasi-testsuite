@@ -30,8 +30,8 @@ The adapter must return exit code to the environment that was passed as an argum
 )
 ```
 and check if the exit code is equal to `13`. There are also two test cases in Assembly Script test suite that verify the behavior:
-* [proc_exit-failure](../tests/assemblyscript/testsuite/proc_exit-failure.ts)
-* [proc_exit-success](../tests/assemblyscript/testsuite/proc_exit-success.ts)
+* [proc_exit-failure](../tests/assemblyscript/wasm32-wasip1/src/proc_exit-failure.ts)
+* [proc_exit-success](../tests/assemblyscript/wasm32-wasip1/src/proc_exit-success.ts)
 ### Examples:
 
 Print runtime version:

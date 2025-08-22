@@ -24,20 +24,10 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install dependencies
-        working-directory: tests/assemblyscript
-        run: |
-          npm install
-
-      - name: Check prettier codestyle
-        working-directory: tests/assemblyscript
-        run: |
-          npm run prettier-format-check
-
       - name: Build tests
         working-directory: tests/assemblyscript
         run: |
-          npm run build
+          ./build.py
 
       - name: Upload precompiled tests
         if: matrix.os == 'ubuntu-latest'
