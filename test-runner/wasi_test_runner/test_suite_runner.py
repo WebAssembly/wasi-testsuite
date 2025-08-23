@@ -6,7 +6,7 @@ import shutil
 import time
 
 from datetime import datetime
-from typing import List, cast
+from typing import List, Optional, cast
 
 from .filters import TestFilter
 from .runtime_adapter import RuntimeAdapter
@@ -19,14 +19,17 @@ from .test_case import (
 from .reporters import TestReporter
 from .test_suite import TestSuite
 from .validators import Validator
+from .override import ConfigOverride
 
 
+# pylint: disable-msg=too-many-arguments, too-many-locals
 def run_tests_from_test_suite(
     test_suite_path: str,
     runtime: RuntimeAdapter,
     validators: List[Validator],
     reporters: List[TestReporter],
     filters: List[TestFilter],
+    config_override: Optional[ConfigOverride],
 ) -> TestSuite:
     test_cases: List[TestCase] = []
     test_start = datetime.now()
@@ -45,7 +48,14 @@ def run_tests_from_test_suite(
                 test_case = _skip_single_test(runtime, validators, test_path)
                 break
         else:
-            test_case = _execute_single_test(runtime, validators, test_path)
+            test_config_override = (
+                config_override.get_test_override(test_suite_name, test_name)
+                if config_override
+                else None
+            )
+            test_case = _execute_single_test(
+                runtime, validators, test_path, test_config_override
+            )
         test_cases.append(test_case)
         for reporter in reporters:
             reporter.report_test(test_case)
@@ -73,9 +83,12 @@ def _skip_single_test(
 
 
 def _execute_single_test(
-    runtime: RuntimeAdapter, validators: List[Validator], test_path: str
+    runtime: RuntimeAdapter,
+    validators: List[Validator],
+    test_path: str,
+    config_override: Optional[Config],
 ) -> TestCase:
-    config = _read_test_config(test_path)
+    config = config_override or _read_test_config(test_path)
     test_start = time.time()
     test_output = runtime.run_test(test_path, config.args, config.env, config.dirs)
     elapsed = time.time() - test_start
