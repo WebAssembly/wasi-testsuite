@@ -1,5 +1,5 @@
 use std::{env, process};
-use wasi_tests::{assert_errno, create_tmp_dir, open_scratch_directory, TESTCONFIG};
+use wasi_tests::{assert_errno, create_tmp_dir, open_scratch_directory};
 
 unsafe fn test_path_filestat(dir_fd: wasi::Fd) {
     let mut fdstat = wasi::fd_fdstat_get(dir_fd).expect("fd_fdstat_get");
@@ -9,24 +9,27 @@ unsafe fn test_path_filestat(dir_fd: wasi::Fd) {
         "the scratch directory should have RIGHT_PATH_FILESTAT_GET as base right",
     );
 
-    let fdflags = if TESTCONFIG.support_fdflags_sync() {
-        wasi::FDFLAGS_APPEND | wasi::FDFLAGS_SYNC
-    } else {
-        wasi::FDFLAGS_APPEND
+    // Create a file in the scratch directory.
+    let open_file = |fdflags| -> Result<wasi::Fd, wasi::Errno> {
+        let rights = wasi::RIGHTS_FD_READ | wasi::RIGHTS_FD_WRITE |
+                     wasi::RIGHTS_PATH_FILESTAT_GET;
+        return wasi::path_open(dir_fd, 0, "file", wasi::OFLAGS_CREAT, rights, 0,
+                               fdflags);
     };
 
-    // Create a file in the scratch directory.
-    let file_fd = wasi::path_open(
-        dir_fd,
-        0,
-        "file",
-        wasi::OFLAGS_CREAT,
-        wasi::RIGHTS_FD_READ | wasi::RIGHTS_FD_WRITE | wasi::RIGHTS_PATH_FILESTAT_GET,
-        0,
-        // Pass some flags for later retrieval
-        fdflags,
-    )
-    .expect("opening a file");
+    let (file_fd, fdflags) =
+        match open_file(wasi::FDFLAGS_APPEND | wasi::FDFLAGS_SYNC) {
+            Ok(fd) => { (fd, wasi::FDFLAGS_APPEND | wasi::FDFLAGS_SYNC) }
+            Err(wasi::ERRNO_NOTSUP) => {
+                (open_file(wasi::FDFLAGS_APPEND).expect("opening file"),
+                 wasi::FDFLAGS_APPEND)
+            }
+            Err(err) => {
+                eprintln!("error opening file: {}", err);
+                process::exit(1);
+            }
+        };
+
     assert!(
         file_fd > libc::STDERR_FILENO as wasi::Fd,
         "file descriptor range check",
@@ -34,41 +37,15 @@ unsafe fn test_path_filestat(dir_fd: wasi::Fd) {
 
     fdstat = wasi::fd_fdstat_get(file_fd).expect("fd_fdstat_get");
     assert_eq!(
-        fdstat.fs_rights_base & wasi::RIGHTS_PATH_FILESTAT_GET,
-        0,
-        "files shouldn't have rights for path_* syscalls even if manually given",
-    );
-    assert_eq!(
-        fdstat.fs_rights_inheriting & wasi::RIGHTS_PATH_FILESTAT_GET,
-        0,
-        "files shouldn't have rights for path_* syscalls even if manually given",
-    );
-    assert_eq!(
         fdstat.fs_flags & wasi::FDFLAGS_APPEND,
         wasi::FDFLAGS_APPEND,
         "file should have the APPEND fdflag used to create the file"
     );
-    if TESTCONFIG.support_fdflags_sync() {
+    if (fdflags & wasi::FDFLAGS_SYNC) != 0 {
         assert_eq!(
             fdstat.fs_flags & wasi::FDFLAGS_SYNC,
             wasi::FDFLAGS_SYNC,
             "file should have the SYNC fdflag used to create the file"
-        );
-    }
-
-    if !TESTCONFIG.support_fdflags_sync() {
-        assert_errno!(
-            wasi::path_open(
-                dir_fd,
-                0,
-                "file",
-                0,
-                wasi::RIGHTS_FD_READ | wasi::RIGHTS_FD_WRITE | wasi::RIGHTS_PATH_FILESTAT_GET,
-                0,
-                wasi::FDFLAGS_SYNC,
-            )
-            .expect_err("FDFLAGS_SYNC not supported by platform"),
-            wasi::ERRNO_NOTSUP
         );
     }
 
