@@ -1,6 +1,6 @@
 from typing import NamedTuple, List
 from datetime import datetime
-from .test_case import TestCase
+from .test_case import TestCase, Result, SkippedResult, TimedoutResult
 
 
 class TestSuite(NamedTuple):
@@ -19,7 +19,7 @@ class TestSuite(NamedTuple):
             [
                 1
                 for test in self.test_cases
-                if test.result.is_executed and test.result.failed is False
+                if isinstance(test.result, Result) and test.result.failed is False
             ]
         )
 
@@ -29,10 +29,14 @@ class TestSuite(NamedTuple):
             [
                 1
                 for test in self.test_cases
-                if test.result.is_executed and test.result.failed
+                if isinstance(test.result, Result) and test.result.failed
             ]
         )
 
     @property
     def skip_count(self) -> int:
-        return len([1 for test in self.test_cases if not test.result.is_executed])
+        return len([1 for test in self.test_cases if isinstance(test.result, SkippedResult)])
+
+    @property
+    def timedout_count(self) -> int:
+        return len([1 for test in self.test_cases if isinstance(test.result, TimedoutResult)])

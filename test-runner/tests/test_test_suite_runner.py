@@ -35,9 +35,9 @@ def test_runner_end_to_end() -> None:
         tc.Output(2, "test3", ""),
     ]
     expected_results = [
-        tc.Result(outputs[0], True, []),
-        tc.Result(outputs[1], True, [failures[1]]),
-        tc.Result(outputs[2], True, [failures[0], failures[2]]),
+        tc.Result(outputs[0], []),
+        tc.Result(outputs[1], [failures[1]]),
+        tc.Result(outputs[2], [failures[0], failures[2]]),
     ]
     expected_config = [
         tc.Config(dirs=[".", "deep/dir"]),

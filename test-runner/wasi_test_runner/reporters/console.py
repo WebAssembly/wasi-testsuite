@@ -2,7 +2,7 @@ from typing import List
 from colorama import Fore, init
 
 from . import TestReporter
-from ..test_case import TestCase
+from ..test_case import TestCase, SkippedResult, TimedoutResult
 from ..test_suite import TestSuite
 from ..runtime_adapter import RuntimeVersion
 
@@ -20,18 +20,21 @@ class ConsoleTestReporter(TestReporter):
         self._colored = colored
 
     def report_test(self, test: TestCase) -> None:
-        if test.result.failed:
-            self._print_fail(f"Test {test.name} failed")
-            for reason in test.result.failures:
-                self._print_fail(f"  [{reason.type}] {reason.message}")
-            print("STDOUT:")
-            print(test.result.output.stdout)
-            print("STDERR:")
-            print(test.result.output.stderr)
-        elif test.result.is_executed:
-            self._print_pass(f"Test {test.name} passed")
-        else:
+        if isinstance(test.result, TimedoutResult):
+            self._print_fail(f"Test {test.name} timed out")
+        elif isinstance(test.result, SkippedResult):
             self._print_skip(f"Test {test.name} skipped")
+        else:
+            if test.result.failed:
+                self._print_fail(f"Test {test.name} failed")
+                for reason in test.result.failures:
+                    self._print_fail(f"  [{reason.type}] {reason.message}")
+                print("STDOUT:")
+                print(test.result.output.stdout)
+                print("STDERR:")
+                print(test.result.output.stderr)
+            else:
+                self._print_pass(f"Test {test.name} passed")
 
     def report_test_suite(self, test_suite: TestSuite) -> None:
         self._test_suites.append(test_suite)
@@ -41,29 +44,31 @@ class ConsoleTestReporter(TestReporter):
         print("===== Test results =====")
         print(f"Runtime: {version.name} {version.version}")
 
-        total_skip = total_pass = total_fail = pass_suite = 0
+        total_skip = total_pass = total_fail = total_timedout = pass_suite = 0
 
         for suite in self._test_suites:
             total_pass += suite.pass_count
             total_fail += suite.fail_count
             total_skip += suite.skip_count
+            total_timedout += suite.timedout_count
 
-            if suite.fail_count == 0:
+            if suite.fail_count == 0 and suite.timedout_count == 0:
                 pass_suite += 1
 
             print(f"Suite: {suite.name}")
             print(f"  Total: {suite.test_count}")
-            self._print_pass(f"  Passed:  {suite.pass_count}")
-            self._print_fail(f"  Failed:  {suite.fail_count}")
-            self._print_skip(f"  Skipped: {suite.skip_count}")
+            self._print_pass(f"  Passed:    {suite.pass_count}")
+            self._print_fail(f"  Failed:    {suite.fail_count}")
+            self._print_skip(f"  Skipped:   {suite.skip_count}")
+            self._print_fail(f"  Timed out: {suite.timedout_count}")
             print("")
 
         print(
-            f"Test suites: {self._get_summary(len(self._test_suites) - pass_suite, pass_suite, 0)}"
+            f"Test suites: {self._get_summary(len(self._test_suites) - pass_suite, pass_suite, 0, 0)}"
         )
-        print(f"Tests:       {self._get_summary(total_fail, total_pass, total_skip)}")
+        print(f"Tests:       {self._get_summary(total_fail, total_pass, total_skip, total_timedout)}")
 
-    def _get_summary(self, fail_count: int, pass_count: int, skip_count: int) -> str:
+    def _get_summary(self, fail_count: int, pass_count: int, skip_count: int, timedout_count: int) -> str:
         items: List[str] = []
 
         if fail_count:
@@ -72,8 +77,10 @@ class ConsoleTestReporter(TestReporter):
             items.append(f"{self._pass_color}{pass_count} passed")
         if skip_count:
             items.append(f"{self._skip_color}{skip_count} skipped")
+        if timedout_count:
+            items.append(f"{self._fail_color}{timedout_count} timed out")
 
-        total = fail_count + pass_count + skip_count
+        total = fail_count + pass_count + skip_count + timedout_count
         items.append(f"{self._reset_color}{total} total")
         return ", ".join(items)
 

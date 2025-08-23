@@ -5,6 +5,7 @@ from typing import List
 
 from . import TestReporter
 from ..test_suite import TestSuite
+from ..test_case import Result, SkippedResult, TimedoutResult
 from ..runtime_adapter import RuntimeVersion
 
 
@@ -28,16 +29,19 @@ class JSONTestReporter(TestReporter):
                     "duration_s": suite.duration_s,
                     "failed": suite.fail_count,
                     "skipped": suite.skip_count,
+                    "timedout": suite.timedout_count,
                     "passed": suite.pass_count,
                     "tests": [
                         {
                             "name": test.name,
-                            "executed": test.result.is_executed,
+                            "executed": isinstance(test.result, Result),
+                            "skipped": isinstance(test.result, SkippedResult),
+                            "timedout": isinstance(test.result, TimedoutResult),
                             "duration_s": test.duration_s,
                             "wasi_functions": test.config.wasi_functions,
                             "failures": [
                                 failure.message for failure in test.result.failures
-                            ],
+                            ] if isinstance(test.result, Result) else [],
                         }
                         for test in suite.test_cases
                     ],

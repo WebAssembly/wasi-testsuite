@@ -9,7 +9,7 @@ def create_test_case(name: str, is_executed: bool, is_failed: bool) -> tc.TestCa
     return tc.TestCase(
         name,
         tc.Config(),
-        tc.Result(tc.Output(0, "", ""), is_executed, failures),
+        tc.Result(tc.Output(0, "", ""), failures) if is_executed else tc.SkippedResult(),
         1.0,
     )
 
