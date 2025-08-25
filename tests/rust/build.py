@@ -21,7 +21,7 @@ if args.dry_run:
     args.verbose = True
 
 SYSTEMS = ['wasm32']
-VERSIONS = ['wasip1'] # + ['wasip2', 'wasip3']
+VERSIONS = ['wasip1', 'wasip3']
 
 def compute_target(system, version):
     return f"{system}-{version}"
