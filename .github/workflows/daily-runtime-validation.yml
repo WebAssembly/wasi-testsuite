@@ -77,7 +77,7 @@ jobs:
             -r ./adapters/${{ matrix.runtime }}.py \
             --json-output-location results.json \
             -t tests/assemblyscript/testsuite \
-               tests/rust/testsuite \
+               tests/rust/testsuite/wasm32-wasip1 \
                tests/c/testsuite
 
       - name: Configure git
