@@ -140,7 +140,13 @@ jobs:
         uses: ./.github/actions/git-config
 
       - name: Merge main branch changes
-        run: git merge ${{ github.sha }}
+        run: |
+          git merge --no-commit -Sours ${{ github.sha }}
+          git checkout ${{ github.sha }} .
+          git checkout HEAD tests/assemblyscript/testsuite
+          git checkout HEAD tests/c/testsuite
+          git checkout HEAD tests/rust/testsuite
+          git commit -m "Merge commit ${{ github.sha }} into prod/testsuite-base"
 
       - name: Remove existing binaries
         run: rm -rf tests/${{ matrix.suite }}/testsuite
