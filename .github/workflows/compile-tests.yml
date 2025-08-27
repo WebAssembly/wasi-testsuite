@@ -55,7 +55,7 @@ jobs:
       - name: Build tests
         working-directory: tests/rust
         run: |
-          ./build.sh
+          ./build.py
 
       - name: Upload precompiled tests
         if: matrix.os == 'ubuntu-latest'
