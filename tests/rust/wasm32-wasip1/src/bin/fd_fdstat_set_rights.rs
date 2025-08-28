@@ -1,11 +1,17 @@
 use std::{env, process};
 use wasi_tests::{
     assert_errno, create_tmp_dir, drop_rights, fd_get_rights, open_scratch_directory,
+    supports_rights,
 };
 
 const TEST_FILENAME: &'static str = "file.cleanup";
 
 unsafe fn test_fd_fdstat_set_rights(dir_fd: wasi::Fd) {
+    // For hosts that don't support rights at all skip this test.
+    if !supports_rights(dir_fd) {
+        return;
+    }
+
     let fd = wasi::path_open(
         dir_fd,
         0,
