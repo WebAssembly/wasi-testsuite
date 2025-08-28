@@ -24,11 +24,11 @@ int main() {
   size = pwrite(fd, buf, 3, 0);
   assert(size == 3);
 
-  // fd_pwrite should write from offset 0 regardless of append.
-  // (thus shouln't extend the file.)
-  // it shouldn't move the file offset either.
+  // fd_pwrite shouldn't update the current offset. POSIX says it should write
+  // at 0, Linux says it should write at the end with `O_APPEND`. Accept either.
   assert(lseek(fd, 0, SEEK_CUR) == 4);
-  assert(lseek(fd, 0, SEEK_END) == 4);
+  int end = lseek(fd, 0, SEEK_END);
+  assert(end == 4 || end == 7);
 
   close(fd);
 
