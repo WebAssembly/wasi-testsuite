@@ -15,11 +15,25 @@ parser.add_argument("--verbose", action="store_true",
                     help="print commands to be executed")
 parser.add_argument("--release", action="store_true",
                     help="build tests in release mode")
+parser.add_argument("--toolchain", action="append",
+                    help="TARGET:TOOLCHAIN, pass +TOOLCHAIN to cargo for TARGET")
 
 args = parser.parse_args()
 if args.dry_run:
     args.verbose = True
 
+TOOLCHAINS={}
+if args.toolchain is not None:
+    for toolchain_arg in args.toolchain:
+        match toolchain_arg.split(':'):
+            case (target, toolchain):
+                TOOLCHAINS[target] = toolchain
+            case arg:
+                print(f"expected --toolchain=TARGET:TOOLCHAIN, got {toolchain_arg}",
+                      file=sys.stderr)
+                sys.exit(1)
+
+CARGO = ['cargo']
 SYSTEMS = ['wasm32']
 VERSIONS = ['wasip1', 'wasip3']
 
@@ -74,10 +88,13 @@ for system in SYSTEMS:
         target = compute_target(system, version)
         build_target = compute_build_target(system, version)
         build_mode = "release" if args.release else "debug"
+        toolchain = [f"+{TOOLCHAINS[target]}"] if target in TOOLCHAINS else []
 
-        build_args = ["cargo", "build",
-                      f"--manifest-path={BASE_DIR / target / 'Cargo.toml'}",
-                      f"--target={build_target}"]
+        build_args = CARGO + toolchain + [
+            "build",
+            f"--manifest-path={BASE_DIR / target / 'Cargo.toml'}",
+            f"--target={build_target}"
+        ]
         if args.release:
             build_args.append("--release")
         run(build_args)
