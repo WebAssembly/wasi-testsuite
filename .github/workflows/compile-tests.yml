@@ -141,8 +141,8 @@ jobs:
 
       - name: Merge main branch changes
         run: |
-          git merge --no-commit -Sours ${{ github.sha }}
-          git checkout ${{ github.sha }} .
+          git merge --no-commit --strategy ours ${{ github.sha }}
+          git checkout --no-overlay ${{ github.sha }} .
           git checkout HEAD tests/assemblyscript/testsuite
           git checkout HEAD tests/c/testsuite
           git checkout HEAD tests/rust/testsuite
