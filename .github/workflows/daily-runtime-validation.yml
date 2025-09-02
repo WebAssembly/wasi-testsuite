@@ -76,9 +76,9 @@ jobs:
           python3 test-runner/wasi_test_runner.py \
             -r ./adapters/${{ matrix.runtime }}.py \
             --json-output-location results.json \
-            -t tests/assemblyscript/testsuite \
-               tests/rust/testsuite \
-               tests/c/testsuite
+            -t tests/assemblyscript/testsuite/wasm32-wasip1 \
+               tests/rust/testsuite/wasm32-wasip1 \
+               tests/c/testsuite/wasm32-wasip1
 
       - name: Configure git
         uses: ./.github/actions/git-config
