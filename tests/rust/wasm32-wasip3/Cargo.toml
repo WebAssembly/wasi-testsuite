@@ -1,0 +1,7 @@
+[package]
+name = "test-wasm32-wasip3"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+wit-bindgen = { git = "https://github.com/bytecodealliance/wit-bindgen.git" }
