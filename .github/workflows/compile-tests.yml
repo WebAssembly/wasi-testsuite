@@ -146,7 +146,7 @@ jobs:
           git checkout HEAD tests/assemblyscript/testsuite
           git checkout HEAD tests/c/testsuite
           git checkout HEAD tests/rust/testsuite
-          git commit -m "Merge commit ${{ github.sha }} into prod/testsuite-base"
+          git diff --quiet || git commit -m "Merge commit ${{ github.sha }} into prod/testsuite-base"
 
       - name: Remove existing binaries
         run: rm -rf tests/${{ matrix.suite }}/testsuite
