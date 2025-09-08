@@ -47,15 +47,22 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v3
 
-      - name: Install wasm32-wasip1 target for Rust
+      - name: Install nightly wasm32-wasip2 target for Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
+          toolchain: nightly
+          target: wasm32-wasip2
+
+      - name: Install stable wasm32-wasip1 target for Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
           target: wasm32-wasip1
 
       - name: Build tests
         working-directory: tests/rust
         run: |
-          ./build.py
+          ./build.py --toolchain=wasm32-wasip3:nightly
 
       - name: Upload precompiled tests
         if: matrix.os == 'ubuntu-latest'
