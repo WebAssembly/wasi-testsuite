@@ -169,6 +169,7 @@ dependencies = [
 name = "test-wasm32-wasip3"
 version = "0.1.0"
 dependencies = [
+ "futures",
  "wit-bindgen",
 ]
 
