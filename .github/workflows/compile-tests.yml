@@ -153,7 +153,7 @@ jobs:
           git checkout HEAD tests/assemblyscript/testsuite
           git checkout HEAD tests/c/testsuite
           git checkout HEAD tests/rust/testsuite
-          git diff --quiet || git commit -m "Merge commit ${{ github.sha }} into prod/testsuite-base"
+          git diff --quiet HEAD || git commit -m "Merge commit ${{ github.sha }} into prod/testsuite-base"
 
       - name: Remove existing binaries
         run: rm -rf tests/${{ matrix.suite }}/testsuite
@@ -168,5 +168,5 @@ jobs:
         shell: bash
         run: |
           git add -f tests/${{ matrix.suite }}/testsuite
-          git diff --quiet || git commit -m "Update test binaries for ${{ matrix.suite }} test suite"
+          git diff --quiet HEAD || git commit -m "Update test binaries for ${{ matrix.suite }} test suite"
           git push
