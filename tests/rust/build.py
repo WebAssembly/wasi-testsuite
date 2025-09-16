@@ -69,7 +69,8 @@ def cp_R(src, dst):
     if args.verbose:
         print(f"cp -R {src} {dst}")
     if not args.dry_run:
-        shutil.copytree(src, dst, dirs_exist_ok=True)
+        shutil.copytree(src, dst, symlinks=True, ignore_dangling_symlinks=True,
+                        dirs_exist_ok=True)
 
 def write_manifest(path, manifest):
     if args.verbose:
