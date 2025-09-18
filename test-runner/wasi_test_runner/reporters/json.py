@@ -5,7 +5,6 @@ from typing import List
 
 from . import TestReporter
 from ..test_suite import TestSuite
-from ..runtime_adapter import RuntimeVersion
 
 
 class JSONTestReporter(TestReporter):
@@ -18,13 +17,17 @@ class JSONTestReporter(TestReporter):
     def report_test_suite(self, test_suite: TestSuite) -> None:
         self._test_suites.append(test_suite)
 
-    def finalize(self, version: RuntimeVersion) -> None:
+    def finalize(self) -> None:
         results = []
 
         for suite in self._test_suites:
             results.append(
                 {
                     "name": suite.name,
+                    "runtime": {
+                        "name": suite.runtime.name,
+                        "version": suite.runtime.version
+                    },
                     "duration_s": suite.duration_s,
                     "failed": suite.fail_count,
                     "skipped": suite.skip_count,
@@ -51,7 +54,6 @@ class JSONTestReporter(TestReporter):
                         "start_timestamp": self._to_iso8601(self._start_timestamp),
                         "finish_timestamp": self._to_iso8601(datetime.utcnow())
                     },
-                    "runtime": {"name": version.name, "version": version.version},
                     "results": results,
                 },
                 file,

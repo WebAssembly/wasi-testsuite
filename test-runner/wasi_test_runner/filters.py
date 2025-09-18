@@ -4,11 +4,13 @@ from abc import abstractmethod
 
 import json
 
+from .runtime_adapter import RuntimeVersion
+
 
 class TestFilter(ABC):
     @abstractmethod
     def should_skip(
-        self, test_suite_name: str, test_name: str
+        self, runtime: RuntimeVersion, test_suite_name: str, test_name: str
     ) -> Union[Tuple[Literal[True], str], Tuple[Literal[False], Literal[None]]]:
         pass
 
@@ -19,7 +21,7 @@ class JSONTestExcludeFilter(TestFilter):
             self.filter_dict = json.load(file)
 
     def should_skip(
-        self, test_suite_name: str, test_name: str
+        self, runtime: RuntimeVersion, test_suite_name: str, test_name: str
     ) -> Union[Tuple[Literal[True], str], Tuple[Literal[False], Literal[None]]]:
         test_suite_filter = self.filter_dict.get(test_suite_name)
         if test_suite_filter is None:

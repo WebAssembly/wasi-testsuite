@@ -60,7 +60,7 @@ def main() -> int:
         filters.append(JSONTestExcludeFilter(filt))
 
     return run_all_tests(
-        RuntimeAdapter(options.runtime_adapter),
+        [RuntimeAdapter(options.runtime_adapter)],
         options.test_suite,
         validators,
         reporters,

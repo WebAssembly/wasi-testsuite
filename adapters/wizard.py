@@ -5,7 +5,7 @@ import os
 import shlex
 
 # shlex.split() splits according to shell quoting rules
-WIZARD = shlex.split(os.getenv("TEST_RUNTIME_EXE", "wizeng.x86-64-linux"))
+WIZARD = shlex.split(os.getenv("WIZARD", "wizeng.x86-64-linux"))
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--version", action="store_true")
