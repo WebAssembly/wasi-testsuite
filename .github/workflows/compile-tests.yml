@@ -36,6 +36,7 @@ jobs:
           name: assemblyscript-testsuite
           path: tests/assemblyscript/testsuite
           if-no-files-found: error
+          include-hidden-files: true
 
   build_rust:
     name: Build Rust tests
@@ -71,6 +72,7 @@ jobs:
           name: rust-testsuite
           path: tests/rust/testsuite
           if-no-files-found: error
+          include-hidden-files: true
 
   build_c:
     name: Build C tests
@@ -127,6 +129,7 @@ jobs:
           name: c-testsuite
           path: tests/c/testsuite
           if-no-files-found: error
+          include-hidden-files: true
 
   upload_test_binaries:
     if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
