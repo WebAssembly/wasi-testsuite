@@ -6,11 +6,12 @@ from ..runtime_adapter import RuntimeVersion
 
 
 class TestReporter(ABC):
-    def report_test(self, test: TestCase) -> None:
+    def report_test(self, test_suite_name: str, runtime: RuntimeVersion,
+                    test: TestCase) -> None:
         pass
 
     def report_test_suite(self, test_suite: TestSuite) -> None:
         pass
 
-    def finalize(self, version: RuntimeVersion) -> None:
+    def finalize(self) -> None:
         pass

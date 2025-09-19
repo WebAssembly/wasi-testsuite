@@ -1,17 +1,19 @@
 from typing import Any
+from pathlib import Path
 from unittest.mock import ANY, MagicMock, Mock, patch, mock_open
 
 import wasi_test_runner.test_case as tc
 import wasi_test_runner.test_suite_runner as tsr
+from wasi_test_runner.runtime_adapter import RuntimeVersion
 
 
 def get_mock_open() -> Mock:
     def open_mock(filename: str, *_args: Any, **_kwargs: Any) -> Any:
         file_content = {
             "my-path/manifest.json": '{"name": "test-suite"}',
-            "test1.json": '{"dirs": [".", "deep/dir"]}',
-            "test2.json": '{"exit_code": 1, "args": ["a", "b"]}',
-            "test3.json": '{"stdout": "output", "env": {"x": "1"}}',
+            "my-path/test1.json": '{"dirs": [".", "deep/dir"]}',
+            "my-path/test2.json": '{"exit_code": 1, "args": ["a", "b"]}',
+            "my-path/test3.json": '{"stdout": "output", "env": {"x": "1"}}',
         }
         if filename in file_content:
             return mock_open(read_data=file_content[filename]).return_value
@@ -25,7 +27,10 @@ def get_mock_open() -> Mock:
 @patch("builtins.open", get_mock_open())
 @patch("os.path.exists", Mock(return_value=True))
 def test_runner_end_to_end() -> None:
-    test_paths = ["test1.wasm", "test2.wasm", "test3.wasm"]
+    test_suite_dir = "my-path"
+    test_suite_name = "test-suite"
+    test_files = ["test1.wasm", "test2.wasm", "test3.wasm"]
+    test_paths = [Path(test_suite_dir) / f for f in test_files]
 
     failures = [tc.Failure("a", "b"), tc.Failure("x", "y"), tc.Failure("x", "z")]
 
@@ -45,15 +50,23 @@ def test_runner_end_to_end() -> None:
         tc.Config(stdout="output", env={"x": "1"}),
     ]
 
+    runtime_name = "rt1"
+    runtime_version_str = "4.2"
+    runtime_version = RuntimeVersion(runtime_name, runtime_version_str)
+
+    expected_argv = [runtime_name, "<test>"]
     expected_test_cases = [
-        tc.TestCase(test_name, config, result, ANY)
+        tc.TestCase(test_name, expected_argv, config, result, ANY)
         for config, test_name, result in zip(
             expected_config, ["test1", "test2", "test3"], expected_results
         )
     ]
 
     runtime = Mock()
+    runtime.get_name.return_value = runtime_name
+    runtime.get_version.return_value = runtime_version
     runtime.run_test.side_effect = outputs
+    runtime.compute_argv.return_value = expected_argv
 
     validators = [
         Mock(side_effect=[None, None, failures[0]]),
@@ -66,11 +79,15 @@ def test_runner_end_to_end() -> None:
     filt.should_skip.return_value = (False, None)
     filters = [filt]
 
-    with patch("glob.glob", return_value=test_paths):
-        suite = tsr.run_tests_from_test_suite("my-path", runtime, validators, reporters, filters)  # type: ignore
+    with (patch("glob.glob", return_value=[str(p) for p in test_paths]),
+          patch("wasi_test_runner.test_suite_runner._cleanup_test_output")):
+        suite = tsr.run_tests_from_test_suite(test_suite_dir, runtime,
+                                              validators,  # type: ignore
+                                              reporters,   # type: ignore
+                                              filters)     # type: ignore
 
     # Assert manifest was read correctly
-    assert suite.name == "test-suite"
+    assert suite.name == test_suite_name
 
     # Assert test cases
     assert suite.test_count == 3
@@ -79,15 +96,19 @@ def test_runner_end_to_end() -> None:
     # Assert test runner calls
     assert runtime.run_test.call_count == 3
     for test_path, config in zip(test_paths, expected_config):
-        runtime.run_test.assert_any_call(
-            test_path, config.args, config.env, config.dirs
+        expected_dirs = [(Path(test_suite_dir) / d, d) for d in config.dirs]
+        runtime.compute_argv.assert_any_call(
+            str(test_path), config.args, config.env, expected_dirs
         )
+        runtime.run_test.assert_called_with(expected_argv)
 
     # Assert reporters calls
     for reporter in reporters:
         assert reporter.report_test.call_count == 3
         for test_case in expected_test_cases:
-            reporter.report_test.assert_any_call(test_case)
+            reporter.report_test.assert_any_call(test_suite_name,
+                                                 runtime_version,
+                                                 test_case)
 
     # Assert validators calls
     for validator in validators:
@@ -99,7 +120,8 @@ def test_runner_end_to_end() -> None:
     for filt in filters:
         assert filt.should_skip.call_count == 3
         for test_case in expected_test_cases:
-            filt.should_skip.assert_any_call(suite.name, test_case.name)
+            filt.should_skip.assert_any_call(runtime_version, suite.name,
+                                             test_case.name)
 
 
 @patch("os.path.exists", Mock(return_value=False))
