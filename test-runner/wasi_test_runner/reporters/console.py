@@ -14,18 +14,26 @@ class ConsoleTestReporter(TestReporter):
     _SKIP_COLOR: str = Fore.LIGHTBLACK_EX
     _RESET_COLOR: str = Fore.RESET
 
-    def __init__(self, colored: bool = True) -> None:
+    def __init__(self, colored: bool = True, verbose: bool = False) -> None:
         super().__init__()
         init(autoreset=True)
         self._test_suites: List[TestSuite] = []
         self._current_test_suite: Optional[str] = None
         self._colored = colored
+        self._verbose = verbose
 
     def report_test(self, test_suite_name: str, runtime: RuntimeVersion,
                     test: TestCase) -> None:
         if self._current_test_suite is None:
             print(f"Running test suite {test_suite_name} with {runtime}")
             self._current_test_suite = test_suite_name
+
+        if self._verbose:
+            self._report_test_verbose(test)
+        else:
+            self._report_test_terse(test)
+
+    def _report_test_verbose(self, test: TestCase) -> None:
         if test.result.failed:
             self._print_fail(f"Test {test.name} failed")
             for reason in test.result.failures:
@@ -38,6 +46,14 @@ class ConsoleTestReporter(TestReporter):
             self._print_pass(f"Test {test.name} passed")
         else:
             self._print_skip(f"Test {test.name} skipped")
+
+    def _report_test_terse(self, test: TestCase) -> None:
+        if test.result.failed:
+            print(self._fail_colored("!"), end='')
+        elif test.result.is_executed:
+            print(self._pass_colored("."), end='')
+        else:
+            print(self._skip_colored("_"), end='')
 
     def report_test_suite(self, test_suite: TestSuite) -> None:
         self._test_suites.append(test_suite)

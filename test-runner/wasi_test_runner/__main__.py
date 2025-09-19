@@ -49,7 +49,8 @@ def main() -> int:
 
     options = parser.parse_args()
 
-    reporters: List[TestReporter] = [ConsoleTestReporter(not options.disable_colors)]
+    reporters: List[TestReporter] = [ConsoleTestReporter(not options.disable_colors,
+                                                         verbose=True)]
     if options.json_output_location:
         reporters.append(JSONTestReporter(options.json_output_location))
 

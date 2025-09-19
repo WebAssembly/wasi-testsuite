@@ -35,6 +35,12 @@ parser.add_argument(
     default=False,
     help="Disables color for console output reporter.",
 )
+parser.add_argument(
+    "--verbose",
+    action="store_true",
+    default=False,
+    help="Print more information about test results.",
+)
 
 def find_test_dirs(root):
     test_dirs = []
