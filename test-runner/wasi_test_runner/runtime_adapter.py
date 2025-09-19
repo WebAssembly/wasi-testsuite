@@ -10,51 +10,38 @@ class RuntimeVersion(NamedTuple):
     name: str
     version: str
 
+    def __str__(self) -> str:
+        return f"{self.name} {self.version}"
+
 
 class RuntimeAdapter:
     def __init__(self, adapter_path: str) -> None:
-        self._adapter_path = self._abs(adapter_path)
+        self._adapter_path = adapter_path
+        self._cached_version: RuntimeVersion | None = None
 
     def get_version(self) -> RuntimeVersion:
-        output = (
-            subprocess.check_output([sys.executable, self._adapter_path, "--version"], encoding="UTF-8")
-            .strip()
-            .split(" ")
-        )
-        return RuntimeVersion(output[0], output[1])
+        if self._cached_version is None:
+            argv = [sys.executable, self._adapter_path, "--version"]
+            result = subprocess.run(argv, encoding="UTF-8", capture_output=True,
+                                    check=True)
+            output = result.stdout.strip().split(" ")
+            self._cached_version = RuntimeVersion(output[0], output[1])
+        return self._cached_version
 
-    def run_test(
-        self,
-        test_path: str,
-        args: List[str],
-        env_variables: Dict[str, str],
-        dirs: List[str],
-    ) -> Output:
-        args = (
-            [
-                sys.executable,
-                self._adapter_path,
-                "--test-file",
-                self._abs(test_path),
-            ]
-            + [a for arg in args for a in ("--arg", arg)]
-            + [d for dir in dirs for d in ("--dir", dir)]
-            + [e for env in self._env_to_list(env_variables) for e in ("--env", env)]
-        )
+    def compute_argv(self, test_path: str, args: List[str],
+                     env_variables: Dict[str, str],
+                     dirs: List[str]) -> List[str]:
+        argv = [sys.executable, self._adapter_path]
+        argv += ["--test-file", test_path]
+        for d in dirs:
+            argv += ["--dir", f"{Path(test_path).parent / d}::{d}"]  # noqa: E231
+        for k, v in env_variables.items():
+            argv += ["--env", f"{k}={v}"]
+        for a in args:
+            argv += ["--arg", a]
+        return argv
 
-        result = subprocess.run(
-            args,
-            capture_output=True,
-            text=True,
-            check=False,
-            cwd=Path(test_path).parent,
-        )
+    def run_test(self, argv: List[str]) -> Output:
+        result = subprocess.run(argv, capture_output=True, text=True,
+                                check=False)
         return Output(result.returncode, result.stdout, result.stderr)
-
-    @staticmethod
-    def _abs(path: str) -> str:
-        return str(Path(path).absolute())
-
-    @staticmethod
-    def _env_to_list(env: Dict[str, str]) -> List[str]:
-        return [f"{key}={value}" for key, value in env.items()]

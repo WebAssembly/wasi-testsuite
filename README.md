@@ -44,32 +44,31 @@ executor is quite simple; see the [specification] document for the details and t
 5. Execute the test suites from this repository:
 
    ```bash
-   python3 test-runner/wasi_test_runner.py                                                  \
-      -t ./tests/assemblyscript/testsuite/ `# path to folders containing .wasm test files` \
-         ./tests/c/testsuite/wasm32-wasip1                                                 \
-         ./tests/rust/testsuite/                                                           \
-      -r adapters/wasmtime.py # path to a runtime adapter
+   ./run-tests
    ```
+
+By default, the test runner will detect available WASI runtimes from
+those available in [adapters/](adapters/), and will run tests on all
+available runtimes.  Pass `--runtime` to instead use a specific runtime.
+
+```
+./run-tests --runtime adapters/wasmtime.py
+```
+
+Running tests will invoke the WASI runtime's binary in a subprocess:
+`wasmtime` for `adapters/wasmtime.py`, `iwasm` for
+`adapters/wasm-micro-runtime.py`, and so on.  These binaries can be
+overridden by setting corresponding environment variables (`WASMTIME`,
+`IWASM`, etc):
+
+```
+WASMTIME="wasmtime --wasm-features all" ./run-tests
+```
 
 Optionally you can specify test cases to skip with the `--exclude-filter` option.
 
 ```bash
-python3 test-runner/wasi_test_runner.py                                                  \
-    -t ./tests/assemblyscript/testsuite/ `# path to folders containing .wasm test files` \
-       ./tests/c/testsuite/wasm32-wasip1                                                 \
-       ./tests/rust/testsuite/                                                           \
-    --exclude-filter examples/skip.json                                                  \
-    -r adapters/wasmtime.py # path to a runtime adapter
-```
-
-The default executable in the adapter used for test execution can be
-overridden using `TEST_RUNTIME_EXE` variable. This only works with adapters defined in
-[adapters/](adapters/), and might not work with 3rd party adapters.
-
-```bash
-TEST_RUNTIME_EXE="wasmtime --wasm-features all" python3 test-runner/wasi_test_runner.py                                                  \
-    -t ./tests/assemblyscript/testsuite/ \
-    -r adapters/wasmtime.py
+./run-tests --exclude-filter examples/skip.json                                                  \
 ```
 
 ## Contributing

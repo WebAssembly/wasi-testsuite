@@ -1,10 +1,12 @@
 from typing import NamedTuple, List
 from datetime import datetime
 from .test_case import TestCase
+from .runtime_adapter import RuntimeVersion
 
 
 class TestSuite(NamedTuple):
     name: str
+    runtime: RuntimeVersion
     duration_s: float
     time: datetime
     test_cases: List[TestCase]

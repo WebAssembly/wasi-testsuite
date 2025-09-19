@@ -1,0 +1,91 @@
+#!/usr/bin/env python3
+
+import argparse
+import subprocess
+import sys
+from typing import List
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent / "test-runner"))
+
+from wasi_test_runner.harness import run_tests
+from wasi_test_runner.runtime_adapter import RuntimeAdapter
+
+parser = argparse.ArgumentParser(
+    description="WASI test runner"
+)
+
+parser.add_argument(
+    "-f",
+    "--exclude-filter",
+    action="append",
+    default=[],
+    help="Path to JSON file indicating tests to exclude.",
+)
+parser.add_argument(
+    "-r", "--runtime-adapter", help="Path to a runtime adapter."
+)
+parser.add_argument(
+    "--json-output-location",
+    help="JSON test result destination. If not specified, JSON output won't be generated.",
+)
+parser.add_argument(
+    "--disable-colors",
+    action="store_true",
+    default=False,
+    help="Disables color for console output reporter.",
+)
+parser.add_argument(
+    "--verbose",
+    action="store_true",
+    default=False,
+    help="Print more information about test results.",
+)
+
+def find_test_dirs(root):
+    test_dirs = []
+    for root, dirs, files in root.walk(on_error=print):
+        if "manifest.json" in files:
+            test_dirs.append(root)
+    return test_dirs
+
+def find_runtime_adapters(root, verbose=False):
+    print(f"Detecting WASI runtime availability:")
+    adapters = []
+    for candidate in root.glob("*.py"):
+        adapter = RuntimeAdapter(candidate)
+        try:
+            print(f"  {candidate.name}: {adapter.get_version()}")
+            adapters.append(adapter)
+        except subprocess.CalledProcessError as e:
+            print(f"  {candidate.name}: unavailable; pass `--runtime {candidate}` to debug.")
+    print("")
+    if len(adapters) == 0:
+        print("Error: No WASI runtimes found")
+        sys.exit(1)
+    return adapters
+
+options = parser.parse_args()
+test_suite = find_test_dirs(Path(__file__).parent / "tests")
+if options.runtime_adapter:
+    runtime_adapters = [RuntimeAdapter(options.runtime_adapter)]
+    # Ensure it works.
+    try:
+        runtime_adapters[0].get_version()
+    except subprocess.CalledProcessError as e:
+        print(f"Error: failed to load {options.runtime_adapter}:")
+        print(f"  Failed command line: {' '.join(e.cmd)}")
+        if e.stdout.strip() != "":
+            print(f"  stdout:\n{e.stdout}")
+        if e.stderr.strip() != "":
+            print(f"  stderr:\n{e.stderr}")
+        sys.exit(1)
+else:
+    runtime_adapters = find_runtime_adapters(Path(__file__).parent / "adapters")
+
+exclude_filters = [JSONTestExcludeFilter(filt) for filt in options.exclude_filter]
+
+sys.exit(run_tests(runtime_adapters, test_suite,
+                   color=not options.disable_colors,
+                   json_log_file=options.json_output_location,
+                   exclude_filters=exclude_filters))

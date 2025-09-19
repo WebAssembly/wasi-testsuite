@@ -3,6 +3,7 @@ from unittest.mock import ANY, MagicMock, Mock, patch, mock_open
 
 import wasi_test_runner.test_case as tc
 import wasi_test_runner.test_suite_runner as tsr
+from wasi_test_runner.runtime_adapter import RuntimeVersion
 
 
 def get_mock_open() -> Mock:
@@ -45,15 +46,23 @@ def test_runner_end_to_end() -> None:
         tc.Config(stdout="output", env={"x": "1"}),
     ]
 
+    runtime_name = "rt1"
+    runtime_version_str = "4.2"
+    runtime_version = RuntimeVersion(runtime_name, runtime_version_str)
+
+    expected_argv = [runtime_name, "<test>"]
     expected_test_cases = [
-        tc.TestCase(test_name, config, result, ANY)
+        tc.TestCase(test_name, expected_argv, config, result, ANY)
         for config, test_name, result in zip(
             expected_config, ["test1", "test2", "test3"], expected_results
         )
     ]
 
     runtime = Mock()
+    runtime.get_name.return_value = runtime_name
+    runtime.get_version.return_value = runtime_version
     runtime.run_test.side_effect = outputs
+    runtime.compute_argv.return_value = expected_argv
 
     validators = [
         Mock(side_effect=[None, None, failures[0]]),
@@ -66,11 +75,16 @@ def test_runner_end_to_end() -> None:
     filt.should_skip.return_value = (False, None)
     filters = [filt]
 
+    test_suite_dir = "my-path"
+    test_suite_name = "test-suite"
     with patch("glob.glob", return_value=test_paths):
-        suite = tsr.run_tests_from_test_suite("my-path", runtime, validators, reporters, filters)  # type: ignore
+        suite = tsr.run_tests_from_test_suite(test_suite_dir, runtime,
+                                              validators,  # type: ignore
+                                              reporters,   # type: ignore
+                                              filters)     # type: ignore
 
     # Assert manifest was read correctly
-    assert suite.name == "test-suite"
+    assert suite.name == test_suite_name
 
     # Assert test cases
     assert suite.test_count == 3
@@ -79,15 +93,18 @@ def test_runner_end_to_end() -> None:
     # Assert test runner calls
     assert runtime.run_test.call_count == 3
     for test_path, config in zip(test_paths, expected_config):
-        runtime.run_test.assert_any_call(
+        runtime.compute_argv.assert_any_call(
             test_path, config.args, config.env, config.dirs
         )
+        runtime.run_test.assert_called_with(expected_argv)
 
     # Assert reporters calls
     for reporter in reporters:
         assert reporter.report_test.call_count == 3
         for test_case in expected_test_cases:
-            reporter.report_test.assert_any_call(test_case)
+            reporter.report_test.assert_any_call(test_suite_name,
+                                                 runtime_version,
+                                                 test_case)
 
     # Assert validators calls
     for validator in validators:
@@ -99,7 +116,8 @@ def test_runner_end_to_end() -> None:
     for filt in filters:
         assert filt.should_skip.call_count == 3
         for test_case in expected_test_cases:
-            filt.should_skip.assert_any_call(suite.name, test_case.name)
+            filt.should_skip.assert_any_call(runtime_version, suite.name,
+                                             test_case.name)
 
 
 @patch("os.path.exists", Mock(return_value=False))
