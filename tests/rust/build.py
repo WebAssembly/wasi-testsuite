@@ -65,7 +65,23 @@ def cp(src, dst):
     if not args.dry_run:
         shutil.copy(src, dst)
 
+def rm_rf(dst):
+    if args.verbose:
+        print(f"rm -rf {dst}")
+    if not args.dry_run:
+        if dst.exists():
+            if dst.is_dir():
+                shutil.rmtree(dst)
+            else:
+                dst.unlink()
+
+ALREADY_COPIED = {}
 def cp_R(src, dst):
+    if src in ALREADY_COPIED:
+        return
+    else:
+        ALREADY_COPIED[src] = dst
+    rm_rf(dst)
     if args.verbose:
         print(f"cp -R {src} {dst}")
     if not args.dry_run:
