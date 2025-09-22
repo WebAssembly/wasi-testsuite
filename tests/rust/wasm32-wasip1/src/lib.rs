@@ -175,3 +175,11 @@ macro_rules! assert_errno {
         }
     };
 }
+
+pub unsafe fn supports_rights(fd: wasi::Fd) -> bool {
+    let fd_stat = wasi::fd_fdstat_get(fd).expect("fd_fdstat_get failed");
+    match wasi::fd_fdstat_set_rights(fd, fd_stat.fs_rights_base, fd_stat.fs_rights_inheriting) {
+        Err(wasi::ERRNO_NOTSUP) => false,
+        _ => true,
+    }
+}
