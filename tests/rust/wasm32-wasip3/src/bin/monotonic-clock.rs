@@ -5,15 +5,12 @@ wit_bindgen::generate!({
   package test:test;
 
   world test {
-      include wasi:clocks/imports@0.3.0-rc-2025-08-15;
-      include wasi:cli/command@0.3.0-rc-2025-08-15;
+      include wasi:clocks/imports@0.3.0-rc-2025-09-16;
+      include wasi:cli/command@0.3.0-rc-2025-09-16;
   }
 ",
     // Work around https://github.com/bytecodealliance/wasm-tools/issues/2285.
     features:["clocks-timezone"],
-    async: [
-        "wasi:cli/run@0.3.0-rc-2025-08-15#run",
-    ],
     generate_all
 });
 
