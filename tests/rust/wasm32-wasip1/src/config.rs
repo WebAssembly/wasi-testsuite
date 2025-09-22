@@ -2,6 +2,7 @@ pub struct TestConfig {
     errno_mode: ErrnoMode,
     no_dangling_filesystem: bool,
     no_rename_dir_to_empty_dir: bool,
+    no_filesystem_rights: bool,
 }
 
 enum ErrnoMode {
@@ -24,11 +25,13 @@ impl TestConfig {
         };
         let no_dangling_filesystem = std::env::var("NO_DANGLING_FILESYSTEM").is_ok();
         let no_rename_dir_to_empty_dir = std::env::var("NO_RENAME_DIR_TO_EMPTY_DIR").is_ok();
+        let no_filesystem_rights = std::env::var("NO_FILESYSTEM_RIGHTS").is_ok();
 
         TestConfig {
             errno_mode,
             no_dangling_filesystem,
             no_rename_dir_to_empty_dir,
+            no_filesystem_rights,
         }
     }
     pub fn errno_expect_unix(&self) -> bool {
@@ -54,5 +57,8 @@ impl TestConfig {
     }
     pub fn support_rename_dir_to_empty_dir(&self) -> bool {
         !self.no_rename_dir_to_empty_dir
+    }
+    pub fn support_filesystem_rights(&self) -> bool {
+        !self.no_filesystem_rights
     }
 }

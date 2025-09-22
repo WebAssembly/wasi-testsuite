@@ -1,6 +1,6 @@
 use std::{env, process};
 use wasi_tests::{
-    assert_errno, create_file, create_tmp_dir, open_scratch_directory, supports_rights, TESTCONFIG,
+    assert_errno, create_file, create_tmp_dir, open_scratch_directory, TESTCONFIG,
 };
 
 const TEST_RIGHTS: wasi::Rights = wasi::RIGHTS_FD_READ
@@ -45,7 +45,7 @@ fn filestats_assert_eq(left: wasi::Filestat, right: wasi::Filestat) {
 
 // This is temporary until `wasi` implements `Debug` and `PartialEq` for
 // `wasi::Fdstat`.
-fn fdstats_assert_eq(left: wasi::Fdstat, right: wasi::Fdstat, supports_rights: bool) {
+fn fdstats_assert_eq(left: wasi::Fdstat, right: wasi::Fdstat) {
     assert_eq!(left.fs_flags, right.fs_flags, "fs_flags should be equal");
     assert_eq!(
         left.fs_filetype, right.fs_filetype,
@@ -53,7 +53,7 @@ fn fdstats_assert_eq(left: wasi::Fdstat, right: wasi::Fdstat, supports_rights: b
     );
 
     // Only tests rights if the host in general supports rights.
-    if supports_rights {
+    if TESTCONFIG.support_filesystem_rights() {
         assert_eq!(
             left.fs_rights_base, right.fs_rights_base,
             "fs_rights_base should be equal"
@@ -74,7 +74,7 @@ unsafe fn check_rights(orig_fd: wasi::Fd, link_fd: wasi::Fd) {
     // Compare Fdstats
     let orig_fdstat = wasi::fd_fdstat_get(orig_fd).expect("reading fdstat of the source");
     let link_fdstat = wasi::fd_fdstat_get(link_fd).expect("reading fdstat of the link");
-    fdstats_assert_eq(orig_fdstat, link_fdstat, supports_rights(orig_fd));
+    fdstats_assert_eq(orig_fdstat, link_fdstat);
 }
 
 // Extra calls of fd_close are needed for Windows, which will not remove
