@@ -1,6 +1,6 @@
 import argparse
 import sys
-from typing import List
+from typing import List, Optional
 
 
 from .runtime_adapter import RuntimeAdapter
@@ -11,6 +11,7 @@ from .reporters import TestReporter
 from .reporters.console import ConsoleTestReporter
 from .reporters.json import JSONTestReporter
 from .validators import exit_code_validator, stdout_validator, Validator
+from .override import ConfigOverride, JSONConfigOverride
 
 
 def main() -> int:
@@ -46,6 +47,11 @@ def main() -> int:
         default=False,
         help="Disables color for console output reporter.",
     )
+    parser.add_argument(
+        "--config-override",
+        required=False,
+        help="Location of JSON file containing overrides for the config used for each test",
+    )
 
     options = parser.parse_args()
 
@@ -59,12 +65,17 @@ def main() -> int:
     for filt in options.exclude_filter:
         filters.append(JSONTestExcludeFilter(filt))
 
+    override: Optional[ConfigOverride] = None
+    if options.config_override:
+        override = JSONConfigOverride(options.config_override)
+
     return run_all_tests(
         RuntimeAdapter(options.runtime_adapter),
         options.test_suite,
         validators,
         reporters,
         filters,
+        override,
     )
 
 
