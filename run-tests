@@ -9,7 +9,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / "test-runner"))
 
 from wasi_test_runner.harness import run_tests
-from wasi_test_runner.runtime_adapter import RuntimeAdapter
+from wasi_test_runner import runtime_adapter
 
 parser = argparse.ArgumentParser(
     description="WASI test runner"
@@ -42,7 +42,9 @@ parser.add_argument(
     help="Print more information about test results.",
 )
 
-def find_test_dirs(root):
+def find_test_dirs():
+    root = Path(__file__).parent / "tests"
+    root = root.relative_to(Path('.').absolute(), walk_up=True)
     test_dirs = []
     for root, dirs, files in root.walk(on_error=print):
         if "manifest.json" in files:
@@ -53,12 +55,14 @@ def find_runtime_adapters(root, verbose=False):
     print(f"Detecting WASI runtime availability:")
     adapters = []
     for candidate in root.glob("*.py"):
-        adapter = RuntimeAdapter(candidate)
         try:
+            adapter = runtime_adapter.RuntimeAdapter(candidate)
             print(f"  {candidate.name}: {adapter.get_version()}")
             adapters.append(adapter)
-        except subprocess.CalledProcessError as e:
-            print(f"  {candidate.name}: unavailable; pass `--runtime {candidate}` to debug.")
+        except runtime_adapter.LegacyRuntimeAdapterError:
+            print(f"  {candidate} is too old; update to new module format.")
+        except runtime_adapter.UnavailableRuntimeAdapterError:
+            print(f"  {candidate.name} unavailable; pass `--runtime {candidate}` to debug.")
     print("")
     if len(adapters) == 0:
         print("Error: No WASI runtimes found")
@@ -66,19 +70,17 @@ def find_runtime_adapters(root, verbose=False):
     return adapters
 
 options = parser.parse_args()
-test_suite = find_test_dirs(Path(__file__).parent / "tests")
+test_suite = find_test_dirs()
 if options.runtime_adapter:
-    runtime_adapters = [RuntimeAdapter(options.runtime_adapter)]
-    # Ensure it works.
     try:
-        runtime_adapters[0].get_version()
-    except subprocess.CalledProcessError as e:
-        print(f"Error: failed to load {options.runtime_adapter}:")
-        print(f"  Failed command line: {' '.join(e.cmd)}")
-        if e.stdout.strip() != "":
-            print(f"  stdout:\n{e.stdout}")
-        if e.stderr.strip() != "":
-            print(f"  stderr:\n{e.stderr}")
+        runtime_adapters = [
+            runtime_adapter.RuntimeAdapter(options.runtime_adapter)
+        ]
+    except runtime_adapter.LegacyRuntimeAdapterError as e:
+        print(f"Error: {e.adapter_path} is too old; update to new module format.")
+        sys.exit(1)
+    except runtime_adapter.UnavailableRuntimeAdapterError as e:
+        print(f"Error: failed to load {e.adapter_path}: {e.error}")
         sys.exit(1)
 else:
     runtime_adapters = find_runtime_adapters(Path(__file__).parent / "adapters")

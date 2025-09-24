@@ -1,4 +1,5 @@
 from typing import Any
+from pathlib import Path
 from unittest.mock import ANY, MagicMock, Mock, patch, mock_open
 
 import wasi_test_runner.test_case as tc
@@ -10,9 +11,9 @@ def get_mock_open() -> Mock:
     def open_mock(filename: str, *_args: Any, **_kwargs: Any) -> Any:
         file_content = {
             "my-path/manifest.json": '{"name": "test-suite"}',
-            "test1.json": '{"dirs": [".", "deep/dir"]}',
-            "test2.json": '{"exit_code": 1, "args": ["a", "b"]}',
-            "test3.json": '{"stdout": "output", "env": {"x": "1"}}',
+            "my-path/test1.json": '{"dirs": [".", "deep/dir"]}',
+            "my-path/test2.json": '{"exit_code": 1, "args": ["a", "b"]}',
+            "my-path/test3.json": '{"stdout": "output", "env": {"x": "1"}}',
         }
         if filename in file_content:
             return mock_open(read_data=file_content[filename]).return_value
@@ -26,7 +27,10 @@ def get_mock_open() -> Mock:
 @patch("builtins.open", get_mock_open())
 @patch("os.path.exists", Mock(return_value=True))
 def test_runner_end_to_end() -> None:
-    test_paths = ["test1.wasm", "test2.wasm", "test3.wasm"]
+    test_suite_dir = "my-path"
+    test_suite_name = "test-suite"
+    test_files = ["test1.wasm", "test2.wasm", "test3.wasm"]
+    test_paths = [Path(test_suite_dir) / f for f in test_files]
 
     failures = [tc.Failure("a", "b"), tc.Failure("x", "y"), tc.Failure("x", "z")]
 
@@ -75,9 +79,8 @@ def test_runner_end_to_end() -> None:
     filt.should_skip.return_value = (False, None)
     filters = [filt]
 
-    test_suite_dir = "my-path"
-    test_suite_name = "test-suite"
-    with patch("glob.glob", return_value=test_paths):
+    with (patch("glob.glob", return_value=[str(p) for p in test_paths]),
+          patch("wasi_test_runner.test_suite_runner._cleanup_test_output")):
         suite = tsr.run_tests_from_test_suite(test_suite_dir, runtime,
                                               validators,  # type: ignore
                                               reporters,   # type: ignore
@@ -93,8 +96,9 @@ def test_runner_end_to_end() -> None:
     # Assert test runner calls
     assert runtime.run_test.call_count == 3
     for test_path, config in zip(test_paths, expected_config):
+        expected_dirs = [(Path(test_suite_dir) / d, d) for d in config.dirs]
         runtime.compute_argv.assert_any_call(
-            test_path, config.args, config.env, config.dirs
+            str(test_path), config.args, config.env, expected_dirs
         )
         runtime.run_test.assert_called_with(expected_argv)
 
