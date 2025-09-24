@@ -9,7 +9,7 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        runtime: [wasmtime, wasm-micro-runtime, wazero, wasmedge, pywasm-runtime]
+        runtime: [wasmtime, wasm-micro-runtime, wazero, wasmedge, pywasm]
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
@@ -62,10 +62,9 @@ jobs:
           cp .github/wasi_testsuite_adapter.py ../adapters/wazero.py
 
       - name: Install pywasm
-        if: matrix.runtime == 'pywasm-runtime'
+        if: matrix.runtime == 'pywasm
         run: |
           pip install pywasm
-          wget -O ./adapters/pywasm-runtime.py https://raw.githubusercontent.com/mohanson/pywasm/refs/heads/master/script/wasi_testsuite_adapter.py
 
       - name: Get current timestamp
         run: echo "date=$(date +'%Y-%m-%d_%H_%M')" >> $GITHUB_ENV
