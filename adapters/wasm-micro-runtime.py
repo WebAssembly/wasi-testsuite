@@ -5,7 +5,7 @@ import os
 import shlex
 
 # shlex.split() splits according to shell quoting rules
-IWASM = shlex.split(os.getenv("TEST_RUNTIME_EXE", "iwasm"))
+IWASM = shlex.split(os.getenv("IWASM", "iwasm"))
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--version", action="store_true")
@@ -23,7 +23,7 @@ if args.version:
 TEST_FILE = args.test_file
 PROG_ARGS = args.arg
 ENV_ARGS = [f"--env={i}" for i in args.env]
-DIR_ARGS = [f"--dir={i}" for i in args.dir]
+DIR_ARGS = [f"--map-dir={i}" for i in args.dir]
 
 r = subprocess.run(IWASM + ENV_ARGS + DIR_ARGS + [TEST_FILE] + PROG_ARGS)
 sys.exit(r.returncode)

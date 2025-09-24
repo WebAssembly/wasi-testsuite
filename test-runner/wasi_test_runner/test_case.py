@@ -62,6 +62,7 @@ class Config(NamedTuple):
 
 class TestCase(NamedTuple):
     name: str
+    argv: List[str]
     config: Config
     result: Result
     duration_s: float
