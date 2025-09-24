@@ -59,7 +59,7 @@ jobs:
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
       - name: Install pywasm
-        if: matrix.runtime == 'pywasm
+        if: matrix.runtime == 'pywasm'
         run: |
           pip install pywasm
 
