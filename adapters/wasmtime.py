@@ -5,7 +5,7 @@ import os
 import shlex
 
 # shlex.split() splits according to shell quoting rules
-WASMTIME = shlex.split(os.getenv("TEST_RUNTIME_EXE", "wasmtime"))
+WASMTIME = shlex.split(os.getenv("WASMTIME", "wasmtime"))
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--version", action="store_true")
