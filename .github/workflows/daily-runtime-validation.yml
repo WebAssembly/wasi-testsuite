@@ -49,8 +49,6 @@ jobs:
         run: |
           curl -sSf https://raw.githubusercontent.com/WasmEdge/WasmEdge/master/utils/install.sh | bash  -s -- -p ./wasmedge-install
           echo "$GITHUB_WORKSPACE/wasmedge-install/bin/" >> $GITHUB_PATH
-          git clone https://github.com/WasmEdge/WasmEdge.git
-          cp WasmEdge/.github/scripts/wasi-testsuite-adapter.py ./adapters/wasmedge.py
 
       - name: Install wazero
         if: matrix.runtime == 'wazero'
