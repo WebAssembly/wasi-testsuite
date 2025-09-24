@@ -1,29 +1,35 @@
-import argparse
 import subprocess
-import sys
 import os
 import shlex
+from pathlib import Path
+from typing import Dict, List, Tuple
 
 # shlex.split() splits according to shell quoting rules
 IWASM = shlex.split(os.getenv("IWASM", "iwasm"))
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--version", action="store_true")
-parser.add_argument("--test-file", action="store")
-parser.add_argument("--arg", action="append", default=[])
-parser.add_argument("--env", action="append", default=[])
-parser.add_argument("--dir", action="append", default=[])
 
-args = parser.parse_args()
+def get_name() -> str:
+    return "wamr"
 
-if args.version:
-    subprocess.run(IWASM + ["--version"])
-    sys.exit(0)
 
-TEST_FILE = args.test_file
-PROG_ARGS = args.arg
-ENV_ARGS = [f"--env={i}" for i in args.env]
-DIR_ARGS = [f"--map-dir={i}" for i in args.dir]
+def get_version() -> str:
+    # ensure no args when version is queried
+    result = subprocess.run(IWASM + ["--version"],
+                            encoding="UTF-8", capture_output=True,
+                            check=True)
+    output = result.stdout.splitlines()[0].split(" ")
+    return output[1]
 
-r = subprocess.run(IWASM + ENV_ARGS + DIR_ARGS + [TEST_FILE] + PROG_ARGS)
-sys.exit(r.returncode)
+
+def compute_argv(test_path: str,
+                 args: List[str],
+                 env: Dict[str, str],
+                 dirs: List[Tuple[Path, str]]) -> List[str]:
+    argv = [] + IWASM
+    for k, v in env.items():
+        argv += ["--env", f"{k}={v}"]
+    for host, guest in dirs:
+        argv += ["--map-dir", f"{host}::{guest}"]  # noqa: E231
+    argv += [test_path]
+    argv += args
+    return argv
