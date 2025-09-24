@@ -6,7 +6,7 @@ from typing import List
 from .runtime_adapter import RuntimeAdapter
 from .harness import run_all_tests
 from .filters import TestFilter
-from .filters import JSONTestExcludeFilter
+from .filters import JSONTestExcludeFilter, UnsupportedWasiTestExcludeFilter
 from .reporters import TestReporter
 from .reporters.console import ConsoleTestReporter
 from .reporters.json import JSONTestReporter
@@ -56,7 +56,7 @@ def main() -> int:
 
     validators: List[Validator] = [exit_code_validator, stdout_validator]
 
-    filters: List[TestFilter] = []
+    filters: List[TestFilter] = [UnsupportedWasiTestExcludeFilter()]
     for filt in options.exclude_filter:
         filters.append(JSONTestExcludeFilter(filt))
 

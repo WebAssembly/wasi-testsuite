@@ -4,12 +4,13 @@ import sys
 from pathlib import Path
 from typing import Dict, NamedTuple, List, Tuple, Any
 
-from .test_case import Output
+from .test_case import Output, WasiVersion
 
 
-class RuntimeVersion(NamedTuple):
+class RuntimeMeta(NamedTuple):
     name: str
     version: str
+    supported_wasi_versions: frozenset[WasiVersion]
 
     def __str__(self) -> str:
         return f"{self.name} {self.version}"
@@ -79,22 +80,31 @@ class RuntimeAdapter:
         try:
             name = self._adapter.get_name()
             version = self._adapter.get_version()
+            wasi_versions = frozenset(
+                WasiVersion(v) for v in self._adapter.get_wasi_versions()
+            )
         except subprocess.CalledProcessError as e:
             raise UnavailableRuntimeAdapterError(adapter_path, e) from e
         except FileNotFoundError as e:
             raise UnavailableRuntimeAdapterError(adapter_path, e) from e
-        self._version = RuntimeVersion(name, version)
+        self._meta = RuntimeMeta(name, version, wasi_versions)
 
-    def get_version(self) -> RuntimeVersion:
-        return self._version
+    def get_meta(self) -> RuntimeMeta:
+        return self._meta
 
     def compute_argv(self, test_path: str, args: List[str],
                      env_variables: Dict[str, str],
-                     dirs: List[Tuple[Path, str]]) -> List[str]:
+                     dirs: List[Tuple[Path, str]],
+                     wasi_version: WasiVersion) -> List[str]:
+        # too-many-positional-arguments is a post-3.0 pylint message.
+        # pylint: disable-msg=unknown-option-value
+        # pylint: disable-msg=too-many-arguments
+        # pylint: disable-msg=too-many-positional-arguments
         argv = self._adapter.compute_argv(test_path=test_path,
                                           args=args,
                                           env=env_variables,
-                                          dirs=dirs)
+                                          dirs=dirs,
+                                          wasi_version=wasi_version.value)
         assert isinstance(argv, list)
         assert all(isinstance(arg, str) for arg in argv)
         return argv

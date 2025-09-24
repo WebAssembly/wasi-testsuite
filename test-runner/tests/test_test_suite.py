@@ -2,7 +2,7 @@ from datetime import datetime
 
 import wasi_test_runner.test_case as tc
 import wasi_test_runner.test_suite as ts
-from wasi_test_runner.runtime_adapter import RuntimeVersion
+from wasi_test_runner.runtime_adapter import RuntimeMeta
 
 
 def create_test_case(name: str, is_executed: bool, is_failed: bool) -> tc.TestCase:
@@ -18,8 +18,10 @@ def create_test_case(name: str, is_executed: bool, is_failed: bool) -> tc.TestCa
 
 def test_test_suite_should_return_correct_count() -> None:
     suite = ts.TestSuite(
-        "suite",
-        RuntimeVersion("test-runtime", "3.14"),
+        ts.TestSuiteMeta("suite",
+                         tc.WasiVersion.WASM32_WASIP1,
+                         RuntimeMeta("test-runtime", "3.14",
+                                     frozenset([tc.WasiVersion.WASM32_WASIP1]))),
         10.0,
         datetime.now(),
         [

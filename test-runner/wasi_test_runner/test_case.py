@@ -1,6 +1,13 @@
 import logging
 import json
+from enum import StrEnum
 from typing import List, NamedTuple, TypeVar, Type, Dict, Any, Optional
+
+
+class WasiVersion(StrEnum):
+    WASM32_WASIP1 = 'wasm32-wasip1'
+    WASM32_WASIP2 = 'wasm32-wasip2'
+    WASM32_WASIP3 = 'wasm32-wasip3'
 
 
 class Output(NamedTuple):

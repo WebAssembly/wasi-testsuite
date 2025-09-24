@@ -23,10 +23,10 @@ class JSONTestReporter(TestReporter):
         for suite in self._test_suites:
             results.append(
                 {
-                    "name": suite.name,
+                    "name": suite.meta.name,
                     "runtime": {
-                        "name": suite.runtime.name,
-                        "version": suite.runtime.version
+                        "name": suite.meta.runtime.name,
+                        "version": suite.meta.runtime.version
                     },
                     "duration_s": suite.duration_s,
                     "failed": suite.fail_count,

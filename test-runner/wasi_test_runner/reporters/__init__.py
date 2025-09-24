@@ -1,13 +1,11 @@
 from abc import ABC
 
 from ..test_case import TestCase
-from ..test_suite import TestSuite
-from ..runtime_adapter import RuntimeVersion
+from ..test_suite import TestSuite, TestSuiteMeta
 
 
 class TestReporter(ABC):
-    def report_test(self, test_suite_name: str, runtime: RuntimeVersion,
-                    test: TestCase) -> None:
+    def report_test(self, meta: TestSuiteMeta, test: TestCase) -> None:
         pass
 
     def report_test_suite(self, test_suite: TestSuite) -> None:
