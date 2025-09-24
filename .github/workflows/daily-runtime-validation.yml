@@ -57,7 +57,6 @@ jobs:
           cd wazero
           go install ./cmd/wazero
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
-          cp .github/wasi_testsuite_adapter.py ../adapters/wazero.py
 
       - name: Install pywasm
         if: matrix.runtime == 'pywasm
