@@ -1,0 +1,29 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import sys
+
+import pywasm
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--version', '-v', action='version', version=f'pywasm {pywasm.version}')
+parser.add_argument('--env', action='append', default=[])
+parser.add_argument('--dir', action='append', default=[])
+parser.add_argument('file', help='wasm file to run')
+parser.add_argument('args', nargs='*', help='arg ...')
+
+args = parser.parse_args()
+
+wasi_args = [os.path.basename(args.file)] + args.args,
+wasi_dirs = {}
+for mapping in args.dir:
+    host, guest = mapping.split('::')
+    wasi_dirs[guest] = host
+wasi_envs = dict([kv.split('=') for kv in args.env])
+runtime = pywasm.core.Runtime()
+wasi = pywasm.wasi.Preview1(wasi_args, wasi_dirs, wasi_envs)
+wasi.bind(runtime)
+instance = runtime.instance_from_file(args.file)
+exit = wasi.main(runtime, instance)
+sys.exit(exit)
