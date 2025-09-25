@@ -1,12 +1,17 @@
 from typing import NamedTuple, List
 from datetime import datetime
-from .test_case import TestCase
-from .runtime_adapter import RuntimeVersion
+from .test_case import TestCase, WasiVersion
+from .runtime_adapter import RuntimeMeta
+
+
+class TestSuiteMeta(NamedTuple):
+    name: str
+    wasi_version: WasiVersion
+    runtime: RuntimeMeta
 
 
 class TestSuite(NamedTuple):
-    name: str
-    runtime: RuntimeVersion
+    meta: TestSuiteMeta
     duration_s: float
     time: datetime
     test_cases: List[TestCase]

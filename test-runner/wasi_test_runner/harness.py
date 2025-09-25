@@ -1,7 +1,9 @@
 from typing import List
 from pathlib import Path
 
-from .filters import TestFilter, JSONTestExcludeFilter
+from .filters import (
+    TestFilter, JSONTestExcludeFilter, UnsupportedWasiTestExcludeFilter
+)
 from .reporters import TestReporter
 from .reporters.console import ConsoleTestReporter
 from .reporters.json import JSONTestReporter
@@ -19,9 +21,9 @@ def run_tests(runtimes: List[RuntimeAdapter],
     reporters: List[TestReporter] = [ConsoleTestReporter(color)]
     if json_log_file:
         reporters.append(JSONTestReporter(json_log_file))
-    filters: List[TestFilter] = []
+    filters: List[TestFilter] = [UnsupportedWasiTestExcludeFilter()]
     if exclude_filters is not None:
-        filters = [JSONTestExcludeFilter(str(filt)) for filt in exclude_filters]
+        filters += [JSONTestExcludeFilter(str(filt)) for filt in exclude_filters]
 
     return run_all_tests(runtimes, [str(p) for p in test_suite_paths],
                          validators, reporters, filters)

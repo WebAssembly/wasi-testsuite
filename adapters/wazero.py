@@ -23,10 +23,15 @@ def get_version() -> str:
     return version
 
 
+def get_wasi_versions() -> List[str]:
+    return ["wasm32-wasip1"]
+
+
 def compute_argv(test_path: str,
                  args: List[str],
                  env: Dict[str, str],
-                 dirs: List[Tuple[Path, str]]) -> List[str]:
+                 dirs: List[Tuple[Path, str]],
+                 wasi_version: str) -> List[str]:
     argv = WAZERO + ["run", "-hostlogging=filesystem"]
     for k, v in env.items():
         argv += [f"-env={k}={v}"]
