@@ -4,8 +4,8 @@ from colorama import Fore, init
 
 from . import TestReporter
 from ..test_case import TestCase
-from ..test_suite import TestSuite
-from ..runtime_adapter import RuntimeVersion
+from ..test_suite import TestSuite, TestSuiteMeta
+from ..runtime_adapter import RuntimeMeta
 
 
 class ConsoleTestReporter(TestReporter):
@@ -18,15 +18,14 @@ class ConsoleTestReporter(TestReporter):
         super().__init__()
         init(autoreset=True)
         self._test_suites: List[TestSuite] = []
-        self._current_test_suite: Optional[str] = None
+        self._current_test_suite: Optional[TestSuiteMeta] = None
         self._colored = colored
         self._verbose = verbose
 
-    def report_test(self, test_suite_name: str, runtime: RuntimeVersion,
-                    test: TestCase) -> None:
+    def report_test(self, meta: TestSuiteMeta, test: TestCase) -> None:
         if self._current_test_suite is None:
-            print(f"Running test suite {test_suite_name} with {runtime}")
-            self._current_test_suite = test_suite_name
+            print(f"Running test suite {meta.name} with {meta.runtime}")
+            self._current_test_suite = meta
 
         if self._verbose:
             self._report_test_verbose(test)
@@ -63,16 +62,16 @@ class ConsoleTestReporter(TestReporter):
     def finalize(self) -> None:
         print("===== Test results =====")
 
-        test_suites_by_runtime: Dict[RuntimeVersion, List[TestSuite]] = {}
+        test_suites_by_runtime: Dict[RuntimeMeta, List[TestSuite]] = {}
         for suite in self._test_suites:
-            if suite.runtime not in test_suites_by_runtime:
-                test_suites_by_runtime[suite.runtime] = []
-            test_suites_by_runtime[suite.runtime].append(suite)
+            if suite.meta.runtime not in test_suites_by_runtime:
+                test_suites_by_runtime[suite.meta.runtime] = []
+            test_suites_by_runtime[suite.meta.runtime].append(suite)
 
         for runtime, test_suites in test_suites_by_runtime.items():
             self._print_result_for_runtime(runtime, test_suites)
 
-    def _print_result_for_runtime(self, runtime: RuntimeVersion,
+    def _print_result_for_runtime(self, runtime: RuntimeMeta,
                                   suites: List[TestSuite]) -> None:
         total_skip = total_pass = total_fail = 0
 

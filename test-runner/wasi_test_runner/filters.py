@@ -4,15 +4,24 @@ from abc import abstractmethod
 
 import json
 
-from .runtime_adapter import RuntimeVersion
+from .test_suite import TestSuiteMeta
 
 
 class TestFilter(ABC):
     @abstractmethod
     def should_skip(
-        self, runtime: RuntimeVersion, test_suite_name: str, test_name: str
+        self, meta: TestSuiteMeta, test_name: str
     ) -> Union[Tuple[Literal[True], str], Tuple[Literal[False], Literal[None]]]:
         pass
+
+
+class UnsupportedWasiTestExcludeFilter(TestFilter):
+    def should_skip(
+        self, meta: TestSuiteMeta, test_name: str
+    ) -> Union[Tuple[Literal[True], str], Tuple[Literal[False], Literal[None]]]:
+        if meta.wasi_version not in meta.runtime.supported_wasi_versions:
+            return True, "WASI version unsupported by runtime"
+        return False, None
 
 
 class JSONTestExcludeFilter(TestFilter):
@@ -21,9 +30,9 @@ class JSONTestExcludeFilter(TestFilter):
             self.filter_dict = json.load(file)
 
     def should_skip(
-        self, runtime: RuntimeVersion, test_suite_name: str, test_name: str
+        self, meta: TestSuiteMeta, test_name: str
     ) -> Union[Tuple[Literal[True], str], Tuple[Literal[False], Literal[None]]]:
-        test_suite_filter = self.filter_dict.get(test_suite_name)
+        test_suite_filter = self.filter_dict.get(meta.name)
         if test_suite_filter is None:
             return False, None
         why = test_suite_filter.get(test_name)

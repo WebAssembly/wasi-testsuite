@@ -57,7 +57,7 @@ def find_runtime_adapters(root, verbose=False):
     for candidate in root.glob("*.py"):
         try:
             adapter = runtime_adapter.RuntimeAdapter(candidate)
-            print(f"  {candidate.name}: {adapter.get_version()}")
+            print(f"  {candidate.name}: {adapter.get_meta()}")
             adapters.append(adapter)
         except runtime_adapter.LegacyRuntimeAdapterError:
             print(f"  {candidate} is too old; update to new module format.")
@@ -85,9 +85,7 @@ if options.runtime_adapter:
 else:
     runtime_adapters = find_runtime_adapters(Path(__file__).parent / "adapters")
 
-exclude_filters = [JSONTestExcludeFilter(filt) for filt in options.exclude_filter]
-
 sys.exit(run_tests(runtime_adapters, test_suite,
                    color=not options.disable_colors,
                    json_log_file=options.json_output_location,
-                   exclude_filters=exclude_filters))
+                   exclude_filters=options.exclude_filter))
