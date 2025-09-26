@@ -1,21 +1,21 @@
 # `wasi-testsuite`
 
-This repository contains tests for WebAssembly System Interface (WASI) and a test executor for running WASI tests against a selected WebAssembly runtime.
+This repository contains tests for WebAssembly System Interface (WASI)
+and a test executor for running WASI tests against a selected
+WebAssembly runtime.
 
-WASI is a modular collection of standardized APIs. Currently, WASI has not reached version 1.0
-stability but a snapshot of experimental APIs does exist ([`wasi_snapshot_preview1`]). This
-repository only holds tests of APIs included in this snapshot. It does not include tests for other
-in-progress proposals or other experimental APIs, though the test executor can run tests from other repositories (e.g., see the [wasi-threads] tests).
+WASI is a modular collection of standardized APIs. Currently, WASI has
+not reached version 1.0 stability; this repository contains tests for
+[WASI preview
+1](https://github.com/WebAssembly/WASI/blob/main/legacy/preview1/docs.md)
+and the forthcoming [WASI preview
+3](https://wasi.dev/roadmap).
 
-[`wasi_snapshot_preview1`]: https://github.com/WebAssembly/WASI/blob/main/legacy/preview1/docs.md
+This repository does not include tests for other in-progress proposals
+or other experimental APIs, though the test executor can run tests from
+other repositories (e.g., see the [wasi-threads] tests).
+
 [wasi-threads]: https://github.com/WebAssembly/wasi-threads/tree/main/test
-
-The test executor matches execution output against a JSON specification. Writing your own test
-executor is quite simple; see the [specification] document for the details and the reference Python
-[implementation].
-
-[specification]: doc/specification.md
-[implementation]: ./test-runner
 
 ## Getting started
 
@@ -68,22 +68,26 @@ WASMTIME="wasmtime --wasm-features all" ./run-tests
 Optionally you can specify test cases to skip with the `--exclude-filter` option.
 
 ```bash
-./run-tests --exclude-filter examples/skip.json                                                  \
+./run-tests --exclude-filter examples/skip.json
 ```
 
 ## Contributing
 
-All contributions are very welcome. Contributors can help with:
+Want to add a new test?  [There's a doc for that!](doc/writing-tests.md)
 
-- adding or updating test cases,
-- improving test execution and reporting,
-- integrating with new WASM runtimes,
+Trying to run these tests using some external test harness?  [It's possible!](doc/specification.md)
 
-and many others. We appreciate both code contributions as well as suggestions and bug reports.
+Want to add support for a new WASI runtime?  [Yes please!](doc/adapters.md)
+
+Just want to have a look at the tests?  [Over here!](tests/)
+
+Otherwise, suggestions and bugs are very welcome, over on the [issue
+tracker](https://github.com/WebAssembly/wasi-testsuite/issues).
 
 ## Developer guide
 
-Here is some additional information for developers who are willing to contribute.
+Here is some additional information for developers who need to manage
+the test runner itself.
 
 ### Directory structure
 
@@ -91,24 +95,6 @@ Here is some additional information for developers who are willing to contribute
 - [`tests`](tests) - source code of WASI tests and build scripts. The folder contains subfolders for all supported languages.
 - [`.github`](.github) - CI workflow definitions.
 - [`doc`](doc) - additional documentation.
-
-### Cleaning up temporary resources
-
-Some of the tests (e.g. [pwrite-with-access](./tests/c/src/pwrite-with-access.c)) generate
-output artifacts and their existence can affect consecutive test executions. Tests should clean up
-the artifacts they generate, but there might be cases where the test fails early. The test runner
-will automatically delete all the files and directories in the test suite directory with the
-`.cleanup` suffix.
-
-### Programming languages for tests
-
-The repository currently consists of tests implemented in the following languages:
-
-- `C` (with [`wasi-libc`](https://github.com/WebAssembly/wasi-libc))
-- `AssemblyScript`
-- `Rust`
-
-The list of supported languages can be extended if needed.
 
 ### Branch structure
 
