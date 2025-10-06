@@ -12,13 +12,18 @@ from .runtime_adapter import RuntimeAdapter
 from .validators import exit_code_validator, stdout_validator, Validator
 
 
+# too-many-positional-arguments is a post-3.0 pylint message.
+# pylint: disable-msg=unknown-option-value
+# pylint: disable-msg=too-many-arguments
+# pylint: disable-msg=too-many-positional-arguments
 def run_tests(runtimes: List[RuntimeAdapter],
               test_suite_paths: List[Path],
               exclude_filters: List[Path] | None = None,
               color: bool = True,
+              verbose: bool = False,
               json_log_file: str | None = None) -> int:
     validators: List[Validator] = [exit_code_validator, stdout_validator]
-    reporters: List[TestReporter] = [ConsoleTestReporter(color)]
+    reporters: List[TestReporter] = [ConsoleTestReporter(color, verbose=verbose)]
     if json_log_file:
         reporters.append(JSONTestReporter(json_log_file))
     filters: List[TestFilter] = [UnsupportedWasiTestExcludeFilter()]
