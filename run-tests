@@ -88,4 +88,5 @@ else:
 sys.exit(run_tests(runtime_adapters, test_suite,
                    color=not options.disable_colors,
                    json_log_file=options.json_output_location,
+                   verbose=options.verbose,
                    exclude_filters=options.exclude_filter))
