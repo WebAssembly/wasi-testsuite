@@ -9,6 +9,7 @@ on:
       - '*'
     paths:
       - 'tests/**'
+      - '.github/workflows/compile-tests.yml'
 
 jobs:
   build_assemblyscript:
@@ -67,14 +68,16 @@ jobs:
         run: |
           ./build.py --toolchain=wasm32-wasip3:nightly
 
+      - name: 'Tar files'
+        if: matrix.os == 'ubuntu-latest'
+        run: tar -cvf rust-testsuite.tar tests/rust/testsuite
+
       - name: Upload precompiled tests
         if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v4
         with:
           name: rust-testsuite
-          path: tests/rust/testsuite
-          if-no-files-found: error
-          include-hidden-files: true
+          path: rust-testsuite.tar
 
   build_c:
     name: Build C tests
@@ -189,7 +192,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: rust-testsuite
-          path: ./tests/rust/testsuite
 
       - name: Download C test binaries
         uses: actions/download-artifact@v4
@@ -202,6 +204,10 @@ jobs:
         with:
           name: assemblyscript-testsuite
           path: ./tests/assemblyscript/testsuite
+
+      - name: Untar tests
+        run: |
+          tar -xvf rust-testsuite.tar
 
       - name: Run tests
         continue-on-error: true
@@ -243,6 +249,11 @@ jobs:
         with:
           name: ${{ matrix.suite }}-testsuite
           path: ./tests/${{ matrix.suite }}/testsuite
+
+      - name: Untar tests
+        if: ${{ matrix.suite }} == 'rust'
+        run: |
+          tar -xvf ${{ matrix.suite }}-testsuite.tar
 
       - name: Publish changes to consumer branch
         shell: bash
