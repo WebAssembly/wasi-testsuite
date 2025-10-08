@@ -232,7 +232,7 @@ jobs:
           path: ./tests/${{ matrix.suite }}/testsuite
 
       - name: Untar tests
-        if: ${{ matrix.suite }} == 'rust'
+        if: matrix.suite == 'rust'
         run: |
           tar -xvf ${{ matrix.suite }}-testsuite.tar
 
