@@ -7,6 +7,8 @@ on:
   pull_request:
     branches:
       - '*'
+    paths:
+      - 'tests/**'
 
 jobs:
   build_assemblyscript:
@@ -130,6 +132,81 @@ jobs:
           path: tests/c/testsuite
           if-no-files-found: error
           include-hidden-files: true
+
+  run_tests:
+    name: Run tests
+    runs-on: ${{ matrix.os }}
+    needs: [build_assemblyscript, build_c, build_rust]
+    env:
+      WASMTIME_VERSION: v37.0.1
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest, windows-11-arm]
+        runtime: [wasmtime]
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: ${{ github.sha }}
+
+      - name: Initialize Python environment
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install dependencies
+        working-directory: test-runner
+        run: pip install -r requirements.txt
+
+      - name: Install wasmtime
+        if: matrix.runtime == 'wasmtime' && matrix.os == 'windows-latest'
+        run: |
+          $url = "https://github.com/bytecodealliance/wasmtime/releases/download/$env:WASMTIME_VERSION/wasmtime-$env:WASMTIME_VERSION-x86_64-windows.zip"
+          Write-Host "URL: $url"
+          Invoke-WebRequest -Uri $url -OutFile "wasmtime.zip"
+          Expand-Archive -Path "wasmtime.zip" -DestinationPath "."
+          echo "$env:GITHUB_WORKSPACE\wasmtime-$env:WASMTIME_VERSION-x86_64-windows" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Install wasmtime
+        if: matrix.runtime == 'wasmtime' && matrix.os == 'windows-11-arm'
+        run: |
+          $url = "https://github.com/bytecodealliance/wasmtime/releases/download/$env:WASMTIME_VERSION/wasmtime-$env:WASMTIME_VERSION-aarch64-windows.zip"
+          Write-Host "URL: $url"
+          Invoke-WebRequest -Uri $url -OutFile "wasmtime.zip"
+          Expand-Archive -Path "wasmtime.zip" -DestinationPath "."
+          echo "$env:GITHUB_WORKSPACE\wasmtime-$env:WASMTIME_VERSION-aarch64-windows" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Install wasmtime
+        if: matrix.runtime == 'wasmtime' && (matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest')
+        run: |
+          set -e
+          curl https://wasmtime.dev/install.sh -sSf | bash -s -- --version $WASMTIME_VERSION
+          echo "$HOME/.wasmtime/bin" >> $GITHUB_PATH
+
+      - name: Download Rust test binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: rust-testsuite
+          path: ./tests/rust/testsuite
+
+      - name: Download C test binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: c-testsuite
+          path: ./tests/c/testsuite
+
+      - name: Download AssemblyScript test binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: assemblyscript-testsuite
+          path: ./tests/assemblyscript/testsuite
+
+      - name: Run tests
+        continue-on-error: true
+        run: |
+          python run-tests --verbose --runtime adapters/${{ matrix.runtime }}.py
 
   upload_test_binaries:
     if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
