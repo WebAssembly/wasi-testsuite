@@ -23,17 +23,26 @@ struct Component;
 export!(Component);
 impl exports::wasi::cli::run::Guest for Component {
     async fn run() -> Result<(), ()> {
-        sleep_10ms().await;
+        sleep_10ms_wait_for().await;
+        sleep_10ms_wait_until().await;
         sleep_0ms();
         sleep_backwards_in_time();
         Ok(())
     }
 }
 
-async fn sleep_10ms() {
+async fn sleep_10ms_wait_for() {
     let dur = 10_000_000;
-    monotonic_clock::wait_until(monotonic_clock::now() + dur).await;
+    let deadline = monotonic_clock::now() + dur;
     monotonic_clock::wait_for(dur).await;
+    assert!(monotonic_clock::now() >= deadline, "wait_for never resolves before the deadline");
+}
+
+async fn sleep_10ms_wait_until() {
+    let dur = 10_000_000;
+    let deadline = monotonic_clock::now() + dur;
+    monotonic_clock::wait_until(deadline).await;
+    assert!(monotonic_clock::now() >= deadline, "wait_until never resolves before the deadline");
 }
 
 fn sleep_0ms() {
