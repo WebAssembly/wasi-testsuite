@@ -40,12 +40,6 @@ VERSIONS = ['wasip1', 'wasip3']
 def compute_target(system, version):
     return f"{system}-{version}"
 
-def compute_build_target(system, version):
-    if version == 'wasip3':
-        # wasm32-wasip3 triple not yet supported.
-        return compute_target(system, 'wasip2')
-    return compute_target(system, version)
-
 BASE_DIR = Path(__file__).parent
 
 def run(argv):
@@ -103,20 +97,19 @@ def mkdir_p(path):
 for system in SYSTEMS:
     for version in VERSIONS:
         target = compute_target(system, version)
-        build_target = compute_build_target(system, version)
         build_mode = "release" if args.release else "debug"
         toolchain = [f"+{TOOLCHAINS[target]}"] if target in TOOLCHAINS else []
 
         build_args = CARGO + toolchain + [
             "build",
             f"--manifest-path={BASE_DIR / target / 'Cargo.toml'}",
-            f"--target={build_target}"
+            f"--target={target}"
         ]
         if args.release:
             build_args.append("--release")
         run(build_args)
 
-        obj_dir = BASE_DIR / target / "target" / build_target / build_mode
+        obj_dir = BASE_DIR / target / "target" / target / build_mode
         src_dir = BASE_DIR / target / "src" / "bin"
         dst_dir = BASE_DIR / "testsuite" / target
         mkdir_p(dst_dir)
