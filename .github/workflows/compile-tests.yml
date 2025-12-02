@@ -141,7 +141,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     needs: [build_assemblyscript, build_c, build_rust]
     env:
-      WASMTIME_VERSION: v37.0.1
+      WASMTIME_VERSION: v39.0.1
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest, windows-11-arm]
