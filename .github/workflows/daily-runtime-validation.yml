@@ -30,9 +30,9 @@ jobs:
 
       - name: Install wasmtime
         if: matrix.runtime == 'wasmtime'
-        run: |
-          curl https://wasmtime.dev/install.sh -sSf | bash
-          echo "$HOME/.wasmtime/bin" >> $GITHUB_PATH
+        uses: bytecodealliance/actions/wasmtime/setup@v1
+        with:
+          version: dev
 
       - name: Install WASM Micro Runtime
         if: matrix.runtime == 'wasm-micro-runtime'
