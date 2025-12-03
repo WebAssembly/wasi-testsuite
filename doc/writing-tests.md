@@ -90,11 +90,8 @@ rustup toolchain install stable
 rustup toolchain install nightly # needed for wasip3, for now
 rustup default stable
 rustup +stable target add wasm32-wasip1
-rustup +nightly target add wasm32-wasip2 # for wasip3
+rustup +nightly target add wasm32-wasip3
 ```
-
-Note that until wasip3 is released, we use the wasip2 toolchain for
-wasip3.
 
 Now you can run `build.py`.  For Rust, run as `./build.py
 --toolchain=wasm32-wasip3:nightly`, so as to use the nightly channel

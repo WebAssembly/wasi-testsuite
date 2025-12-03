@@ -25,12 +25,6 @@ VERSIONS = ['wasip1'] # + ['wasip2', 'wasip3']
 def compute_target(system, version):
     return f"{system}-{version}"
 
-def compute_cc_target(system, version):
-    if version == 'wasip3':
-        # wasm32-wasip3 triple not yet supported.
-        return compute_target(system, 'wasip2')
-    return compute_target(system, version)
-
 BASE_DIR = Path(__file__).parent
 
 def maybe_stat(path, default):
@@ -85,7 +79,7 @@ for system in SYSTEMS:
 
         target_dir = BASE_DIR / "testsuite" / target
         mkdir_p(target_dir)
-        target_args = [f"--target={compute_cc_target(system, version)}"]
+        target_args = [f"--target={compute_target(system, version)}"]
 
         write_manifest(target_dir / "manifest.json",
                        {'name': f"WASI C tests [{target}]"})
