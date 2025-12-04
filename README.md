@@ -102,4 +102,4 @@ Apart from development branches for various features, we identify the following 
 
 - `main` - main branch of the repository. Use this branch for development (e.g. updating test cases, modifying test runner)
 - `prod/testsuite-base` - the branch is an up-to-date fork of the `main` branch but it also includes precompiled binaries. Use this branch for simply running tests and validating WASM runtimes (see [doc](doc/precompiled-binaries.md) for details).
-- `prod/daily-test-results` - the branch contains daily test results for supported WASM runtimes (at the moment, we only execute tests on wasmtime and WAMR). In the future we intend to publish those results to the website to provide users with additional input for selecting the runtime.
+- `prod/daily-test-results` - the branch contains daily test results for supported WASM runtimes. In the future we intend to publish those results to the website to provide users with additional input for selecting the runtime.
