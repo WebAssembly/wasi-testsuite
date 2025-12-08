@@ -66,18 +66,18 @@ async fn test_set_size(dir: &Descriptor) {
     assert_eq!(c.stat().await.unwrap().size, 0);
     assert_eq!(r.stat().await.unwrap().size, 0);
 
-    // https://github.com/WebAssembly/wasi-filesystem/issues/190
+    // https://github.com/WebAssembly/WASI/issues/712
     match r.set_size(100).await {
         Ok(()) => {
             panic!("set-size succeeded on read-only descriptor");
         }
-        Err(ErrorCode::Invalid | ErrorCode::BadDescriptor) => {}
+        Err(ErrorCode::Invalid | ErrorCode::BadDescriptor | ErrorCode::Access) => {}
         Err(err) => {
             panic!("unexpected err: {}", err)
         }
     };
 
-    // https://github.com/WebAssembly/wasi-filesystem/issues/190
+    // https://github.com/WebAssembly/WASI/issues/712
     match c.set_size(u64::MAX).await {
         Ok(()) => {
             panic!("set-size(-1) succeeded");
@@ -88,17 +88,24 @@ async fn test_set_size(dir: &Descriptor) {
         }
     };
 
-    rm("c.cleanup").await.unwrap();
-
-    // We still have `c` and `r` open, which refer to the file; on POSIX
-    // systems, the `c.cleanup` will have been removed from its dir,
-    // whereas on Windows that will happen when the last open descriptor
-    // (`c` and `r`) is closed.  In any case we can still stat our
-    // descriptors, call `set-size` on it, and so on.
-    assert_eq!(c.stat().await.unwrap().size, 0);
-    c.set_size(42).await.unwrap();
-    assert_eq!(c.stat().await.unwrap().size, 42);
-    assert_eq!(r.stat().await.unwrap().size, 42);
+    match rm("c.cleanup").await {
+        Ok(()) => {
+            // We still have `c` and `r` open, which refer to the file,
+            // but we can still stat our descriptors, call `set-size` on
+            // it, and so on.
+            assert_eq!(c.stat().await.unwrap().size, 0);
+            c.set_size(42).await.unwrap();
+            assert_eq!(c.stat().await.unwrap().size, 42);
+            assert_eq!(r.stat().await.unwrap().size, 42);
+        }
+        Err(ErrorCode::Busy) => {
+            // Otherwise if we're on Windows we are unable to remove the
+            // file while descriptors are open.
+        }
+        Err(err) => {
+            panic!("unexpected err: {}", err)
+        }
+    }
 }
 
 struct Component;
