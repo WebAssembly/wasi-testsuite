@@ -17,8 +17,8 @@ wit_bindgen::generate!({
 });
 
 use wasi::filesystem::types::Descriptor;
-use wasi::filesystem::types::{DescriptorFlags, ErrorCode, OpenFlags, PathFlags};
 use wasi::filesystem::types::DescriptorType;
+use wasi::filesystem::types::{DescriptorFlags, ErrorCode, OpenFlags, PathFlags};
 
 async fn test_flags_and_type(dir: &Descriptor) {
     // get-flags: async func() -> result<descriptor-flags, error-code>;
