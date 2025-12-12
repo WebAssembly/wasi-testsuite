@@ -1,3 +1,10 @@
 *.wasm
 .DS_Store
 /tests/c/testsuite/
+/tests/rust/testsuite/
+/tests/assemblyscript/testsuite/
+__pycache__
+
+*~
+\#*\#
+
