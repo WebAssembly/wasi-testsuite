@@ -63,10 +63,15 @@ jobs:
           toolchain: stable
           target: wasm32-wasip1
 
+      - name: Run `cargo-fmt`
+        run: |
+          cargo fmt --manifest-path ./tests/rust/wasm32-wasip3/Cargo.toml --check
+          cargo fmt --manifest-path ./tests/rust/wasm32-wasip1/Cargo.toml --check
+
       - name: Build tests
         working-directory: tests/rust
         run: |
-          ./build.py --toolchain=wasm32-wasip3:nightly
+          ./build.py
 
       - name: 'Tar files'
         if: matrix.os == 'ubuntu-latest'

@@ -16,8 +16,8 @@ wit_bindgen::generate!({
     generate_all
 });
 
-use wasi::filesystem::types::Descriptor;
 use wasi::filesystem::types::Advice;
+use wasi::filesystem::types::Descriptor;
 use wasi::filesystem::types::{DescriptorFlags, ErrorCode, OpenFlags, PathFlags};
 
 async fn test_advise(dir: &Descriptor) {

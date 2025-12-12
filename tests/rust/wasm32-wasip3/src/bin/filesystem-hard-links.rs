@@ -29,8 +29,10 @@ async fn test_hard_links(dir: &Descriptor) {
     let rmdir = |path: &str| dir.remove_directory_at(path.to_string());
 
     // link-at: async func(old-path-flags: path-flags, old-path: string, new-descriptor: borrow<descriptor>, new-path: string) -> result<_, error-code>;
-    assert!(matches!(ln(".", "foo").await,
-                     Err(ErrorCode::NotPermitted | ErrorCode::Access)));
+    assert!(matches!(
+        ln(".", "foo").await,
+        Err(ErrorCode::NotPermitted | ErrorCode::Access)
+    ));
 
     assert_eq!(ln("", "foo").await, Err(ErrorCode::NoEntry));
     assert_eq!(ln("", "").await, Err(ErrorCode::NoEntry));
@@ -44,17 +46,23 @@ async fn test_hard_links(dir: &Descriptor) {
     // FIXME: https://github.com/WebAssembly/WASI/issues/710
     // assert_eq!(ln_follow("parent/foo", "a.txt").await,
     //            Err(ErrorCode::NotPermitted));
-    assert_eq!(ln("parent/foo", "a.txt").await,
-               Err(ErrorCode::NotPermitted));
-    assert_eq!(ln("a.txt", "parent/foo").await,
-               Err(ErrorCode::NotPermitted));
+    assert_eq!(
+        ln("parent/foo", "a.txt").await,
+        Err(ErrorCode::NotPermitted)
+    );
+    assert_eq!(
+        ln("a.txt", "parent/foo").await,
+        Err(ErrorCode::NotPermitted)
+    );
     ln("a.txt", "c.cleanup").await.unwrap();
     rm("c.cleanup").await.unwrap();
     mkdir("d.cleanup").await.unwrap();
     ln("a.txt", "d.cleanup/q.txt").await.unwrap();
     rm("d.cleanup/q.txt").await.unwrap();
-    assert!(matches!(ln("d.cleanup", "e.cleanup").await,
-                     Err(ErrorCode::NotPermitted | ErrorCode::Access)));
+    assert!(matches!(
+        ln("d.cleanup", "e.cleanup").await,
+        Err(ErrorCode::NotPermitted | ErrorCode::Access)
+    ));
     rmdir("d.cleanup").await.unwrap();
 }
 

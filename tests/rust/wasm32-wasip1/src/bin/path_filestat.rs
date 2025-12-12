@@ -11,24 +11,21 @@ unsafe fn test_path_filestat(dir_fd: wasi::Fd) {
 
     // Create a file in the scratch directory.
     let open_file = |fdflags| -> Result<wasi::Fd, wasi::Errno> {
-        let rights = wasi::RIGHTS_FD_READ | wasi::RIGHTS_FD_WRITE |
-                     wasi::RIGHTS_PATH_FILESTAT_GET;
-        return wasi::path_open(dir_fd, 0, "file", wasi::OFLAGS_CREAT, rights, 0,
-                               fdflags);
+        let rights = wasi::RIGHTS_FD_READ | wasi::RIGHTS_FD_WRITE | wasi::RIGHTS_PATH_FILESTAT_GET;
+        return wasi::path_open(dir_fd, 0, "file", wasi::OFLAGS_CREAT, rights, 0, fdflags);
     };
 
-    let (file_fd, fdflags) =
-        match open_file(wasi::FDFLAGS_APPEND | wasi::FDFLAGS_SYNC) {
-            Ok(fd) => { (fd, wasi::FDFLAGS_APPEND | wasi::FDFLAGS_SYNC) }
-            Err(wasi::ERRNO_NOTSUP) => {
-                (open_file(wasi::FDFLAGS_APPEND).expect("opening file"),
-                 wasi::FDFLAGS_APPEND)
-            }
-            Err(err) => {
-                eprintln!("error opening file: {}", err);
-                process::exit(1);
-            }
-        };
+    let (file_fd, fdflags) = match open_file(wasi::FDFLAGS_APPEND | wasi::FDFLAGS_SYNC) {
+        Ok(fd) => (fd, wasi::FDFLAGS_APPEND | wasi::FDFLAGS_SYNC),
+        Err(wasi::ERRNO_NOTSUP) => (
+            open_file(wasi::FDFLAGS_APPEND).expect("opening file"),
+            wasi::FDFLAGS_APPEND,
+        ),
+        Err(err) => {
+            eprintln!("error opening file: {}", err);
+            process::exit(1);
+        }
+    };
 
     assert!(
         file_fd > libc::STDERR_FILENO as wasi::Fd,
