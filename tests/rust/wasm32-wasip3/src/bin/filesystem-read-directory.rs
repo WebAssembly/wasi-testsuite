@@ -17,8 +17,8 @@ wit_bindgen::generate!({
 });
 
 use wasi::filesystem::types::Descriptor;
-use wasi::filesystem::types::DirectoryEntry;
 use wasi::filesystem::types::DescriptorType;
+use wasi::filesystem::types::DirectoryEntry;
 
 async fn test_read_directory(dir: &Descriptor) {
     // read-directory: async func() -> tuple<stream<directory-entry>, future<result<_, error-code>>>;

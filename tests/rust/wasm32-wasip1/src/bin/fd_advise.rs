@@ -1,5 +1,5 @@
 use std::{env, process};
-use wasi_tests::{open_scratch_directory};
+use wasi_tests::open_scratch_directory;
 
 unsafe fn test_fd_advise(dir_fd: wasi::Fd) {
     const FILE_NAME: &str = "fd_advise_file.cleanup";
@@ -43,11 +43,12 @@ unsafe fn test_fd_advise(dir_fd: wasi::Fd) {
 
     match wasi::fd_allocate(file_fd, 100, 100) {
         Ok(()) => {
-            let stat =
-                wasi::fd_filestat_get(file_fd).expect("failed to fdstat 3");
+            let stat = wasi::fd_filestat_get(file_fd).expect("failed to fdstat 3");
             assert_eq!(stat.size, 200, "file size should be 200");
-        },
-        Err(err) => { assert_eq!(err, wasi::ERRNO_NOTSUP, "allocating size"); }
+        }
+        Err(err) => {
+            assert_eq!(err, wasi::ERRNO_NOTSUP, "allocating size");
+        }
     }
 
     wasi::fd_close(file_fd).expect("failed to close");

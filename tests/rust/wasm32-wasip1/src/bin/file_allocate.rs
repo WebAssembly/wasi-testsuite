@@ -39,8 +39,10 @@ unsafe fn test_file_allocate(dir_fd: wasi::Fd) {
             wasi::fd_allocate(file_fd, 90, 20).expect("allocating size larger than current size");
             stat = wasi::fd_filestat_get(file_fd).expect("reading file stats");
             assert_eq!(stat.size, 110, "file size should increase from 100 to 110");
-        },
-        Err(err) => { assert_eq!(err, wasi::ERRNO_NOTSUP, "allocating size"); }
+        }
+        Err(err) => {
+            assert_eq!(err, wasi::ERRNO_NOTSUP, "allocating size");
+        }
     }
     wasi::fd_close(file_fd).expect("closing a file");
     wasi::path_unlink_file(dir_fd, "file").expect("removing a file");
