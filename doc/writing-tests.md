@@ -96,9 +96,9 @@ rustup +nightly target add wasm32-wasip2 # for wasip3
 Note that until wasip3 is released, we use the wasip2 toolchain for
 wasip3.
 
-Now you can run `build.py`.  For Rust, run as `./build.py
---toolchain=wasm32-wasip3:nightly`, so as to use the nightly channel
-instead of the default stable, for wasip3.
+Now you can run `build.py`.  For Rust, the build script will
+automatically derive the right channel to use depending on the WASI
+version.
 
 ## Final notes
 
