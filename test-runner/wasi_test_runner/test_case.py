@@ -9,11 +9,14 @@ class WasiVersion(StrEnum):
     WASM32_WASIP2 = 'wasm32-wasip2'
     WASM32_WASIP3 = 'wasm32-wasip3'
 
+class ProtocolResponse(NamedTuple):
+    body: str
 
 class Output(NamedTuple):
     exit_code: int
     stdout: str
     stderr: str
+    response: Optional[ProtocolResponse] = None
 
 
 class Failure(NamedTuple):
@@ -31,8 +34,39 @@ class Result(NamedTuple):
         return len(self.failures) > 0
 
 
-T = TypeVar("T", bound="Config")
+class ProtocolType(StrEnum):
+    TCP = 'tcp'
+    UDP = 'udp'
+    HTTP = 'http'
 
+
+P = TypeVar("P", bound = "Protocol")
+
+class Protocol(NamedTuple):
+    type: ProtocolType
+    port: int
+    address: str
+    request: str
+    response: str
+
+    @classmethod
+    def from_dict(cls: Type[P], cfg: Dict[str, Any]) -> P:
+        for field_name in cfg:
+            if field_name not in cls._fields:
+                logging.warning("Unknown field in the protocol configuration: %s", field_name)
+
+        return cls(
+            type=ProtocolType(cfg.get("type")),
+            port=cfg.get("port"),
+            address=cfg.get("address"),
+            request=cfg.get("request"),
+            response=cfg.get("response"),
+        )
+                
+                
+
+
+T = TypeVar("T", bound="Config")
 
 class Config(NamedTuple):
     args: List[str] = []
@@ -41,6 +75,7 @@ class Config(NamedTuple):
     dirs: List[str] = []
     stdout: Optional[str] = None
     wasi_functions: List[str] = []
+    protocol: Optional[Protocol] = None
 
     @classmethod
     def from_file(cls: Type[T], config_file: str) -> T:
@@ -51,6 +86,10 @@ class Config(NamedTuple):
 
         cls._validate_dict(dict_config)
 
+        protocol = None
+        if dict_config.get("protocol") is not None:
+            protocol = Protocol.from_dict(dict_config.get("protocol"))
+
         return cls(
             args=dict_config.get("args", default.args),
             env=dict_config.get("env", default.env),
@@ -58,6 +97,7 @@ class Config(NamedTuple):
             dirs=dict_config.get("dirs", default.dirs),
             wasi_functions=dict_config.get("wasi_functions", default.wasi_functions),
             stdout=dict_config.get("stdout", default.stdout),
+            protocol=protocol
         )
 
     @classmethod

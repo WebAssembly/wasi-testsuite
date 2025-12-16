@@ -75,7 +75,8 @@ async fn echo(family: IpAddressFamily, addr: IpSocketAddress) {
         async {
             let remaining = send_tx.write_all(data).await;
             assert!(remaining.is_empty());
-            // Drop the stream, since there's no more data.
+            // Drop the stream, since we don't pretend to send more
+            // data.
             drop(send_tx);
         }
     );

@@ -91,7 +91,7 @@ def _execute_single_test(
                                             test_path)
     _cleanup_test_output(dir_pairs)
     test_start = time.time()
-    test_output = runtime.run_test(argv)
+    test_output = runtime.run_test(argv, config)
     elapsed = time.time() - test_start
     _cleanup_test_output(dir_pairs)
 

@@ -53,6 +53,6 @@ def _add_wasi_version_options(argv: List[str], wasi_version: str) -> None:
             pass
         case "wasm32-wasip3":
             argv[splice_pos:splice_pos] = ["-Wcomponent-model-async",
-                                           "-Sp3,http"]
+                                           "-Sp3,http,inherit-network"]
         case _:
             pass
