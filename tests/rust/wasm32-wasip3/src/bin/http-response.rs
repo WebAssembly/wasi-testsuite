@@ -6,6 +6,7 @@ wit_bindgen::generate!({
 
   world test {
       include wasi:http/imports@0.3.0-rc-2025-09-16;
+      include wasi:cli/command@0.3.0-rc-2025-09-16;
   }
 ",
     additional_derives: [PartialEq, Eq, Hash, Clone],
@@ -44,7 +45,7 @@ fn test_headers_same(left: &Fields, right: &Fields) {
     assert_eq!(left.copy_all(), right.copy_all());
 }
 
-fn main() {
+async fn test_response() {
     let headers = Fields::new();
     // No field-specific syntax checks.
     headers.append("content-type", b"!!!! invalid").unwrap();
@@ -57,4 +58,17 @@ fn main() {
     test_status_codes(&response);
     test_immutable_headers(&response.get_headers());
     test_headers_same(&response.get_headers(), &headers_copy);
+}
+
+struct Component;
+export!(Component);
+impl exports::wasi::cli::run::Guest for Component {
+    async fn run() -> Result<(), ()> {
+        test_response().await;
+        Ok(())
+    }
+}
+
+fn main() {
+    unreachable!("main is a stub");
 }
