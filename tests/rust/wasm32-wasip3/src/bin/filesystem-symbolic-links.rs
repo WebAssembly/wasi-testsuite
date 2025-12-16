@@ -20,7 +20,9 @@ use wasi::filesystem::types::Descriptor;
 use wasi::filesystem::types::{DescriptorFlags, ErrorCode, OpenFlags, PathFlags};
 
 async fn test_symbolic_links(dir: &Descriptor) {
+    // symlink-at: async func(old-path: string, new-path: string) -> result<_, error-code>;
     let ln_s = |from: &str, to: &str| -> _ { dir.symlink_at(from.to_string(), to.to_string()) };
+    // readlink-at: async func(path: string) -> result<string, error-code>;
     let readlink = |path: &str| dir.readlink_at(path.to_string());
     let stat_with_flags = |flags: PathFlags, path: &str| dir.stat_at(flags, path.to_string());
     let stat_follow = |path: &str| stat_with_flags(PathFlags::SYMLINK_FOLLOW, path);
@@ -42,7 +44,6 @@ async fn test_symbolic_links(dir: &Descriptor) {
     };
     let rm = |path: &str| dir.unlink_file_at(path.to_string());
 
-    // readlink-at: async func(path: string) -> result<string, error-code>;
     assert_eq!(readlink("").await, Err(ErrorCode::NoEntry));
     assert_eq!(readlink(".").await, Err(ErrorCode::Invalid));
     assert_eq!(readlink("a.txt").await, Err(ErrorCode::Invalid));
@@ -58,7 +59,7 @@ async fn test_symbolic_links(dir: &Descriptor) {
         Err(ErrorCode::NotDirectory)
     );
 
-    // https://github.com/WebAssembly/wasi-filesystem/issues/186
+    // https://github.com/WebAssembly/WASI/issues/718
     assert_eq!(
         open_r("parent")
             .await
@@ -90,7 +91,56 @@ async fn test_symbolic_links(dir: &Descriptor) {
 
     assert_eq!(ln_s("whatever", "").await, Err(ErrorCode::NoEntry));
     assert_eq!(ln_s("", "whatever").await, Err(ErrorCode::NoEntry));
-    // symlink-at: async func(old-path: string, new-path: string) -> result<_, error-code>;
+
+    ln_s("..\\.", "parent-link").await.unwrap();
+    assert_eq!(open_r("parent-link").await.unwrap_err(), ErrorCode::Loop);
+    match open_r_follow("parent-link/fs-tests.dir").await {
+        // Backslashes are not separators.
+        Err(ErrorCode::NoEntry) => (),
+        // Backslashes are separators.
+        Err(ErrorCode::NotPermitted) => {
+            assert_eq!(
+                stat_follow("parent-link").await.unwrap_err(),
+                ErrorCode::NotPermitted
+            );
+            assert_eq!(
+                open_r("parent-link/fs-tests.dir/a.txt").await.unwrap_err(),
+                ErrorCode::NotPermitted
+            );
+            assert_eq!(
+                ln_s("a.txt", "parent-link/fs-tests.dir/q.txt").await,
+                Err(ErrorCode::NotPermitted)
+            );
+        }
+        Err(e) => panic!("unexpected error: {}", e),
+        Ok(_) => panic!("unexpected success"),
+    }
+    rm("parent-link").await.unwrap();
+
+    ln_s("..\\fs-tests.dir", "self-link").await.unwrap();
+    assert_eq!(open_r("self-link").await.unwrap_err(), ErrorCode::Loop);
+    match open_r_follow("self-link").await {
+        // Backslashes are not separators.
+        Err(ErrorCode::NoEntry) => (),
+        // Backslashes are separators.
+        Err(ErrorCode::NotPermitted) => {
+            assert_eq!(
+                stat_follow("self-link").await.unwrap_err(),
+                ErrorCode::NotPermitted
+            );
+            assert_eq!(
+                open_r("self-link/a.txt").await.unwrap_err(),
+                ErrorCode::NotPermitted
+            );
+            assert_eq!(
+                ln_s("a.txt", "self-link/q.txt").await,
+                Err(ErrorCode::NotPermitted)
+            );
+        }
+        Err(e) => panic!("unexpected error: {}", e),
+        Ok(_) => panic!("unexpected success"),
+    }
+    rm("self-link").await.unwrap();
 }
 
 struct Component;
