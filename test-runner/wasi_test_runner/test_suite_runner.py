@@ -78,7 +78,7 @@ def _skip_single_test(
         name=os.path.splitext(os.path.basename(test_path))[0],
         argv=argv,
         config=config,
-        result=Result(output=Output(0, "", ""), is_executed=False, failures=[]),
+        result=Result(output=Output(0, "", "", ""), is_executed=False, failures=[]),
         duration_s=0,
     )
 

@@ -15,3 +15,11 @@ def stdout_validator(config: Config, output: Output) -> Optional[Failure]:
     if config.stdout is None or config.stdout == output.stdout:
         return None
     return Failure("stdout", f"{config.stdout} == {output.stdout}")
+
+
+def protocol_validator(config: Config, output: Output) -> Optional[Failure]:
+    if config.protocol is None:
+        return None
+    if config.protocol.response == output.response:
+        return None
+    return Failure(f"{config.protocol.type}",  f"response {config.protocol.response} == {output.response}")

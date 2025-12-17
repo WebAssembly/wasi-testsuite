@@ -1,32 +1,50 @@
-from .test_case import Output, Config, Protocol, ProtocolResponse, ProtocolType
-from typing import List
-
 import subprocess
-import time
 import socket
+from typing import List
+from .test_case import Output, Config, Protocol, ProtocolType
+
 
 def serve(argv: List[str], config: Config) -> Output:
+    if config.protocol is None:
+        raise RuntimeError("Protocol configuration is required for connection based tests")
+
     if config.protocol.type == ProtocolType.TCP:
-        with subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as server:
-            # TODO(saul):
-            # * We might want to use a different heuristic, since this
-            #   is likely error prone and could cause flakiness
-            # * At the very least inspect stdout for confirmation that the server started.
-            # * Port availability could become tricky. Perhaps we could derive an available port
-            #   from the client/server on the fly rather than hard coding it.
-            time.sleep(2)
-            return _test_tcp(server, config.protocol)
+        with subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) as server:
+            # Something went wrong starting the server.
+            if server.poll() is not None:
+                _, err = server.communicate()
+                return Output(server.returncode, "", err, "")
+
+            # Business as usual.
+            # We get to test the connection.
+            if server.stdout is None:
+                return _kill_server(server)
+
+            ack = server.stdout.readline().strip()
+            if ack == "OK":
+                return _test_tcp(server, config.protocol)
+
+            # We didn't receive the ack message that we were expecting.
+            return _kill_server(server)
 
     raise RuntimeError(f"Unimplemented support for protocol {config.protocol.type}")
 
+
 def _test_tcp(server: subprocess.Popen, prot: Protocol) -> Output:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.settimeout(5)
-        sock.connect((prot.address, prot.port))
-        sock.sendall(prot.request.encode('utf-8'))
-        response = sock.recv(len(prot.response))
+        try:
+            sock.settimeout(5)
+            sock.connect((prot.address, prot.port))
+            sock.sendall(prot.request.encode('utf-8'))
+            response = sock.recv(len(prot.response))
+            server.wait(timeout=5)
+            out, err = server.communicate()
+            return Output(server.returncode, out, err, response.decode('utf-8'))
+        except (socket.timeout, subprocess.TimeoutExpired):
+            return _kill_server(server)
 
-    # TODO(saul): Check for the exit status code. It's possible that
-    # we might get a legit non-zero exit code e.g., permission related
-    # or port not available
-    return Output(0, "", "", ProtocolResponse(response))
+
+def _kill_server(server: subprocess.Popen) -> Output:
+    server.kill()
+    out, err = server.communicate()
+    return Output(server.returncode, out, err, "")

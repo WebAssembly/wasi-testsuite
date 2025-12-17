@@ -9,14 +9,12 @@ class WasiVersion(StrEnum):
     WASM32_WASIP2 = 'wasm32-wasip2'
     WASM32_WASIP3 = 'wasm32-wasip3'
 
-class ProtocolResponse(NamedTuple):
-    body: str
 
 class Output(NamedTuple):
     exit_code: int
     stdout: str
     stderr: str
-    response: Optional[ProtocolResponse] = None
+    response: str
 
 
 class Failure(NamedTuple):
@@ -40,33 +38,35 @@ class ProtocolType(StrEnum):
     HTTP = 'http'
 
 
-P = TypeVar("P", bound = "Protocol")
+P = TypeVar("P", bound="Protocol")
+
 
 class Protocol(NamedTuple):
-    type: ProtocolType
-    port: int
-    address: str
-    request: str
-    response: str
+    type: ProtocolType = ProtocolType("tcp")
+    port: int = 3000
+    address: str = "localhost"
+    request: str = ""
+    response: str = ""
 
     @classmethod
     def from_dict(cls: Type[P], cfg: Dict[str, Any]) -> P:
+        logging.warning(cfg)
+        default = cls()
         for field_name in cfg:
             if field_name not in cls._fields:
                 logging.warning("Unknown field in the protocol configuration: %s", field_name)
 
         return cls(
-            type=ProtocolType(cfg.get("type")),
-            port=cfg.get("port"),
-            address=cfg.get("address"),
-            request=cfg.get("request"),
-            response=cfg.get("response"),
+            type=ProtocolType(cfg.get("type", default.type)),
+            port=cfg.get("port", default.port),
+            address=cfg.get("address", default.address),
+            request=cfg.get("request", default.request),
+            response=cfg.get("response", default.response),
         )
-                
-                
 
 
 T = TypeVar("T", bound="Config")
+
 
 class Config(NamedTuple):
     args: List[str] = []

@@ -13,10 +13,10 @@ wit_bindgen::generate!({
 
 use std::fmt;
 use wasi::sockets::types::{
-    IpAddressFamily, IpSocketAddress, Ipv4SocketAddress, Ipv6SocketAddress, TcpSocket,
+    ErrorCode, IpAddressFamily, IpSocketAddress, Ipv4SocketAddress, Ipv6SocketAddress, TcpSocket,
 };
 
-use futures::join;
+use futures::try_join;
 use wit_bindgen::StreamResult;
 
 impl std::fmt::Display for IpSocketAddress {
@@ -48,38 +48,43 @@ impl std::fmt::Display for IpSocketAddress {
     }
 }
 
-async fn echo(family: IpAddressFamily, addr: IpSocketAddress) {
-    let listener = TcpSocket::create(family).unwrap();
-    listener.bind(addr).unwrap();
-    println!("Listening at {}", listener.get_local_address().unwrap());
+async fn echo(family: IpAddressFamily, addr: IpSocketAddress) -> Result<(), ErrorCode> {
+    let listener = TcpSocket::create(family)?;
+    listener.bind(addr)?;
+    println!("OK");
 
-    let mut accept = listener.listen().unwrap();
-    let sock = accept.next().await.unwrap();
-    let (mut recv_stream, recv_fut) = sock.receive();
+    let mut accept = listener.listen()?;
+    if let Some(sock) = accept.next().await {
+        let (mut recv_stream, recv_fut) = sock.receive();
 
-    // Read incoming data.
-    let (result, data) = recv_stream.read(Vec::with_capacity(100)).await;
-    assert_eq!(result, StreamResult::Complete(data.len()));
+        // Read incoming data.
+        let (result, data) = recv_stream.read(Vec::with_capacity(100)).await;
+        assert_eq!(result, StreamResult::Complete(data.len()));
 
-    // Explicitly drop the stream, since we're not expecting more
-    // incoming data.
-    drop(recv_stream);
-    recv_fut.await.unwrap();
+        // Explicitly drop the stream, since we're not expecting more
+        // incoming data.
+        drop(recv_stream);
+        recv_fut.await?;
 
-    // Send the response
-    let (mut send_tx, send_rx) = wit_stream::new();
-    join!(
-        async {
-            sock.send(send_rx).await.unwrap();
-        },
-        async {
-            let remaining = send_tx.write_all(data).await;
-            assert!(remaining.is_empty());
-            // Drop the stream, since we don't pretend to send more
-            // data.
-            drop(send_tx);
-        }
-    );
+        // Send the response
+        let (mut send_tx, send_rx) = wit_stream::new();
+        try_join!(
+            async {
+                sock.send(send_rx).await?;
+                Ok::<(), ErrorCode>(())
+            },
+            async {
+                let remaining = send_tx.write_all(data).await;
+                assert!(remaining.is_empty());
+                // Drop the stream, since we don't pretend to send more
+                // data.
+                drop(send_tx);
+                Ok::<(), ErrorCode>(())
+            }
+        )?;
+    }
+
+    Ok(())
 }
 
 struct Component;
@@ -87,7 +92,7 @@ export!(Component);
 
 impl exports::wasi::cli::run::Guest for Component {
     async fn run() -> Result<(), ()> {
-        echo(
+        let echo_result = echo(
             IpAddressFamily::Ipv4,
             IpSocketAddress::Ipv4(Ipv4SocketAddress {
                 port: 3000,
@@ -96,7 +101,10 @@ impl exports::wasi::cli::run::Guest for Component {
         )
         .await;
 
-        Ok(())
+        match echo_result {
+            Err(_) => std::process::abort(),
+            _ => Ok(()),
+        }
     }
 }
 

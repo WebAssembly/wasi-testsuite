@@ -114,7 +114,5 @@ class RuntimeAdapter:
         if config.protocol is None:
             result = subprocess.run(argv, capture_output=True, text=True,
                                     check=False)
-            return Output(result.returncode, result.stdout, result.stderr)
+            return Output(result.returncode, result.stdout, result.stderr, "")
         return serve(argv, config)
-
-

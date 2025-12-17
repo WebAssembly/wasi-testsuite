@@ -9,7 +9,7 @@ from .reporters.console import ConsoleTestReporter
 from .reporters.json import JSONTestReporter
 from .test_suite_runner import run_tests_from_test_suite
 from .runtime_adapter import RuntimeAdapter
-from .validators import exit_code_validator, stdout_validator, Validator
+from .validators import exit_code_validator, stdout_validator, protocol_validator, Validator
 
 
 # too-many-positional-arguments is a post-3.0 pylint message.
@@ -22,7 +22,7 @@ def run_tests(runtimes: List[RuntimeAdapter],
               color: bool = True,
               verbose: bool = False,
               json_log_file: str | None = None) -> int:
-    validators: List[Validator] = [exit_code_validator, stdout_validator]
+    validators: List[Validator] = [exit_code_validator, stdout_validator, protocol_validator]
     reporters: List[TestReporter] = [ConsoleTestReporter(color, verbose=verbose)]
     if json_log_file:
         reporters.append(JSONTestReporter(json_log_file))
