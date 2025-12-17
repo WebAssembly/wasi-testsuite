@@ -50,7 +50,6 @@ class Protocol(NamedTuple):
 
     @classmethod
     def from_dict(cls: Type[P], cfg: Dict[str, Any]) -> P:
-        logging.warning(cfg)
         default = cls()
         for field_name in cfg:
             if field_name not in cls._fields:
