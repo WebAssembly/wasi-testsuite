@@ -13,10 +13,10 @@ wit_bindgen::generate!({
 
 use std::fmt;
 use wasi::sockets::types::{
-    ErrorCode, IpAddressFamily, IpSocketAddress, Ipv4SocketAddress, Ipv6SocketAddress, TcpSocket,
+    IpAddressFamily, IpSocketAddress, Ipv4SocketAddress, Ipv6SocketAddress, TcpSocket,
 };
 
-use futures::try_join;
+use futures::join;
 use wit_bindgen::StreamResult;
 
 impl std::fmt::Display for IpSocketAddress {
@@ -48,43 +48,39 @@ impl std::fmt::Display for IpSocketAddress {
     }
 }
 
-async fn echo(family: IpAddressFamily, addr: IpSocketAddress) -> Result<(), ErrorCode> {
-    let listener = TcpSocket::create(family)?;
-    listener.bind(addr)?;
+async fn echo(family: IpAddressFamily, addr: IpSocketAddress) {
+    let listener = TcpSocket::create(family).unwrap();
+    listener.bind(addr).unwrap();
     println!("OK");
 
-    let mut accept = listener.listen()?;
-    if let Some(sock) = accept.next().await {
-        let (mut recv_stream, recv_fut) = sock.receive();
+    let mut accept = listener.listen().unwrap();
+    let sock = accept.next().await.unwrap();
+    let (mut recv_stream, recv_fut) = sock.receive();
 
-        // Read incoming data.
-        let (result, data) = recv_stream.read(Vec::with_capacity(100)).await;
-        assert_eq!(result, StreamResult::Complete(data.len()));
+    // Read incoming data.
+    // TODO(saul): Not incoming data fits in 100, this must be configurable.
+    let (result, data) = recv_stream.read(Vec::with_capacity(100)).await;
+    assert_eq!(result, StreamResult::Complete(data.len()));
 
-        // Explicitly drop the stream, since we're not expecting more
-        // incoming data.
-        drop(recv_stream);
-        recv_fut.await?;
+    // Explicitly drop the stream, since we're not expecting more
+    // incoming data.
+    drop(recv_stream);
+    recv_fut.await.unwrap();
 
-        // Send the response
-        let (mut send_tx, send_rx) = wit_stream::new();
-        try_join!(
-            async {
-                sock.send(send_rx).await?;
-                Ok::<(), ErrorCode>(())
-            },
-            async {
-                let remaining = send_tx.write_all(data).await;
-                assert!(remaining.is_empty());
-                // Drop the stream, since we don't pretend to send more
-                // data.
-                drop(send_tx);
-                Ok::<(), ErrorCode>(())
-            }
-        )?;
-    }
-
-    Ok(())
+    // Send the response
+    let (mut send_tx, send_rx) = wit_stream::new();
+    join!(
+        async {
+            sock.send(send_rx).await.unwrap();
+        },
+        async {
+            let remaining = send_tx.write_all(data).await;
+            assert!(remaining.is_empty());
+            // Drop the stream, since we don't pretend to send more
+            // data.
+            drop(send_tx);
+        }
+    );
 }
 
 struct Component;
@@ -92,19 +88,17 @@ export!(Component);
 
 impl exports::wasi::cli::run::Guest for Component {
     async fn run() -> Result<(), ()> {
-        let echo_result = echo(
+        echo(
             IpAddressFamily::Ipv4,
             IpSocketAddress::Ipv4(Ipv4SocketAddress {
+                // TODO(saul): make the port configurable, ideally letting the OS assign it.
                 port: 3000,
                 address: (127, 0, 0, 1),
             }),
         )
         .await;
 
-        match echo_result {
-            Err(_) => std::process::abort(),
-            _ => Ok(()),
-        }
+        Ok(())
     }
 }
 
