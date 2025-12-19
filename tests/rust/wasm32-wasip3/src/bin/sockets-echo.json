@@ -1,0 +1,9 @@
+{
+    "protocol": {
+	"type": "tcp",
+	"port": 3000,
+	"address": "localhost",
+	"request": "Hello, world",
+	"response": "Hello, world"
+    }
+}

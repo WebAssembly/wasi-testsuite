@@ -4,7 +4,8 @@ import sys
 from pathlib import Path
 from typing import Dict, NamedTuple, List, Tuple, Any
 
-from .test_case import Output, WasiVersion
+from .test_case import Output, WasiVersion, Config
+from .test_server import serve
 
 
 class RuntimeMeta(NamedTuple):
@@ -109,7 +110,9 @@ class RuntimeAdapter:
         assert all(isinstance(arg, str) for arg in argv)
         return argv
 
-    def run_test(self, argv: List[str]) -> Output:
-        result = subprocess.run(argv, capture_output=True, text=True,
-                                check=False)
-        return Output(result.returncode, result.stdout, result.stderr)
+    def run_test(self, argv: List[str], config: Config) -> Output:
+        if config.protocol is None:
+            result = subprocess.run(argv, capture_output=True, text=True,
+                                    check=False)
+            return Output(result.returncode, result.stdout, result.stderr, "")
+        return serve(argv, config)
