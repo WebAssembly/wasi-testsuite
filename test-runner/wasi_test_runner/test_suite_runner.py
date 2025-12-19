@@ -78,7 +78,7 @@ def _skip_single_test(
         name=os.path.splitext(os.path.basename(test_path))[0],
         argv=argv,
         config=config,
-        result=Result(output=Output(0, "", ""), is_executed=False, failures=[]),
+        result=Result(output=Output(0, "", "", ""), is_executed=False, failures=[]),
         duration_s=0,
     )
 
@@ -91,7 +91,7 @@ def _execute_single_test(
                                             test_path)
     _cleanup_test_output(dir_pairs)
     test_start = time.time()
-    test_output = runtime.run_test(argv)
+    test_output = runtime.run_test(argv, config)
     elapsed = time.time() - test_start
     _cleanup_test_output(dir_pairs)
 
