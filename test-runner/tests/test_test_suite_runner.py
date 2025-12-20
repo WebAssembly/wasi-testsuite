@@ -37,9 +37,9 @@ def test_runner_end_to_end() -> None:
     failures = [tc.Failure("a", "b"), tc.Failure("x", "y"), tc.Failure("x", "z")]
 
     outputs = [
-        tc.Output(0, "test1", ""),
-        tc.Output(1, "test2", ""),
-        tc.Output(2, "test3", ""),
+        tc.Output(0, "test1", "", ""),
+        tc.Output(1, "test2", "", ""),
+        tc.Output(2, "test3", "", ""),
     ]
     expected_results = [
         tc.Result(outputs[0], True, []),
@@ -110,7 +110,7 @@ def test_runner_end_to_end() -> None:
             str(test_path), config.args, config.env, expected_dirs,
             "wasm32-wasip1"
         )
-        runtime.run_test.assert_called_with(expected_argv)
+        runtime.run_test.assert_any_call(expected_argv, config)
 
     # Assert reporters calls
     for reporter in reporters:

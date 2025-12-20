@@ -42,12 +42,12 @@ def test_test_config_should_warn_when_unknown_field(_mock_file: Mock) -> None:
 
 
 def test_test_results_should_mark_failed_if_multiple_failures() -> None:
-    results = Result(Output(0, "", ""), True, [Failure("type", "message")])
+    results = Result(Output(0, "", "", ""), True, [Failure("type", "message")])
 
     assert results.failed is True
 
 
 def test_test_results_should_not_mark_failed_if_no_failure() -> None:
-    results = Result(Output(0, "", ""), True, [])
+    results = Result(Output(0, "", "", ""), True, [])
 
     assert results.failed is False
