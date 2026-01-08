@@ -2,25 +2,22 @@ import glob
 import json
 import os
 import re
-import shutil
 import time
 
 from datetime import datetime
 from pathlib import Path
-from typing import List, Tuple, NamedTuple
+from typing import List, NamedTuple
 
 from .filters import TestFilter
 from .runtime_adapter import RuntimeAdapter
 from .test_case import (
     Result,
     Config,
-    Output,
     TestCase,
     WasiVersion
 )
 from .reporters import TestReporter
 from .test_suite import TestSuite, TestSuiteMeta
-from .validators import Validator
 
 
 class Manifest(NamedTuple):
@@ -32,7 +29,6 @@ class Manifest(NamedTuple):
 def run_tests_from_test_suite(
     test_suite_path: str,
     runtime: RuntimeAdapter,
-    validators: List[Validator],
     reporters: List[TestReporter],
     filters: List[TestFilter],
 ) -> TestSuite:
@@ -53,8 +49,7 @@ def run_tests_from_test_suite(
                 test_case = _skip_single_test(runtime, meta, test_path)
                 break
         else:
-            test_case = _execute_single_test(runtime, meta, validators,
-                                             test_path)
+            test_case = _execute_single_test(runtime, meta, test_path)
         test_cases.append(test_case)
         for reporter in reporters:
             reporter.report_test(meta, test_case)
@@ -72,56 +67,33 @@ def run_tests_from_test_suite(
 def _skip_single_test(
     runtime: RuntimeAdapter, meta: TestSuiteMeta, test_path: str
 ) -> TestCase:
-    config, _dir_pairs, argv = _prepare_test(runtime, meta.wasi_version,
-                                             test_path)
+    config = _read_test_config(test_path)
+    argv = runtime.compute_argv(test_path, config, meta.wasi_version)
+
     return TestCase(
         name=os.path.splitext(os.path.basename(test_path))[0],
         argv=argv,
         config=config,
-        result=Result(output=Output(0, "", "", ""), is_executed=False, failures=[]),
+        result=Result(argv=argv, is_executed=False, failures=[]),
         duration_s=0,
     )
 
 
 def _execute_single_test(
-    runtime: RuntimeAdapter, meta: TestSuiteMeta, validators: List[Validator],
-    test_path: str
+    runtime: RuntimeAdapter, meta: TestSuiteMeta, test_path: str
 ) -> TestCase:
-    config, dir_pairs, argv = _prepare_test(runtime, meta.wasi_version,
-                                            test_path)
-    _cleanup_test_output(dir_pairs)
+    config = _read_test_config(test_path)
     test_start = time.time()
-    test_output = runtime.run_test(argv, config)
+    result = runtime.run_test(test_path, config, meta.wasi_version)
     elapsed = time.time() - test_start
-    _cleanup_test_output(dir_pairs)
 
     return TestCase(
         name=os.path.splitext(os.path.basename(test_path))[0],
-        argv=argv,
+        argv=result.argv,
         config=config,
-        result=_validate(validators, config, test_output),
+        result=result,
         duration_s=elapsed,
     )
-
-
-def _prepare_test(
-    runtime: RuntimeAdapter, wasi_version: WasiVersion, test_path: str
-) -> Tuple[Config, List[Tuple[Path, str]], List[str]]:
-    config = _read_test_config(test_path)
-    dir_pairs = [(Path(test_path).parent / d, d) for d in config.dirs]
-    argv = runtime.compute_argv(test_path, config.args, config.env, dir_pairs,
-                                wasi_version)
-    return config, dir_pairs, argv
-
-
-def _validate(validators: List[Validator], config: Config, output: Output) -> Result:
-    failures = [
-        result
-        for result in [validator(config, output) for validator in validators]
-        if result is not None
-    ]
-
-    return Result(failures=failures, is_executed=True, output=output)
 
 
 def _read_test_config(test_path: str) -> Config:
@@ -156,12 +128,3 @@ def _read_manifest(test_suite_path: Path) -> Manifest:
                         raise RuntimeError(f"unexpected manifest option: {k}={v}")
 
     return Manifest(name=name, wasi_version=wasi_version)
-
-
-def _cleanup_test_output(dirs: List[Tuple[Path, str]]) -> None:
-    for host, _guest in dirs:
-        for f in host.glob("**/*.cleanup"):
-            if f.is_file():
-                f.unlink()
-            elif f.is_dir():
-                shutil.rmtree(f)

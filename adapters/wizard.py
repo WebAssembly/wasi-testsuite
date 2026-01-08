@@ -1,8 +1,17 @@
 import subprocess
 import os
 import shlex
+import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
+import importlib
+
+
+_test_runner_path = Path(__file__).parent.parent / "test-runner"
+if str(_test_runner_path) not in sys.path:
+    sys.path.insert(0, str(_test_runner_path))
+
+_test_case_module = importlib.import_module('wasi_test_runner.test_case')
 
 # shlex.split() splits according to shell quoting rules
 WIZARD = shlex.split(os.getenv("WIZARD", "wizeng.x86-64-linux"))
@@ -34,16 +43,18 @@ def get_wasi_versions() -> List[str]:
 
 
 def compute_argv(test_path: str,
-                 args: List[str],
-                 env: Dict[str, str],
-                 dirs: List[Tuple[Path, str]],
+                 config: _test_case_module.Config,
                  wasi_version: str) -> List[str]:
-    argv = [] + WIZARD
-    for k, v in env.items():
-        argv += [f"--env={k}={v}"]
-    for host, guest in dirs:
-        # FIXME: https://github.com/titzer/wizard-engine/issues/482
-        argv += [f"--dir={host}"]
-    argv += [test_path]
-    argv += args
+    argv = []
+    for op in config.operations:
+        match op:
+            case _test_case_module.Run(args, env, dirs):
+                argv += [WIZARD]
+                for k, v in env.items():
+                    argv += [f"--env={k}={v}"]
+                for host, guest in dirs:
+                    # FIXME: https://github.com/titzer/wizard-engine/issues/482
+                    argv += [f"--dir={host}"]
+                argv += [test_path]
+                argv += args
     return argv

@@ -10,7 +10,6 @@ from .filters import JSONTestExcludeFilter, UnsupportedWasiTestExcludeFilter
 from .reporters import TestReporter
 from .reporters.console import ConsoleTestReporter
 from .reporters.json import JSONTestReporter
-from .validators import exit_code_validator, stdout_validator, protocol_validator, Validator
 
 
 def main() -> int:
@@ -54,8 +53,6 @@ def main() -> int:
     if options.json_output_location:
         reporters.append(JSONTestReporter(options.json_output_location))
 
-    validators: List[Validator] = [exit_code_validator, stdout_validator, protocol_validator]
-
     filters: List[TestFilter] = [UnsupportedWasiTestExcludeFilter()]
     for filt in options.exclude_filter:
         filters.append(JSONTestExcludeFilter(filt))
@@ -63,7 +60,6 @@ def main() -> int:
     return run_all_tests(
         [RuntimeAdapter(options.runtime_adapter)],
         options.test_suite,
-        validators,
         reporters,
         filters,
     )

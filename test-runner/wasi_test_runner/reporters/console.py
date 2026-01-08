@@ -37,10 +37,6 @@ class ConsoleTestReporter(TestReporter):
             self._print_fail(f"Test {test.name} failed")
             for reason in test.result.failures:
                 self._print_fail(f"  [{reason.type}] {reason.message}")
-            print("STDOUT:")
-            print(test.result.output.stdout)
-            print("STDERR:")
-            print(test.result.output.stderr)
         elif test.result.is_executed:
             self._print_pass(f"Test {test.name} passed")
         else:
