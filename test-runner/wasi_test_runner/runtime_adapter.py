@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import NamedTuple, List, Tuple, Any
 
 from .test_case import Result, WasiVersion, Config, Run, Read, Wait, Send, Recv, Failure, Connect, ProtocolType
-# from .test_server import serve
 
 
 class RuntimeMeta(NamedTuple):
