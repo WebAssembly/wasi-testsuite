@@ -103,16 +103,8 @@ def test_runner_end_to_end() -> None:
     # Assert test runner calls
     assert runtime.run_test.call_count == 3
 
-    # Need to add config for skipped test
-    skipped_config = tc.Config(operations=[tc.Run(), tc.Wait(exit_code=0)])
-    all_configs = expected_config + [skipped_config]
-
-    for test_path, config in zip(test_paths, all_configs):
-        if "skipped" in str(test_path):
-            runtime.compute_argv.assert_any_call(str(test_path), config, "wasm32-wasip1")
-            runtime.run_test.assert_any_call(str(test_path), config, "wasm32-wasip1")
-        else:
-            runtime.run_test.assert_any_call(str(test_path), config, "wasm32-wasip1")
+    for test_path, config in zip(test_paths, expected_config):
+        runtime.run_test.assert_any_call(str(test_path), config, "wasm32-wasip1")
 
     # Assert reporters calls
     for reporter in reporters:
