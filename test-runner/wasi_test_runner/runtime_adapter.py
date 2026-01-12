@@ -127,6 +127,10 @@ class RuntimeAdapter:
                         if proc is None:
                             result.failures.append(Failure.unexpected("Read operation called before Run"))
                         else:
+                            # Instance asserts might seems redudant here, given the match.
+                            # Asserts merely exist to ensure that mypy can fully resolve the underlying type;
+                            # else it will report errors like:
+                            #   wasi_test_runner/runtime_adapter.py:131: error: Argument 2 to "_handle_read" has incompatible type "Read"; expected "Read"  [arg-type]
                             assert isinstance(read, Read)
                             _handle_read(proc, read, result)
                     case Wait() as wait:
