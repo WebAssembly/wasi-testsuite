@@ -7,7 +7,7 @@ WebAssembly runtime.
 WASI is a modular collection of standardized APIs. Currently, WASI has
 not reached version 1.0 stability; this repository contains tests for
 [WASI preview
-1](https://github.com/WebAssembly/WASI/blob/main/legacy/preview1/docs.md)
+1](https://github.com/WebAssembly/WASI/blob/wasi-0.1/preview1/docs.md)
 and the forthcoming [WASI preview
 3](https://wasi.dev/roadmap).
 
