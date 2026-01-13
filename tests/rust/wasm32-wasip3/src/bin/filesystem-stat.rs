@@ -6,8 +6,8 @@ wit_bindgen::generate!({
   package test:test;
 
   world test {
-      include wasi:filesystem/imports@0.3.0-rc-2025-09-16;
-      include wasi:cli/command@0.3.0-rc-2025-09-16;
+      include wasi:filesystem/imports@0.3.0-rc-2026-01-06;
+      include wasi:cli/command@0.3.0-rc-2026-01-06;
   }
 ",
     additional_derives: [PartialEq, Eq, Hash, Clone],
@@ -16,13 +16,13 @@ wit_bindgen::generate!({
     generate_all
 });
 
-use wasi::clocks::wall_clock::Datetime;
+use wasi::clocks::system_clock::Instant;
 use wasi::filesystem::types::Descriptor;
 use wasi::filesystem::types::NewTimestamp;
 use wasi::filesystem::types::{DescriptorFlags, ErrorCode, OpenFlags, PathFlags};
 use wasi::filesystem::types::{DescriptorStat, DescriptorType};
 
-fn check_timestamp(t: Datetime) {
+fn check_timestamp(t: Instant) {
     assert!(t.nanoseconds < 1_000_000_000);
 }
 
@@ -104,11 +104,11 @@ async fn test_stat(dir: &Descriptor) {
         )
     };
     {
-        let atime = Datetime {
+        let atime = Instant {
             seconds: 42,
             nanoseconds: 0,
         };
-        let mtime = Datetime {
+        let mtime = Instant {
             seconds: 69,
             nanoseconds: 0,
         };
@@ -149,11 +149,11 @@ async fn test_stat(dir: &Descriptor) {
             .unwrap()
             .data_modification_timestamp
             .unwrap();
-        let new_atime = Datetime {
+        let new_atime = Instant {
             seconds: 42,
             nanoseconds: 0,
         };
-        let new_mtime = Datetime {
+        let new_mtime = Instant {
             seconds: 69,
             nanoseconds: 0,
         };

@@ -5,8 +5,8 @@ wit_bindgen::generate!({
   package test:test;
 
   world test {
-      include wasi:http/imports@0.3.0-rc-2025-09-16;
-      include wasi:cli/command@0.3.0-rc-2025-09-16;
+      include wasi:http/service@0.3.0-rc-2026-01-06;
+      include wasi:cli/command@0.3.0-rc-2026-01-06;
   }
 ",
     additional_derives: [PartialEq, Eq, Hash, Clone],
@@ -14,7 +14,7 @@ wit_bindgen::generate!({
     generate_all
 });
 
-use wasi::http::types::{Fields, HeaderError, Response};
+use wasi::http::types::{ErrorCode, Fields, HeaderError, Request, Response};
 
 fn test_response_field_default_values(response: &Response) {
     assert_eq!(response.get_status_code(), 200);
@@ -45,7 +45,7 @@ fn test_headers_same(left: &Fields, right: &Fields) {
     assert_eq!(left.copy_all(), right.copy_all());
 }
 
-async fn test_response() {
+async fn test_response() -> Response {
     let headers = Fields::new();
     // No field-specific syntax checks.
     headers.append("content-type", b"!!!! invalid").unwrap();
@@ -58,10 +58,19 @@ async fn test_response() {
     test_status_codes(&response);
     test_immutable_headers(&response.get_headers());
     test_headers_same(&response.get_headers(), &headers_copy);
+
+    response
 }
 
 struct Component;
 export!(Component);
+
+impl exports::wasi::http::handler::Guest for Component {
+    async fn handle(_r: Request) -> Result<Response, ErrorCode> {
+        Ok(test_response().await)
+    }
+}
+
 impl exports::wasi::cli::run::Guest for Component {
     async fn run() -> Result<(), ()> {
         test_response().await;
