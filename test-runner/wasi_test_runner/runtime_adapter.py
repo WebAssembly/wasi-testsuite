@@ -101,17 +101,16 @@ class RuntimeAdapter:
         # pylint: disable-msg=unknown-option-value
         # pylint: disable-msg=too-many-arguments
         # pylint: disable-msg=too-many-positional-arguments
-        argv = self._adapter.compute_argv(test_path=test_path,
-                                          config=config,
-                                          wasi_version=wasi_version.value)
+        args_env_dirs = config.args_env_dirs()
+        proposals = config.proposals_as_str()
+        argv = self._adapter.compute_argv(test_path, args_env_dirs, proposals, wasi_version.value)
         assert isinstance(argv, list)
         assert all(isinstance(arg, str) for arg in argv)
         return argv
 
-    def run_test(self, test_path: str, config: Config, wasi_version: WasiVersion) -> Result:
+    def run_test(self, config: Config, argv: List[str]) -> Result:
         # pylint: disable=too-many-branches
-        argv = self.compute_argv(test_path, config, wasi_version)
-        result = Result(argv=argv, is_executed=True, failures=[])
+        result = Result(is_executed=True, failures=[])
 
         proc: subprocess.Popen[Any] | None = None
         cleanup_dirs = None
@@ -127,10 +126,11 @@ class RuntimeAdapter:
                         if proc is None:
                             result.failures.append(Failure.unexpected("Read operation called before Run"))
                         else:
-                            # Instance asserts might seems redudant here, given the match.
+                            # Instance asserts might seem redudant here, given the match.
                             # Asserts merely exist to ensure that mypy can fully resolve the underlying type;
                             # else it will report errors like:
-                            #   wasi_test_runner/runtime_adapter.py:131: error: Argument 2 to "_handle_read" has incompatible type "Read"; expected "Read"  [arg-type]
+                            #   wasi_test_runner/runtime_adapter.py:131: error: Argument 2 to "_handle_read"
+                            #   has incompatible type "Read"; expected "Read" [arg-type]
                             assert isinstance(read, Read)
                             _handle_read(proc, read, result)
                     case Wait() as wait:

@@ -74,7 +74,7 @@ def _skip_single_test(
         name=os.path.splitext(os.path.basename(test_path))[0],
         argv=argv,
         config=config,
-        result=Result(argv=argv, is_executed=False, failures=[]),
+        result=Result(is_executed=False, failures=[]),
         duration_s=0,
     )
 
@@ -83,13 +83,14 @@ def _execute_single_test(
     runtime: RuntimeAdapter, meta: TestSuiteMeta, test_path: str
 ) -> TestCase:
     config = _read_test_config(test_path)
+    argv = runtime.compute_argv(test_path, config, meta.wasi_version)
     test_start = time.time()
-    result = runtime.run_test(test_path, config, meta.wasi_version)
+    result = runtime.run_test(config, argv)
     elapsed = time.time() - test_start
 
     return TestCase(
         name=os.path.splitext(os.path.basename(test_path))[0],
-        argv=result.argv,
+        argv=argv,
         config=config,
         result=result,
         duration_s=elapsed,

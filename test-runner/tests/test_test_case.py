@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch, mock_open
 import pytest
 
 from wasi_test_runner.test_case import (
-    Config, Failure, Result, Run, Wait, Read, Connect, Send, Recv, ProtocolType
+    Config, Failure, Result, Run, Wait, Read, Connect, Send, Recv, ProtocolType, WasiProposal
 )
 
 
@@ -69,13 +69,13 @@ def test_test_config_should_fail_when_mixing_config_styles(_mock_file: Mock) -> 
 
 
 def test_test_results_should_mark_failed_if_multiple_failures() -> None:
-    results = Result([], True, [Failure("type", "message")])
+    results = Result(True, [Failure("type", "message")])
 
     assert results.failed is True
 
 
 def test_test_results_should_not_mark_failed_if_no_failure() -> None:
-    results = Result([], True, [])
+    results = Result(True, [])
 
     assert results.failed is False
 
@@ -179,3 +179,37 @@ def test_recv_from_config_with_default_payload() -> None:
 
     assert recv.id == "conn1"
     assert recv.payload == ""
+
+
+@patch(
+    "builtins.open",
+    new_callable=mock_open,
+    read_data='{"operations": [{"type": "run"}, {"type": "wait"}], "proposals": []}',
+)
+def test_new_config_with_empty_proposals(_mock_file: Mock) -> None:
+    config = Config.from_file("file")
+
+    assert len(config.proposals) == 0
+
+
+@patch(
+    "builtins.open",
+    new_callable=mock_open,
+    read_data='{"operations": [{"type": "run"}], "proposals": ["http", "sockets"]}',
+)
+def test_new_config_with_multiple_proposals(_mock_file: Mock) -> None:
+    config = Config.from_file("file")
+
+    assert len(config.proposals) == 2
+    assert config.proposals[0] == WasiProposal.HTTP
+    assert config.proposals[1] == WasiProposal.SOCKETS
+
+
+@patch(
+    "builtins.open",
+    new_callable=mock_open,
+    read_data='{"operations": [{"type": "run"}], "proposals": ["invalid"]}',
+)
+def test_new_config_should_fail_with_invalid_proposal(_mock_file: Mock) -> None:
+    with pytest.raises(ValueError):
+        Config.from_file("file")

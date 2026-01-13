@@ -7,7 +7,7 @@ from typing import List, NamedTuple, TypeVar, Type, Dict, Any, Set, Tuple
 
 # Top level configuration keys
 LEGACY_CONFIG_KEYS = {"args", "dirs", "env", "exit_code", "stderr", "stdout"}
-CONFIG_KEYS = {"operations"}
+CONFIG_KEYS = {"operations", "proposals"}
 
 
 # Supported operations
@@ -37,7 +37,6 @@ class Failure(NamedTuple):
 
 
 class Result(NamedTuple):
-    argv: List[str]
     is_executed: bool
     failures: List[Failure]
 
@@ -155,6 +154,11 @@ class Connect(NamedTuple):
 Operation = Run | Wait | Read | Connect | Send | Recv
 
 
+class WasiProposal(StrEnum):
+    HTTP = 'http'
+    SOCKETS = 'sockets'
+
+
 T = TypeVar("T", bound="Config")
 
 
@@ -163,6 +167,8 @@ class Config(NamedTuple):
     operations: List[Operation] = [Run(), Wait()]
     # Mapping of declared connections
     connections: Dict[str, socket.socket] = {}
+    # WASI proposals needed for the test.
+    proposals: List[WasiProposal] = []
 
     @classmethod
     def from_file(cls: Type[T], config_file: str) -> T:
@@ -170,12 +176,21 @@ class Config(NamedTuple):
             dict_config = json.load(file)
 
         test_config_path = Path(config_file)
-        if dict_config.get("operations") is not None:
+        if dict_config.get("operations") is not None or dict_config.get("proposals") is not None:
             cls._validate_config(dict_config, CONFIG_KEYS)
 
+            operations = []
+            if dict_config.get("operations") is not None:
+                operations = cls._operations_from_config(test_config_path, dict_config.get("operations"))
+
+            proposals = []
+            if dict_config.get("proposals") is not None:
+                proposals = cls._proposals_from_config(dict_config.get("proposals"))
+
             return cls(
-                operations=cls._operations_from_config(test_config_path, dict_config.get("operations")),
-                connections={}
+                operations=operations,
+                connections={},
+                proposals=proposals
             )
 
         cls._validate_config(dict_config, LEGACY_CONFIG_KEYS)
@@ -188,27 +203,45 @@ class Config(NamedTuple):
             dict_config,
         )
 
-        operations: List[Operation] = [run_op]
+        legacy_operations: List[Operation] = [run_op]
 
         if dict_config.get("stdout") is not None:
-            operations.append(Read(id="stdout", payload=dict_config.get("stdout")))
+            legacy_operations.append(Read(id="stdout", payload=dict_config.get("stdout")))
 
         if dict_config.get("stderr") is not None:
-            operations.append(Read(id="stderr", payload=dict_config.get("stderr")))
+            legacy_operations.append(Read(id="stderr", payload=dict_config.get("stderr")))
 
         wait_op = Wait(
             exit_code=dict_config.get("exit_code", 0)
         )
-        operations.append(wait_op)
+        legacy_operations.append(wait_op)
 
         return cls(
-            operations=operations,
-            connections={}
+            operations=legacy_operations,
+            connections={},
+            # Tests which require explicit proposals must be
+            # configured using the new configuration.
+            # See http-response.json
+            # We could potentially use additional heuristics to derive
+            # the proposals to enable, but that doesn't seem entirely
+            # reliable, plus we'd be introducing a third level of
+            # configuration.
+            proposals=[],
         )
+
+    def args_env_dirs(self) -> Tuple[List[str], Dict[str, str], List[Tuple[Path, str]]]:
+        for op in self.operations:
+            match op:
+                case Run(args, env, dirs):
+                    return (args, env, dirs)
+        return ([], {}, [])
+
+    def proposals_as_str(self) -> List[str]:
+        return [p.value for p in self.proposals]
 
     @classmethod
     def _validate_config(cls: Type[T], dict_config: Dict[str, Any], expected_keys: Set[str]) -> None:
-        # Check that the test configration is unique, either v0 or v1
+        # Check that the test configuration is unique, either v0 or v1
         actual_keys = set(dict_config.keys())
         if (actual_keys & CONFIG_KEYS) and (actual_keys & LEGACY_CONFIG_KEYS):
             raise ValueError("Cannot mix configuration styles")
@@ -242,6 +275,10 @@ class Config(NamedTuple):
                     operations.append(Recv.from_config(op))
 
         return operations
+
+    @classmethod
+    def _proposals_from_config(cls: Type[T], proposals: List[Any]) -> List[WasiProposal]:
+        return [WasiProposal(p) for p in proposals]
 
 
 class TestCase(NamedTuple):

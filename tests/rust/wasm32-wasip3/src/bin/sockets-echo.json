@@ -1,4 +1,7 @@
 {
+    "proposals": [
+	"sockets"
+    ],
     "operations": [
 	{
 	    "type": "run"

@@ -15,6 +15,10 @@ def get_mock_open() -> Mock:
             "my-path/test1.json": '{"dirs": [".", "deep/dir"]}',
             "my-path/test2.json": '{"exit_code": 1, "args": ["a", "b"]}',
             "my-path/test3.json": '{"stdout": "output", "env": {"x": "1"}}',
+            "my-path/test4.json": (
+                '{"operations": [{"type": "run"}, {"type": "wait", "exit_code": 1}], '
+                '"proposals": []}'
+            ),
         }
         if filename in file_content:
             return mock_open(read_data=file_content[filename]).return_value
@@ -31,7 +35,7 @@ def get_mock_open() -> Mock:
 def test_runner_end_to_end() -> None:
     test_suite_dir = "my-path"
     test_suite_name = "test-suite"
-    test_files = ["test1.wasm", "test2.wasm", "test3.wasm"]
+    test_files = ["test1.wasm", "test2.wasm", "test3.wasm", "test4.wasm"]
     test_paths = [Path(test_suite_dir) / f for f in test_files]
 
     failures = [tc.Failure("a", "b"), tc.Failure("x", "y"), tc.Failure("x", "z")]
@@ -40,22 +44,30 @@ def test_runner_end_to_end() -> None:
 
     expected_argv = [runtime_name, "<test>"]
     expected_results = [
-        tc.Result(expected_argv, True, []),
-        tc.Result(expected_argv, True, [failures[1]]),
-        tc.Result(expected_argv, True, [failures[0], failures[2]]),
+        tc.Result(True, []),
+        tc.Result(True, [failures[1]]),
+        tc.Result(True, [failures[0], failures[2]]),
+        tc.Result(True, [])
     ]
     expected_config = [
         tc.Config(
             operations=[
                 tc.Run(dirs=[(Path(test_suite_dir) / d, d) for d in test_dirs]),
                 tc.Wait(exit_code=0)
-            ]
+            ],
+            proposals=[]
         ),
         tc.Config(
-            operations=[tc.Run(args=["a", "b"]), tc.Wait(exit_code=1)]
+            operations=[tc.Run(args=["a", "b"]), tc.Wait(exit_code=1)],
+            proposals=[]
         ),
         tc.Config(
-            operations=[tc.Run(env={"x": "1"}), tc.Read(id="stdout", payload="output"), tc.Wait(exit_code=0)]
+            operations=[tc.Run(env={"x": "1"}), tc.Read(id="stdout", payload="output"), tc.Wait(exit_code=0)],
+            proposals=[]
+        ),
+        tc.Config(
+            operations=[tc.Run(), tc.Wait(exit_code=1)],
+            proposals=[]
         ),
     ]
 
@@ -72,7 +84,7 @@ def test_runner_end_to_end() -> None:
     expected_test_cases = [
         tc.TestCase(test_name, expected_argv, config, result, ANY)
         for config, test_name, result in zip(
-            expected_config, ["test1", "test2", "test3"], expected_results
+            expected_config, ["test1", "test2", "test3", "test4"], expected_results
         )
     ]
 
@@ -80,6 +92,7 @@ def test_runner_end_to_end() -> None:
     runtime.get_name.return_value = runtime_name
     runtime.get_meta.return_value = runtime_meta
     runtime.run_test.side_effect = expected_results
+    runtime.compute_argv.return_value = expected_argv
 
     reporters = [Mock(), Mock()]
 
@@ -97,25 +110,25 @@ def test_runner_end_to_end() -> None:
     assert suite.meta == expected_test_suite_meta
 
     # Assert test cases
-    assert suite.test_count == 3
+    assert suite.test_count == 4
     assert suite.test_cases == expected_test_cases
 
     # Assert test runner calls
-    assert runtime.run_test.call_count == 3
+    assert runtime.run_test.call_count == 4
 
-    for test_path, config in zip(test_paths, expected_config):
-        runtime.run_test.assert_any_call(str(test_path), config, "wasm32-wasip1")
+    for config in expected_config:
+        runtime.run_test.assert_any_call(config, expected_argv)
 
     # Assert reporters calls
     for reporter in reporters:
-        assert reporter.report_test.call_count == 3
+        assert reporter.report_test.call_count == 4
         for test_case in expected_test_cases:
             reporter.report_test.assert_any_call(expected_test_suite_meta,
                                                  test_case)
 
     # Assert filter calls
     for filt in filters:
-        assert filt.should_skip.call_count == 3
+        assert filt.should_skip.call_count == 4
         for test_case in expected_test_cases:
             filt.should_skip.assert_any_call(expected_test_suite_meta,
                                              test_case.name)
