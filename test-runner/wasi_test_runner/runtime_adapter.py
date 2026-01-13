@@ -109,7 +109,8 @@ class RuntimeAdapter:
         return argv
 
     def run_test(self, config: Config, argv: List[str]) -> Result:
-        # pylint: disable=too-many-branches
+        # pylint: disable=too-many-branches,too-many-locals
+        config.dry_run()
         result = Result(is_executed=True, failures=[])
 
         proc: subprocess.Popen[Any] | None = None
@@ -120,39 +121,37 @@ class RuntimeAdapter:
                     case Run(_, _, dirs):
                         _cleanup_test_output(dirs)
                         # pylint: disable=consider-using-with
-                        proc = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-                        cleanup_dirs = dirs
+                        try:
+                            proc = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                            cleanup_dirs = dirs
+                        except (OSError, ValueError) as e:
+                            result.failures.append(Failure.unexpected(f"Failed to start process: {e}"))
+                            break
                     case Read() as read:
-                        if proc is None:
-                            result.failures.append(Failure.unexpected("Read operation called before Run"))
-                        else:
-                            # Instance asserts might seem redudant here, given the match.
-                            # Asserts merely exist to ensure that mypy can fully resolve the underlying type;
-                            # else it will report errors like:
-                            #   wasi_test_runner/runtime_adapter.py:131: error: Argument 2 to "_handle_read"
-                            #   has incompatible type "Read"; expected "Read" [arg-type]
-                            assert isinstance(read, Read)
-                            _handle_read(proc, read, result)
+                        assert proc is not None
+                        # Instance asserts might seem redudant here, given the match.
+                        # Asserts merely exist to ensure that mypy can fully resolve the underlying type;
+                        # else it will report errors like:
+                        #   wasi_test_runner/runtime_adapter.py:131: error: Argument 2 to "_handle_read"
+                        #   has incompatible type "Read"; expected "Read" [arg-type]
+                        assert isinstance(read, Read)
+                        _handle_read(proc, read, result)
                     case Wait() as wait:
-                        if proc is None:
-                            result.failures.append(Failure.unexpected("Wait operation called before Run"))
-                        else:
-                            assert isinstance(wait, Wait)
-                            _handle_wait(proc, wait, result)
+                        assert proc is not None
+                        assert isinstance(wait, Wait)
+                        _handle_wait(proc, wait, result)
+                        # The wait handler will `kill` the process
+                        proc = None
                     case Connect() as conn:
-                        if proc is None:
-                            result.failures.append(Failure.unexpected("Connect operation called before Run"))
-                        else:
-                            assert isinstance(conn, Connect)
-                            _handle_connect(proc, config, conn, result)
+                        assert proc is not None
+                        assert isinstance(conn, Connect)
+                        _handle_connect(proc, config, conn, result)
                     case Send() as send:
                         assert isinstance(send, Send)
                         _handle_send(config, send, result)
                     case Recv() as recv:
                         assert isinstance(recv, Recv)
                         _handle_recv(config, recv, result)
-                    case _:
-                        pass
 
         finally:
             if cleanup_dirs:
@@ -164,27 +163,23 @@ class RuntimeAdapter:
                     _, _ = proc.communicate(timeout=5)
                 except subprocess.TimeoutExpired:
                     proc.kill()
-                    result.failures.append(Failure.unexpected("Process timed out"))
+                    out, err = proc.communicate()
+                    msg = "Process timed out"
+                    msg = _append_stdout_and_stderr(msg, out, err)
+                    result.failures.append(Failure.unexpected(msg))
 
         return result
 
 
 def _handle_read(proc: subprocess.Popen[Any], spec: Read, result: Result) -> None:
-    if spec.id == "stdout":
-        if proc.stdout is None:
-            result.failures.append(Failure.unexpected(f"{spec.id} is not available"))
-            return
-        payload = proc.stdout.readline().strip()
-        if payload != spec.payload:
-            result.failures.append(Failure.expectation(f"{spec.id} failed: expected {spec.payload}, got {payload}"))
+    stream = getattr(proc, spec.id, None)
+    if stream is None:
+        result.failures.append(Failure.unexpected(f"{spec} {spec.id} is not available"))
+        return
 
-    if spec.id == "stderr":
-        if proc.stderr is None:
-            result.failures.append(Failure.unexpected(f"{spec.id} is not available"))
-            return
-        payload = proc.stderr.readline().strip()
-        if payload != spec.payload:
-            result.failures.append(Failure.expectation(f"{spec.id} failed: expected {spec.payload}, got {payload}"))
+    payload = stream.readline().strip()
+    if payload != spec.payload:
+        result.failures.append(Failure.expectation(f"{spec} {spec.id} failed: expected {spec.payload}, got {payload}"))
 
 
 def _handle_wait(proc: subprocess.Popen[Any], spec: Wait, result: Result) -> None:
@@ -192,16 +187,12 @@ def _handle_wait(proc: subprocess.Popen[Any], spec: Wait, result: Result) -> Non
         out, err = proc.communicate(timeout=5)
         if spec.exit_code != proc.returncode:
             msg = f"{spec} failed: expected {spec.exit_code}, got {proc.returncode}"
-
-            if out:
-                msg += f"\n\n==STDOUT==\n{out}"
-
-            if err:
-                msg += f"\n\n==STDERR==\n{err}"
-
+            msg = _append_stdout_and_stderr(msg, out, err)
             result.failures.append(Failure.expectation(msg))
 
     except subprocess.TimeoutExpired:
+        proc.kill()
+        out, err = proc.communicate()
         result.failures.append(Failure.expectation(f"{spec} failed: timeout expired"))
 
 
@@ -220,35 +211,55 @@ def _handle_connect(proc: subprocess.Popen[Any], config: Config, spec: Connect, 
         result.failures.append(Failure.unexpected(f"{spec}: No connection information available"))
         return
 
-    host, port = proc.stdout.readline().strip().split(':')
+    try:
+        line = proc.stdout.readline().strip()
+        parts = line.split(':')
+        if len(parts) != 2:
+            msg = f"{spec}: Expected address information to be available as <host>: <port>, found {line}"
+            result.failures.append(Failure.unexpected(msg))
+            return
+        host, port_str = parts
+        if not host or not port_str:
+            msg = f"{spec}: Expected address information to be available as <host>: <port>, found {line}"
+            result.failures.append(Failure.unexpected(msg))
+            return
+        port = int(port_str)
+    except ValueError as e:
+        result.failures.append(Failure.unexpected(f"{spec}: Failed to parse connection information: {e}"))
+        return
+
+    sock = None
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((host, int(port)))
+        sock.connect((host, port))
         config.connections[spec.id] = sock
-    except socket.timeout:
-        host_port = host + ":" + port
-        result.failures.append(Failure.unexpected(f"{spec}: Could not connect to {host_port}"))
+    except (socket.timeout, ConnectionRefusedError, OSError) as e:
+        if sock is not None:
+            sock.close()
+        result.failures.append(Failure.unexpected(f"{spec}: Could not connect to {host}: {port} - {e}"))
 
 
 def _handle_send(config: Config, spec: Send, result: Result) -> None:
-    if config.connections[spec.id] is None:
-        result.failures.append(Failure.unexpected(f"{spec}: No connection declared for id {spec.id}"))
-        return
-
     sock = config.connections[spec.id]
-    sock.sendall(spec.payload.encode('utf-8'))
+    assert sock is not None
+    try:
+        sock.sendall(spec.payload.encode('utf-8'))
+    except (OSError, socket.error) as e:
+        result.failures.append(Failure.unexpected(f"{spec}: Failed to send data: {e}"))
 
 
 def _handle_recv(config: Config, spec: Recv, result: Result) -> None:
-    if config.connections[spec.id] is None:
-        result.failures.append(Failure.unexpected(f"{spec}: No connection declared for id {spec.id}"))
-        return
-
     sock = config.connections[spec.id]
-    response_bytes = sock.recv(len(spec.payload))
-    response = response_bytes.decode('utf-8')
-    if response != spec.payload:
-        result.failures.append(Failure.unexpected(f"{spec}: Expected {spec.payload}, got {response}"))
+    assert sock is not None
+    try:
+        response_bytes = sock.recv(len(spec.payload))
+        response = response_bytes.decode('utf-8')
+        if response != spec.payload:
+            result.failures.append(Failure.unexpected(f"{spec}: Expected {spec.payload}, got {response}"))
+    except (OSError, socket.error) as e:
+        result.failures.append(Failure.unexpected(f"{spec}: Failed to receive data: {e}"))
+    except UnicodeDecodeError as e:
+        result.failures.append(Failure.unexpected(f"{spec}: Failed to decode response: {e}"))
 
 
 def _cleanup_test_output(dirs: List[Tuple[Path, str]]) -> None:
@@ -258,3 +269,13 @@ def _cleanup_test_output(dirs: List[Tuple[Path, str]]) -> None:
                 f.unlink()
             elif f.is_dir():
                 shutil.rmtree(f)
+
+
+def _append_stdout_and_stderr(msg: str, out: str | None, err: str | None) -> str:
+    if out:
+        msg += f"\n\n==STDOUT==\n{out}"
+
+    if err:
+        msg += f"\n\n==STDERR==\n{err}"
+
+    return msg

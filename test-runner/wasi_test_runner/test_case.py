@@ -239,6 +239,45 @@ class Config(NamedTuple):
     def proposals_as_str(self) -> List[str]:
         return [p.value for p in self.proposals]
 
+    # Performs a dry run of the configuration validating its structure.
+    def dry_run(self) -> None:
+        run_found = False
+        procs: List[str] = []
+        errors: List[str] = []
+
+        for op in self.operations:
+            match op:
+                case Run() as run:
+                    if run_found:
+                        errors.append(f"{run}: each Run operation must be paired with a Wait operation")
+                    run_found = True
+                case Read() as read:
+                    if not run_found:
+                        errors.append(f"{read}: Found Read operation before Run")
+                case Wait() as wait:
+                    if not run_found:
+                        errors.append(f"{wait}: Found Wait operation before Run")
+                    run_found = False
+                case Connect(conn_id, protocol_type) as conn:
+                    if not run_found:
+                        errors.append(f"{conn}: Found Connect operation before Run")
+                    if protocol_type != ProtocolType.TCP:
+                        errors.append(f"{conn}: {protocol_type} not supported")
+                    if conn_id in procs:
+                        errors.append(f"{conn}: Duplicate definition of id {conn_id}")
+                    procs.append(conn_id)
+                case Send(send_id) as send:
+                    if not run_found:
+                        errors.append(f"{send}: Found Send operation before Run")
+                    if send_id not in procs:
+                        errors.append(f"{send}: No identifier defined for {send_id}")
+                case Recv() as recv:
+                    if not run_found:
+                        errors.append(f"{recv}: Found Recv operation before Run")
+
+        if errors:
+            raise ValueError("\n".join(errors))
+
     @classmethod
     def _validate_config(cls: Type[T], dict_config: Dict[str, Any], expected_keys: Set[str]) -> None:
         # Check that the test configuration is unique, either v0 or v1

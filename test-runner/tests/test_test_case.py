@@ -213,3 +213,77 @@ def test_new_config_with_multiple_proposals(_mock_file: Mock) -> None:
 def test_new_config_should_fail_with_invalid_proposal(_mock_file: Mock) -> None:
     with pytest.raises(ValueError):
         Config.from_file("file")
+
+
+def test_dry_run_valid_config_should_not_raise() -> None:
+    config = Config(operations=[Run(), Wait()])
+    config.dry_run()
+
+
+def test_dry_run_run_without_wait() -> None:
+    config = Config(operations=[Run(), Run()])
+    with pytest.raises(ValueError, match="each Run operation must be paired with a Wait operation"):
+        config.dry_run()
+
+
+def test_dry_run_read_before_run() -> None:
+    config = Config(operations=[Read()])
+    with pytest.raises(ValueError, match="Found Read operation before Run"):
+        config.dry_run()
+
+
+def test_dry_run_wait_before_run() -> None:
+    config = Config(operations=[Wait()])
+    with pytest.raises(ValueError, match="Found Wait operation before Run"):
+        config.dry_run()
+
+
+def test_dry_run_connect_before_run() -> None:
+    config = Config(operations=[Connect()])
+    with pytest.raises(ValueError, match="Found Connect operation before Run"):
+        config.dry_run()
+
+
+def test_dry_run_connect_with_non_tcp_protocol() -> None:
+    config = Config(operations=[Run(), Connect(protocol_type=ProtocolType.UDP), Wait()])
+    with pytest.raises(ValueError, match="udp not supported"):
+        config.dry_run()
+
+
+def test_dry_run_connect_with_duplicate_id() -> None:
+    config = Config(operations=[
+        Run(),
+        Connect(id="conn1"),
+        Connect(id="conn1"),
+        Wait()
+    ])
+    with pytest.raises(ValueError, match="Duplicate definition of id conn1"):
+        config.dry_run()
+
+
+def test_dry_run_send_before_run() -> None:
+    config = Config(operations=[Send(id="conn1", payload="test")])
+    with pytest.raises(ValueError, match="Found Send operation before Run"):
+        config.dry_run()
+
+
+def test_dry_run_send_with_undefined_id() -> None:
+    config = Config(operations=[Run(), Send(id="conn1", payload="test"), Wait()])
+    with pytest.raises(ValueError, match="No identifier defined for conn1"):
+        config.dry_run()
+
+
+def test_dry_run_recv_before_run() -> None:
+    config = Config(operations=[Recv(id="conn1", payload="test")])
+    with pytest.raises(ValueError, match="Found Recv operation before Run"):
+        config.dry_run()
+
+
+def test_dry_run_multiple_errors() -> None:
+    config = Config(operations=[Read(), Wait(), Run(), Run()])
+    with pytest.raises(ValueError) as exc_info:
+        config.dry_run()
+    error_message = str(exc_info.value)
+    assert "Found Read operation before Run" in error_message
+    assert "Found Wait operation before Run" in error_message
+    assert "each Run operation must be paired with a Wait operation" in error_message
