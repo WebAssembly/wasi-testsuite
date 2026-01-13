@@ -5,8 +5,8 @@ wit_bindgen::generate!({
   package test:test;
 
   world test {
-      include wasi:clocks/imports@0.3.0-rc-2025-09-16;
-      include wasi:cli/command@0.3.0-rc-2025-09-16;
+      include wasi:clocks/imports@0.3.0-rc-2026-01-06;
+      include wasi:cli/command@0.3.0-rc-2026-01-06;
   }
 ",
     // Work around https://github.com/bytecodealliance/wasm-tools/issues/2285.
@@ -15,7 +15,7 @@ wit_bindgen::generate!({
 });
 
 use core::task::{Context, Poll, Waker};
-use monotonic_clock::Instant;
+use monotonic_clock::Mark;
 use std::future::Future;
 use wasi::clocks::monotonic_clock;
 
@@ -27,7 +27,7 @@ const OFFSETS: &[i64] = &[
     2403137, 6055827, 5658461, -3972826, -561642, 6360445, 9966678, 2946734, 2012267, -3456550,
 ];
 
-fn add_offset(t: Instant, dt: i64) -> Instant {
+fn add_offset(t: Mark, dt: i64) -> Mark {
     if dt < 0 {
         t.saturating_sub(-dt as u64)
     } else {
@@ -38,7 +38,7 @@ fn add_offset(t: Instant, dt: i64) -> Instant {
 async fn test_multi_clock_wait() {
     let mut cx = Context::from_waker(Waker::noop());
 
-    let times: Vec<Instant> = {
+    let times: Vec<Mark> = {
         let start = monotonic_clock::now();
         OFFSETS.iter().map(|ns| add_offset(start, *ns)).collect()
     };

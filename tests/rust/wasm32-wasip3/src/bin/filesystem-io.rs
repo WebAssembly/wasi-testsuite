@@ -7,8 +7,8 @@ wit_bindgen::generate!({
   package test:test;
 
   world test {
-      include wasi:filesystem/imports@0.3.0-rc-2025-09-16;
-      include wasi:cli/command@0.3.0-rc-2025-09-16;
+      include wasi:filesystem/imports@0.3.0-rc-2026-01-06;
+      include wasi:cli/command@0.3.0-rc-2026-01-06;
   }
 ",
     additional_derives: [PartialEq, Eq, Hash, Clone],
