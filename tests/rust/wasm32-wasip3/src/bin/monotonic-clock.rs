@@ -5,8 +5,8 @@ wit_bindgen::generate!({
   package test:test;
 
   world test {
-      include wasi:clocks/imports@0.3.0-rc-2025-09-16;
-      include wasi:cli/command@0.3.0-rc-2025-09-16;
+      include wasi:clocks/imports@0.3.0-rc-2026-01-06;
+      include wasi:cli/command@0.3.0-rc-2026-01-06;
   }
 ",
     // Work around https://github.com/bytecodealliance/wasm-tools/issues/2285.
@@ -14,7 +14,7 @@ wit_bindgen::generate!({
     generate_all
 });
 
-use monotonic_clock::{Duration, Instant};
+use monotonic_clock::{Duration, Mark};
 use wasi::clocks::monotonic_clock;
 
 const NANOSECOND: Duration = 1;
@@ -25,7 +25,7 @@ const MINUTE: Duration = SECOND * 60;
 const HOUR: Duration = MINUTE * 60;
 const DAY: Duration = HOUR * 24;
 
-fn compute_duration(start: Instant, end: Instant) -> Duration {
+fn compute_duration(start: Mark, end: Mark) -> Duration {
     // Assume that this test takes less than a day to run (in terms of
     // the monotonic clock), and that therefore the difference between
     // any two `monotonic-clock#now` calls should be less than a day;

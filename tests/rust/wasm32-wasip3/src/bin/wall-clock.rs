@@ -5,7 +5,7 @@ wit_bindgen::generate!({
   package test:test;
 
   world test {
-      include wasi:clocks/imports@0.3.0-rc-2025-09-16;
+      include wasi:clocks/imports@0.3.0-rc-2026-01-06;
   }
 ",
     // Work around https://github.com/bytecodealliance/wasm-tools/issues/2285.
@@ -13,19 +13,26 @@ wit_bindgen::generate!({
     generate_all
 });
 
-use wasi::clocks::wall_clock;
+use wasi::clocks::system_clock;
 
 const NANOSECOND: u32 = 1;
 const MICROSECOND: u32 = NANOSECOND * 1_000;
 const MILLISECOND: u32 = MICROSECOND * 1_000;
 const SECOND: u32 = MILLISECOND * 1_000;
 
-fn verify_datetime(t: wall_clock::Datetime) {
+fn verify_instant(t: system_clock::Instant) {
     assert!(t.nanoseconds < SECOND)
 }
 
 fn main() {
-    // Not much we can assert about wall-clock time.
-    verify_datetime(wall_clock::now());
-    verify_datetime(wall_clock::get_resolution());
+    // Not much we can assert about system-clock time.
+    verify_instant(system_clock::now());
+    let resolution = system_clock::get_resolution();
+    let resolution_instant = system_clock::Instant {
+        seconds: 0,
+        nanoseconds: resolution as u32,
+    };
+    verify_instant(resolution_instant);
+    // Resolution should be non-zero and represent the clock's precision.
+    assert!(resolution > 0, "Clock resolution should be non-zero");
 }
