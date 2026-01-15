@@ -1,8 +1,11 @@
 import subprocess
 import os
 import shlex
+import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
+import importlib
+
 
 # shlex.split() splits according to shell quoting rules
 RUN_PYWASM = Path(__file__).parent.parent / "tools" / "run-pywasm"
@@ -25,15 +28,21 @@ def get_wasi_versions() -> List[str]:
     return ["wasm32-wasip1"]
 
 def compute_argv(test_path: str,
-                 args: List[str],
-                 env: Dict[str, str],
-                 dirs: List[Tuple[Path, str]],
+                 args_env_dirs: Tuple[List[str], Dict[str, str], List[Tuple[Path, str]]],
+                 proposals: List[str],
                  wasi_version: str) -> List[str]:
-    argv = [str(RUN_PYWASM)]
+
+    argv = []
+    argv += [str(RUN_PYWASM)]
+    args, env, dirs = args_env_dirs
+
     for k, v in env.items():
         argv += ["--env", f"{k}={v}"]
+
     for host, guest in dirs:
         argv += ["--dir", f"{host}::{guest}"]  # noqa: E231
+
     argv += [test_path]
+
     argv += args
     return argv

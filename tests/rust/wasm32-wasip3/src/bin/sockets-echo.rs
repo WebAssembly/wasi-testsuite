@@ -51,7 +51,8 @@ impl std::fmt::Display for IpSocketAddress {
 async fn echo(family: IpAddressFamily, addr: IpSocketAddress) {
     let listener = TcpSocket::create(family).unwrap();
     listener.bind(addr).unwrap();
-    println!("OK");
+    let addr = listener.get_local_address().unwrap();
+    println!("{}", addr);
 
     let mut accept = listener.listen().unwrap();
     let sock = accept.next().await.unwrap();
