@@ -35,14 +35,20 @@ async fn sleep_10ms_wait_for() {
     let dur = 10_000_000;
     let deadline = monotonic_clock::now() + dur;
     monotonic_clock::wait_for(dur).await;
-    assert!(monotonic_clock::now() >= deadline, "wait_for never resolves before the deadline");
+    assert!(
+        monotonic_clock::now() >= deadline,
+        "wait_for never resolves before the deadline"
+    );
 }
 
 async fn sleep_10ms_wait_until() {
     let dur = 10_000_000;
     let deadline = monotonic_clock::now() + dur;
     monotonic_clock::wait_until(deadline).await;
-    assert!(monotonic_clock::now() >= deadline, "wait_until never resolves before the deadline");
+    assert!(
+        monotonic_clock::now() >= deadline,
+        "wait_until never resolves before the deadline"
+    );
 }
 
 fn sleep_0ms() {
@@ -71,4 +77,3 @@ fn sleep_backwards_in_time() {
 }
 
 fn main() {}
-
