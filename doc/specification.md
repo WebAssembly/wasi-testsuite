@@ -82,7 +82,7 @@ Defines how to start the execution of the test case.
 }
 ```
 
-##### `wait`
+#### `wait`
 
 Waits for the test case to complete and validates the exit code.
 
@@ -97,7 +97,7 @@ Waits for the test case to complete and validates the exit code.
 }
 ```
 
-##### `read`
+#### `read`
 
 Reads and validates output from a stream (stdout or stderr).
 
@@ -114,9 +114,17 @@ Reads and validates output from a stream (stdout or stderr).
 }
 ```
 
-##### `connect`
+#### `connect`
 
 Establishes a connection to a server for network-based tests.
+
+This operation assumes:
+- The test runner acts as the client
+- The WASI module acts as the server
+
+Upon execution start, the test executor expects the WASI module to
+write the address information to `stdout` following the
+`<host>:<port>` format.
 
 **Fields:**
 - `id` (optional): Connection identifier for referencing in later operations
@@ -148,7 +156,7 @@ Sends data over a previously established connection.
 }
 ```
 
-##### `recv`
+#### `recv`
 
 Receives and validates data from a previously established connection.
 
