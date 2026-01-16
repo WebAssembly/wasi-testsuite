@@ -83,12 +83,43 @@ fn test_ephemeral_port_assignment(family: IpAddressFamily) {
     assert_ne!(addr.port(), bound.port());
 }
 
+fn test_non_unicast(family: IpAddressFamily) {
+    let mut non_unicast_addresses = Vec::new();
+
+    match family {
+        IpAddressFamily::Ipv4 => {
+            // Multicast
+            for nibble in 224..=239 {
+                non_unicast_addresses.push(IpAddress::Ipv4((nibble, 0, 0, 1)));
+            }
+            // Limited broadcast
+            non_unicast_addresses.push(IpAddress::Ipv4((255, 255, 255, 255)));
+        }
+        IpAddressFamily::Ipv6 => {
+            // Multicast
+            for b in 0xff00..=0xffff {
+                non_unicast_addresses.push(IpAddress::Ipv6((b, 0, 0, 0, 0, 0, 0, 1)));
+            }
+        }
+    };
+
+    for addr in non_unicast_addresses {
+        let sock = TcpSocket::create(family).unwrap();
+        let socket_addr = IpSocketAddress::new(addr, 0);
+        let result = sock.bind(socket_addr);
+
+        assert!(matches!(result, Err(ErrorCode::InvalidArgument)));
+    }
+}
+
 impl exports::wasi::cli::run::Guest for Component {
     async fn run() -> Result<(), ()> {
         test_invalid_address_family(IpAddressFamily::Ipv4);
         test_invalid_address_family(IpAddressFamily::Ipv6);
         test_ephemeral_port_assignment(IpAddressFamily::Ipv4);
         test_ephemeral_port_assignment(IpAddressFamily::Ipv6);
+        test_non_unicast(IpAddressFamily::Ipv4);
+        test_non_unicast(IpAddressFamily::Ipv6);
         Ok(())
     }
 }
