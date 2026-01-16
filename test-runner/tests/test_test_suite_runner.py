@@ -15,6 +15,10 @@ def get_mock_open() -> Mock:
             "my-path/test1.json": '{"dirs": [".", "deep/dir"]}',
             "my-path/test2.json": '{"exit_code": 1, "args": ["a", "b"]}',
             "my-path/test3.json": '{"stdout": "output", "env": {"x": "1"}}',
+            "my-path/test4.json": (
+                '{"operations": [{"type": "run"}, {"type": "wait", "exit_code": 1}], '
+                '"proposals": []}'
+            ),
         }
         if filename in file_content:
             return mock_open(read_data=file_content[filename]).return_value
@@ -31,28 +35,42 @@ def get_mock_open() -> Mock:
 def test_runner_end_to_end() -> None:
     test_suite_dir = "my-path"
     test_suite_name = "test-suite"
-    test_files = ["test1.wasm", "test2.wasm", "test3.wasm"]
+    test_files = ["test1.wasm", "test2.wasm", "test3.wasm", "test4.wasm"]
     test_paths = [Path(test_suite_dir) / f for f in test_files]
 
     failures = [tc.Failure("a", "b"), tc.Failure("x", "y"), tc.Failure("x", "z")]
+    test_dirs = [".", "deep/dir"]
+    runtime_name = "rt1"
 
-    outputs = [
-        tc.Output(0, "test1", "", ""),
-        tc.Output(1, "test2", "", ""),
-        tc.Output(2, "test3", "", ""),
-    ]
+    expected_argv = [runtime_name, "<test>"]
     expected_results = [
-        tc.Result(outputs[0], True, []),
-        tc.Result(outputs[1], True, [failures[1]]),
-        tc.Result(outputs[2], True, [failures[0], failures[2]]),
+        tc.Result(True, []),
+        tc.Result(True, [failures[1]]),
+        tc.Result(True, [failures[0], failures[2]]),
+        tc.Result(True, [])
     ]
     expected_config = [
-        tc.Config(dirs=[".", "deep/dir"]),
-        tc.Config(args=["a", "b"], exit_code=1),
-        tc.Config(stdout="output", env={"x": "1"}),
+        tc.Config(
+            operations=[
+                tc.Run(dirs=[(Path(test_suite_dir) / d, d) for d in test_dirs]),
+                tc.Wait(exit_code=0)
+            ],
+            proposals=[]
+        ),
+        tc.Config(
+            operations=[tc.Run(args=["a", "b"]), tc.Wait(exit_code=1)],
+            proposals=[]
+        ),
+        tc.Config(
+            operations=[tc.Run(env={"x": "1"}), tc.Read(id="stdout", payload="output"), tc.Wait(exit_code=0)],
+            proposals=[]
+        ),
+        tc.Config(
+            operations=[tc.Run(), tc.Wait(exit_code=1)],
+            proposals=[]
+        ),
     ]
 
-    runtime_name = "rt1"
     runtime_version_str = "4.2"
     the_runtime_wasi_version = tc.WasiVersion.WASM32_WASIP1
     runtime_wasi_versions = frozenset([the_runtime_wasi_version])
@@ -63,24 +81,18 @@ def test_runner_end_to_end() -> None:
                                                 the_runtime_wasi_version,
                                                 runtime_meta)
 
-    expected_argv = [runtime_name, "<test>"]
     expected_test_cases = [
         tc.TestCase(test_name, expected_argv, config, result, ANY)
         for config, test_name, result in zip(
-            expected_config, ["test1", "test2", "test3"], expected_results
+            expected_config, ["test1", "test2", "test3", "test4"], expected_results
         )
     ]
 
     runtime = Mock()
     runtime.get_name.return_value = runtime_name
     runtime.get_meta.return_value = runtime_meta
-    runtime.run_test.side_effect = outputs
+    runtime.run_test.side_effect = expected_results
     runtime.compute_argv.return_value = expected_argv
-
-    validators = [
-        Mock(side_effect=[None, None, failures[0]]),
-        Mock(side_effect=[None, failures[1], failures[2]]),
-    ]
 
     reporters = [Mock(), Mock()]
 
@@ -89,9 +101,8 @@ def test_runner_end_to_end() -> None:
     filters = [filt]
 
     with (patch("glob.glob", return_value=[str(p) for p in test_paths]),
-          patch("wasi_test_runner.test_suite_runner._cleanup_test_output")):
+          patch("wasi_test_runner.runtime_adapter._cleanup_test_output")):
         suite = tsr.run_tests_from_test_suite(test_suite_dir, runtime,
-                                              validators,  # type: ignore
                                               reporters,   # type: ignore
                                               filters)     # type: ignore
 
@@ -99,35 +110,25 @@ def test_runner_end_to_end() -> None:
     assert suite.meta == expected_test_suite_meta
 
     # Assert test cases
-    assert suite.test_count == 3
+    assert suite.test_count == 4
     assert suite.test_cases == expected_test_cases
 
     # Assert test runner calls
-    assert runtime.run_test.call_count == 3
-    for test_path, config in zip(test_paths, expected_config):
-        expected_dirs = [(Path(test_suite_dir) / d, d) for d in config.dirs]
-        runtime.compute_argv.assert_any_call(
-            str(test_path), config.args, config.env, expected_dirs,
-            "wasm32-wasip1"
-        )
-        runtime.run_test.assert_any_call(expected_argv, config)
+    assert runtime.run_test.call_count == 4
+
+    for config in expected_config:
+        runtime.run_test.assert_any_call(config, expected_argv)
 
     # Assert reporters calls
     for reporter in reporters:
-        assert reporter.report_test.call_count == 3
+        assert reporter.report_test.call_count == 4
         for test_case in expected_test_cases:
             reporter.report_test.assert_any_call(expected_test_suite_meta,
                                                  test_case)
 
-    # Assert validators calls
-    for validator in validators:
-        assert validator.call_count == 3
-        for config, output in zip(expected_config, outputs):
-            validator.assert_any_call(config, output)
-
     # Assert filter calls
     for filt in filters:
-        assert filt.should_skip.call_count == 3
+        assert filt.should_skip.call_count == 4
         for test_case in expected_test_cases:
             filt.should_skip.assert_any_call(expected_test_suite_meta,
                                              test_case.name)
@@ -135,6 +136,6 @@ def test_runner_end_to_end() -> None:
 
 @patch("os.path.exists", Mock(return_value=False))
 def test_runner_should_use_path_for_name_if_manifest_does_not_exist() -> None:
-    suite = tsr.run_tests_from_test_suite("my-path", Mock(), [], [], [])
+    suite = tsr.run_tests_from_test_suite("my-path", Mock(), [], [])
 
     assert suite.meta.name == "my-path"

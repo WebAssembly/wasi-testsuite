@@ -1,8 +1,11 @@
 import subprocess
 import os
 import shlex
+import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
+import importlib
+
 
 # shlex.split() splits according to shell quoting rules
 WAZERO = shlex.split(os.getenv("WAZERO", "wazero"))
@@ -28,15 +31,22 @@ def get_wasi_versions() -> List[str]:
 
 
 def compute_argv(test_path: str,
-                 args: List[str],
-                 env: Dict[str, str],
-                 dirs: List[Tuple[Path, str]],
+                 args_env_dirs: Tuple[List[str], Dict[str, str], List[Tuple[Path, str]]],
+                 proposals: List[str],
                  wasi_version: str) -> List[str]:
-    argv = WAZERO + ["run", "-hostlogging=filesystem"]
+
+    argv = []
+    argv += WAZERO
+    argv += ["run", "-hostlogging=filesystem"]
+    args, env, dirs = args_env_dirs
+
     for k, v in env.items():
         argv += [f"-env={k}={v}"]
+
     for host, guest in dirs:
         argv += [f"-mount={host}:{guest}"]
+
     argv += [test_path]
+
     argv += args
     return argv

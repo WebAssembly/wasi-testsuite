@@ -37,7 +37,6 @@ class JSONTestReporter(TestReporter):
                             "name": test.name,
                             "executed": test.result.is_executed,
                             "duration_s": test.duration_s,
-                            "wasi_functions": test.config.wasi_functions,
                             "failures": [
                                 failure.message for failure in test.result.failures
                             ],

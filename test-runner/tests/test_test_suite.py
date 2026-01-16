@@ -11,7 +11,7 @@ def create_test_case(name: str, is_executed: bool, is_failed: bool) -> tc.TestCa
         name,
         ["test-runtime-exe", name],
         tc.Config(),
-        tc.Result(tc.Output(0, "", "", ""), is_executed, failures),
+        tc.Result(is_executed, failures),
         1.0,
     )
 
