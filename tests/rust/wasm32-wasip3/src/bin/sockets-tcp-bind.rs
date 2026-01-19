@@ -158,6 +158,30 @@ fn test_bind_addrinuse(family: IpAddressFamily) {
     assert_eq!(result, Err(ErrorCode::AddressInUse));
 }
 
+fn test_not_bindable(family: IpAddressFamily) {
+    let mut non_bindable_addresses = Vec::new();
+
+    match family {
+        // https://datatracker.ietf.org/doc/html/rfc5737#section-3
+        IpAddressFamily::Ipv4 => {
+            non_bindable_addresses.push(IpAddress::Ipv4((192, 0, 2, 1)));
+            non_bindable_addresses.push(IpAddress::Ipv4((198, 51, 100, 1)));
+            non_bindable_addresses.push(IpAddress::Ipv4((203, 0, 113, 1)));
+        }
+        IpAddressFamily::Ipv6 => {
+            non_bindable_addresses.push(IpAddress::Ipv6((0x2001, 0x0db8, 0, 0, 0, 0, 0, 1)));
+        }
+    };
+
+    for addr in non_bindable_addresses {
+        let sock = TcpSocket::create(family).unwrap();
+        let socket_addr = IpSocketAddress::new(addr, 0);
+        let result = sock.bind(socket_addr);
+
+        assert_eq!(result, Err(ErrorCode::AddressNotBindable));
+    }
+}
+
 impl exports::wasi::cli::run::Guest for Component {
     async fn run() -> Result<(), ()> {
         test_invalid_address_family(IpAddressFamily::Ipv4);
@@ -169,6 +193,8 @@ impl exports::wasi::cli::run::Guest for Component {
         test_dual_stack_support();
         test_bind_addrinuse(IpAddressFamily::Ipv4);
         test_bind_addrinuse(IpAddressFamily::Ipv6);
+        test_not_bindable(IpAddressFamily::Ipv4);
+        test_not_bindable(IpAddressFamily::Ipv6);
         Ok(())
     }
 }
