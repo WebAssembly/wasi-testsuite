@@ -12,6 +12,7 @@ wit_bindgen::generate!({
     generate_all
 });
 
+use futures::join;
 use wasi::sockets::types::{
     ErrorCode, IpAddress, IpAddressFamily, IpSocketAddress, Ipv4SocketAddress, Ipv6SocketAddress,
     TcpSocket,
@@ -191,6 +192,46 @@ fn test_already_bound(family: IpAddressFamily) {
     assert_eq!(result, Err(ErrorCode::InvalidState));
 }
 
+async fn test_reuseaddr(family: IpAddressFamily) {
+    let client = TcpSocket::create(family).unwrap();
+    let local_addr = {
+        let server = TcpSocket::create(family).unwrap();
+        let addr = IpSocketAddress::localhost(family, 0);
+        server.bind(addr).unwrap();
+        let local_addr = server.get_local_address().unwrap();
+        let mut accept = server.listen().unwrap();
+        join!(
+            // Change the state to connected.
+            async {
+                client.connect(local_addr).await.unwrap();
+            },
+            async {
+                let sock = accept.next().await.unwrap();
+                let (mut send_tx, send_rx) = wit_stream::new();
+                join!(
+                    async {
+                        sock.send(send_rx).await.unwrap();
+                    },
+                    async {
+                        let remaining = send_tx.write_all(vec![0; 1]).await;
+                        assert!(remaining.is_empty());
+                        drop(send_tx);
+                    }
+                );
+            }
+        );
+        local_addr
+    };
+
+    // Immediately try to connect to the same after the connection is
+    // dropped.  According to the spec, `SO_REUSEADDR` should be set
+    // by default, so the next connection should not be affected by
+    // the `TIME_WAIT` state.
+    let next = TcpSocket::create(family).unwrap();
+    next.bind(local_addr).unwrap();
+    next.listen().unwrap();
+}
+
 impl exports::wasi::cli::run::Guest for Component {
     async fn run() -> Result<(), ()> {
         test_invalid_address_family(IpAddressFamily::Ipv4);
@@ -206,6 +247,8 @@ impl exports::wasi::cli::run::Guest for Component {
         test_not_bindable(IpAddressFamily::Ipv6);
         test_already_bound(IpAddressFamily::Ipv4);
         test_already_bound(IpAddressFamily::Ipv6);
+        test_reuseaddr(IpAddressFamily::Ipv4).await;
+        test_reuseaddr(IpAddressFamily::Ipv6).await;
         Ok(())
     }
 }
