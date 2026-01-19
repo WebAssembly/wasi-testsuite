@@ -21,11 +21,39 @@ struct Component;
 
 export!(Component);
 
-const IPV6_LOCALHOST: IpAddress = IpAddress::Ipv6((0, 0, 0, 0, 0, 0, 0, 1));
-const IPV4_LOCALHOST: IpAddress = IpAddress::Ipv4((127, 0, 0, 1));
-const IPV4_MAPPED_LOCALHOST: IpAddress = IpAddress::Ipv6((0, 0, 0, 0, 0, 0xFFFF, 0x7F00, 0x0001));
-
 impl IpSocketAddress {
+    fn ipv4_localhost(port: u16) -> IpSocketAddress {
+        IpSocketAddress::Ipv4(Ipv4SocketAddress {
+            port,
+            address: (127, 0, 0, 1),
+        })
+    }
+
+    fn ipv6_localhost(port: u16) -> IpSocketAddress {
+        IpSocketAddress::Ipv6(Ipv6SocketAddress {
+            port,
+            address: (0, 0, 0, 0, 0, 0, 0, 1),
+            flow_info: 0,
+            scope_id: 0,
+        })
+    }
+
+    fn ipv6_mapped_localhost(port: u16) -> IpSocketAddress {
+        IpSocketAddress::Ipv6(Ipv6SocketAddress {
+            port,
+            address: (0, 0, 0, 0, 0, 0xFFFF, 0x7F00, 0x0001),
+            flow_info: 0,
+            scope_id: 0,
+        })
+    }
+
+    fn localhost(family: IpAddressFamily, port: u16) -> IpSocketAddress {
+        match family {
+            IpAddressFamily::Ipv4 => Self::ipv4_localhost(port),
+            IpAddressFamily::Ipv6 => Self::ipv6_localhost(port),
+        }
+    }
+
     fn new(addr: IpAddress, port: u16) -> IpSocketAddress {
         match addr {
             IpAddress::Ipv4(addr) => IpSocketAddress::Ipv4(Ipv4SocketAddress {
@@ -60,8 +88,8 @@ fn test_invalid_address_family(family: IpAddressFamily) {
     let sock = TcpSocket::create(family).unwrap();
 
     let addr = match family {
-        IpAddressFamily::Ipv4 => IpSocketAddress::new(IPV6_LOCALHOST, 0),
-        IpAddressFamily::Ipv6 => IpSocketAddress::new(IPV4_LOCALHOST, 0),
+        IpAddressFamily::Ipv4 => IpSocketAddress::localhost(IpAddressFamily::Ipv6, 0),
+        IpAddressFamily::Ipv6 => IpSocketAddress::localhost(IpAddressFamily::Ipv4, 0),
     };
 
     let result = sock.bind(addr);
@@ -70,11 +98,7 @@ fn test_invalid_address_family(family: IpAddressFamily) {
 
 fn test_ephemeral_port_assignment(family: IpAddressFamily) {
     let sock = TcpSocket::create(family).unwrap();
-
-    let addr = match family {
-        IpAddressFamily::Ipv4 => IpSocketAddress::new(IPV4_LOCALHOST, 0),
-        IpAddressFamily::Ipv6 => IpSocketAddress::new(IPV6_LOCALHOST, 0),
-    };
+    let addr = IpSocketAddress::localhost(family, 0);
 
     sock.bind(addr).unwrap();
     let bound = sock.get_local_address().unwrap();
@@ -115,10 +139,23 @@ fn test_non_unicast(family: IpAddressFamily) {
 
 fn test_dual_stack_support() {
     let sock = TcpSocket::create(IpAddressFamily::Ipv6).unwrap();
-    let addr = IpSocketAddress::new(IPV4_MAPPED_LOCALHOST, 0);
+    let addr = IpSocketAddress::ipv6_mapped_localhost(0);
     let result = sock.bind(addr);
 
     assert!(matches!(result, Err(ErrorCode::InvalidArgument)));
+}
+
+fn test_bind_addrinuse(family: IpAddressFamily) {
+    let addr = IpSocketAddress::localhost(family, 0);
+
+    let sock1 = TcpSocket::create(family).unwrap();
+    sock1.bind(addr).unwrap();
+    sock1.listen().unwrap();
+
+    let bound_addr = sock1.get_local_address().unwrap();
+    let sock2 = TcpSocket::create(family).unwrap();
+    let result = sock2.bind(bound_addr);
+    assert_eq!(result, Err(ErrorCode::AddressInUse));
 }
 
 impl exports::wasi::cli::run::Guest for Component {
@@ -130,6 +167,8 @@ impl exports::wasi::cli::run::Guest for Component {
         test_non_unicast(IpAddressFamily::Ipv4);
         test_non_unicast(IpAddressFamily::Ipv6);
         test_dual_stack_support();
+        test_bind_addrinuse(IpAddressFamily::Ipv4);
+        test_bind_addrinuse(IpAddressFamily::Ipv6);
         Ok(())
     }
 }
