@@ -21,8 +21,9 @@ struct Component;
 
 export!(Component);
 
-pub const IPV6_LOCALHOST: (u16, u16, u16, u16, u16, u16, u16, u16) = (0, 0, 0, 0, 0, 0, 0, 1);
-pub const IPV4_LOCALHOST: (u8, u8, u8, u8) = (127, 0, 0, 1);
+const IPV6_LOCALHOST: IpAddress = IpAddress::Ipv6((0, 0, 0, 0, 0, 0, 0, 1));
+const IPV4_LOCALHOST: IpAddress = IpAddress::Ipv4((127, 0, 0, 1));
+const IPV4_MAPPED_LOCALHOST: IpAddress = IpAddress::Ipv6((0, 0, 0, 0, 0, 0xFFFF, 0x7F00, 0x0001));
 
 impl IpSocketAddress {
     fn new(addr: IpAddress, port: u16) -> IpSocketAddress {
@@ -59,8 +60,8 @@ fn test_invalid_address_family(family: IpAddressFamily) {
     let sock = TcpSocket::create(family).unwrap();
 
     let addr = match family {
-        IpAddressFamily::Ipv4 => IpSocketAddress::new(IpAddress::Ipv6(IPV6_LOCALHOST), 0),
-        IpAddressFamily::Ipv6 => IpSocketAddress::new(IpAddress::Ipv4(IPV4_LOCALHOST), 0),
+        IpAddressFamily::Ipv4 => IpSocketAddress::new(IPV6_LOCALHOST, 0),
+        IpAddressFamily::Ipv6 => IpSocketAddress::new(IPV4_LOCALHOST, 0),
     };
 
     let result = sock.bind(addr);
@@ -71,8 +72,8 @@ fn test_ephemeral_port_assignment(family: IpAddressFamily) {
     let sock = TcpSocket::create(family).unwrap();
 
     let addr = match family {
-        IpAddressFamily::Ipv4 => IpSocketAddress::new(IpAddress::Ipv4(IPV4_LOCALHOST), 0),
-        IpAddressFamily::Ipv6 => IpSocketAddress::new(IpAddress::Ipv6(IPV6_LOCALHOST), 0),
+        IpAddressFamily::Ipv4 => IpSocketAddress::new(IPV4_LOCALHOST, 0),
+        IpAddressFamily::Ipv6 => IpSocketAddress::new(IPV6_LOCALHOST, 0),
     };
 
     sock.bind(addr).unwrap();
@@ -112,6 +113,14 @@ fn test_non_unicast(family: IpAddressFamily) {
     }
 }
 
+fn test_dual_stack_support() {
+    let sock = TcpSocket::create(IpAddressFamily::Ipv6).unwrap();
+    let addr = IpSocketAddress::new(IPV4_MAPPED_LOCALHOST, 0);
+    let result = sock.bind(addr);
+
+    assert!(matches!(result, Err(ErrorCode::InvalidArgument)));
+}
+
 impl exports::wasi::cli::run::Guest for Component {
     async fn run() -> Result<(), ()> {
         test_invalid_address_family(IpAddressFamily::Ipv4);
@@ -120,6 +129,7 @@ impl exports::wasi::cli::run::Guest for Component {
         test_ephemeral_port_assignment(IpAddressFamily::Ipv6);
         test_non_unicast(IpAddressFamily::Ipv4);
         test_non_unicast(IpAddressFamily::Ipv6);
+        test_dual_stack_support();
         Ok(())
     }
 }
