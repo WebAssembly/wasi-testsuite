@@ -182,6 +182,15 @@ fn test_not_bindable(family: IpAddressFamily) {
     }
 }
 
+fn test_already_bound(family: IpAddressFamily) {
+    let addr = IpSocketAddress::localhost(family, 0);
+    let sock = TcpSocket::create(family).unwrap();
+    let result = sock.bind(addr);
+    assert!(result.is_ok());
+    let result = sock.bind(addr);
+    assert_eq!(result, Err(ErrorCode::InvalidState));
+}
+
 impl exports::wasi::cli::run::Guest for Component {
     async fn run() -> Result<(), ()> {
         test_invalid_address_family(IpAddressFamily::Ipv4);
@@ -195,6 +204,8 @@ impl exports::wasi::cli::run::Guest for Component {
         test_bind_addrinuse(IpAddressFamily::Ipv6);
         test_not_bindable(IpAddressFamily::Ipv4);
         test_not_bindable(IpAddressFamily::Ipv6);
+        test_already_bound(IpAddressFamily::Ipv4);
+        test_already_bound(IpAddressFamily::Ipv6);
         Ok(())
     }
 }
