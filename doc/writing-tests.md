@@ -42,11 +42,17 @@ subfolder of the directory your test is in.  Then create a
 
 ```json
 {
-  "dirs": ["stat-working-dir"]
+  "operations": [
+    {
+	  "type": "run",
+	  "dirs": ["stat-working-dir"]
+	}
+  ]
 }
 ```
 
-A `dirs` declaration in a test's JSON file adds a dir to the preopens.
+A `dirs` declaration in the `run` operation of a test's JSON file adds
+a dir to the preopens.
 
 If you need to create a file, name it something that ends with
 `.cleanup`, if possible, and ideally have the test case remove it at the
