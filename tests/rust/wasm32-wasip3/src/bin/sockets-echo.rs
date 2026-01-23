@@ -92,8 +92,7 @@ impl exports::wasi::cli::run::Guest for Component {
         echo(
             IpAddressFamily::Ipv4,
             IpSocketAddress::Ipv4(Ipv4SocketAddress {
-                // TODO(saul): make the port configurable, ideally letting the OS assign it.
-                port: 3000,
+                port: 0,
                 address: (127, 0, 0, 1),
             }),
         )
