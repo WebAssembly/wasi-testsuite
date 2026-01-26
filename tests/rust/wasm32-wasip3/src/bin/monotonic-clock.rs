@@ -1,29 +1,8 @@
-extern crate wit_bindgen;
-
-wit_bindgen::generate!({
-    inline: r"
-  package test:test;
-
-  world test {
-      include wasi:clocks/imports@0.3.0-rc-2026-01-06;
-      include wasi:cli/command@0.3.0-rc-2026-01-06;
-  }
-",
-    // Work around https://github.com/bytecodealliance/wasm-tools/issues/2285.
-    features:["clocks-timezone"],
-    generate_all
-});
-
-use monotonic_clock::{Duration, Mark};
-use wasi::clocks::monotonic_clock;
-
-const NANOSECOND: Duration = 1;
-const MICROSECOND: Duration = NANOSECOND * 1_000;
-const MILLISECOND: Duration = MICROSECOND * 1_000;
-const SECOND: Duration = MILLISECOND * 1_000;
-const MINUTE: Duration = SECOND * 60;
-const HOUR: Duration = MINUTE * 60;
-const DAY: Duration = HOUR * 24;
+use test_wasm32_wasip3::clocks::{
+    DAY, MILLISECOND, export,
+    exports::wasi::cli::run::Guest,
+    wasi::clocks::monotonic_clock::{self, Duration, Mark},
+};
 
 fn compute_duration(start: Mark, end: Mark) -> Duration {
     // Assume that this test takes less than a day to run (in terms of
@@ -64,7 +43,7 @@ fn test_resolution() {
 
 struct Component;
 export!(Component);
-impl exports::wasi::cli::run::Guest for Component {
+impl Guest for Component {
     async fn run() -> Result<(), ()> {
         test_wait_for().await;
         test_wait_until().await;

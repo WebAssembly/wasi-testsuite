@@ -1,19 +1,6 @@
-extern crate wit_bindgen;
-
-wit_bindgen::generate!({
-    inline: r"
-  package test:test;
-
-  world test {
-      include wasi:clocks/imports@0.3.0-rc-2026-01-06;
-  }
-",
-    // Work around https://github.com/bytecodealliance/wasm-tools/issues/2285.
-    features:["clocks-timezone"],
-    generate_all
-});
-
-use wasi::clocks::system_clock;
+use test_wasm32_wasip3::clocks::{
+    export, exports::wasi::cli::run::Guest, wasi::clocks::system_clock,
+};
 
 const NANOSECOND: u32 = 1;
 const MICROSECOND: u32 = NANOSECOND * 1_000;
@@ -25,14 +12,24 @@ fn verify_instant(t: system_clock::Instant) {
 }
 
 fn main() {
-    // Not much we can assert about system-clock time.
-    verify_instant(system_clock::now());
-    let resolution = system_clock::get_resolution();
-    let resolution_instant = system_clock::Instant {
-        seconds: 0,
-        nanoseconds: resolution as u32,
-    };
-    verify_instant(resolution_instant);
-    // Resolution should be non-zero and represent the clock's precision.
-    assert!(resolution > 0, "Clock resolution should be non-zero");
+    unreachable!();
+}
+
+struct Component;
+export!(Component);
+
+impl Guest for Component {
+    async fn run() -> Result<(), ()> {
+        // Not much we can assert about system-clock time.
+        verify_instant(system_clock::now());
+        let resolution = system_clock::get_resolution();
+        let resolution_instant = system_clock::Instant {
+            seconds: 0,
+            nanoseconds: resolution as u32,
+        };
+        verify_instant(resolution_instant);
+        // Resolution should be non-zero and represent the clock's precision.
+        assert!(resolution > 0, "Clock resolution should be non-zero");
+        Ok(())
+    }
 }
