@@ -1,23 +1,10 @@
-extern crate wit_bindgen;
-
-wit_bindgen::generate!({
-    inline: r"
-  package test:test;
-
-  world test {
-      include wasi:clocks/imports@0.3.0-rc-2026-01-06;
-      include wasi:cli/command@0.3.0-rc-2026-01-06;
-  }
-",
-    // Work around https://github.com/bytecodealliance/wasm-tools/issues/2285.
-    features:["clocks-timezone"],
-    generate_all
-});
-
 use core::task::{Context, Poll, Waker};
-use monotonic_clock::Mark;
 use std::future::Future;
-use wasi::clocks::monotonic_clock;
+use test_wasm32_wasip3::clocks::{
+    export,
+    exports::wasi::cli::run::Guest,
+    wasi::clocks::monotonic_clock::{self, Mark},
+};
 
 // Offsets relative to "now" at which to wait_until(), in nanoseconds.
 // These are 20 values chosen uniformly randomly over the range [-5
@@ -71,7 +58,8 @@ async fn test_multi_clock_wait() {
 
 struct Component;
 export!(Component);
-impl exports::wasi::cli::run::Guest for Component {
+
+impl Guest for Component {
     async fn run() -> Result<(), ()> {
         test_multi_clock_wait().await;
         Ok(())
