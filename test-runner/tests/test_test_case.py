@@ -5,12 +5,12 @@ from unittest.mock import Mock, patch, mock_open
 import pytest
 
 from wasi_test_runner.test_case import (
-    Config, Failure, Result, Run, Wait, Read, Connect, Send, Recv, ProtocolType, WasiProposal
+    Config, Failure, Result, Run, Wait, Read, Write, Connect, Send, Recv, ProtocolType, WasiProposal
 )
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="{}")
-def test_test_config_sholud_load_defaults_for_empty_json(_mock_file: Mock) -> None:
+def test_test_config_should_load_defaults_for_empty_json(_mock_file: Mock) -> None:
     config = Config.from_file("file")
 
     assert len(config.operations) == 2
@@ -30,7 +30,7 @@ def test_test_config_sholud_load_defaults_for_empty_json(_mock_file: Mock) -> No
     new_callable=mock_open,
     read_data='{"args": ["a", "b"], "exit_code": 5}',
 )
-def test_test_config_sholud_load_values_from_json(_mock_file: Mock) -> None:
+def test_test_config_should_load_values_from_json(_mock_file: Mock) -> None:
     config = Config.from_file("file")
 
     assert len(config.operations) == 2
@@ -46,7 +46,7 @@ def test_test_config_sholud_load_values_from_json(_mock_file: Mock) -> None:
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="not-json")
-def test_test_config_sholud_fail_when_invalid_json(_mock_file: Mock) -> None:
+def test_test_config_should_fail_when_invalid_json(_mock_file: Mock) -> None:
     with pytest.raises(JSONDecodeError):
         Config.from_file("file")
 
@@ -127,6 +127,20 @@ def test_read_from_config_with_values() -> None:
 
     assert read.id == "stderr"
     assert read.payload == "error message"
+
+
+def test_write_from_config_with_defaults() -> None:
+    write = Write.from_config({})
+
+    assert write.id == "write"
+    assert write.payload == ""
+
+
+def test_write_from_config_with_values() -> None:
+    write = Write.from_config({"id": "stdin", "payload": "input data"})
+
+    assert write.id == "stdin"
+    assert write.payload == "input data"
 
 
 def test_connect_from_config_with_defaults() -> None:
@@ -229,6 +243,12 @@ def test_dry_run_run_without_wait() -> None:
 def test_dry_run_read_before_run() -> None:
     config = Config(operations=[Read()])
     with pytest.raises(ValueError, match="Found Read operation before Run"):
+        config.dry_run()
+
+
+def test_dry_run_write_before_run() -> None:
+    config = Config(operations=[Write()])
+    with pytest.raises(ValueError, match="Found Write operation before Run"):
         config.dry_run()
 
 
