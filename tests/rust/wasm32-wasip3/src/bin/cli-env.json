@@ -1,0 +1,16 @@
+{
+  "operations": [
+    {
+      "type": "run",
+      "env": {
+        "foo": "bar",
+        "baz": "42"
+      },
+      "args": [
+        "a",
+        "b",
+        "42"
+      ]
+    }
+  ]
+}

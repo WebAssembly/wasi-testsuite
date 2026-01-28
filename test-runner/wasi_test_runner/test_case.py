@@ -11,7 +11,7 @@ CONFIG_KEYS = {"operations", "proposals"}
 
 
 # Supported operations
-SUPPORTED_OPERATIONS = {"run", "wait", "read", "connect", "send", "recv"}
+SUPPORTED_OPERATIONS = {"run", "wait", "read", "write", "connect", "send", "recv"}
 
 
 class WasiVersion(StrEnum):
@@ -135,6 +135,22 @@ class Read(NamedTuple):
         )
 
 
+Wr = TypeVar("Wr", bound="Write")
+
+
+class Write(NamedTuple):
+    id: str = "write"
+    payload: str = ""
+
+    @classmethod
+    def from_config(cls: Type[Wr], config: Dict[str, Any]) -> Wr:
+        default = cls()
+        return cls(
+            id=config.get("id", default.id),
+            payload=config.get("payload", default.payload)
+        )
+
+
 C = TypeVar("C", bound="Connect")
 
 
@@ -151,7 +167,7 @@ class Connect(NamedTuple):
         )
 
 
-Operation = Run | Wait | Read | Connect | Send | Recv
+Operation = Run | Wait | Read | Write | Connect | Send | Recv
 
 
 class WasiProposal(StrEnum):
@@ -254,6 +270,9 @@ class Config(NamedTuple):
                 case Read() as read:
                     if not run_found:
                         errors.append(f"{read}: Found Read operation before Run")
+                case Write() as write:
+                    if not run_found:
+                        errors.append(f"{write}: Found Write operation before Run")
                 case Wait() as wait:
                     if not run_found:
                         errors.append(f"{wait}: Found Wait operation before Run")
@@ -306,6 +325,8 @@ class Config(NamedTuple):
                     operations.append(Wait.from_config(op))
                 case "read":
                     operations.append(Read.from_config(op))
+                case "write":
+                    operations.append(Write.from_config(op))
                 case "connect":
                     operations.append(Connect.from_config(op))
                 case "send":
