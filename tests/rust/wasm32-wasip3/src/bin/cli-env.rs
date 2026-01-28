@@ -5,7 +5,10 @@ export!(Component);
 
 fn test_get_environment() {
     let env = environment::get_environment();
-    assert_eq!(env, vec![("foo".into(), "bar".into()), ("baz".into(), "42".into())]);
+    assert_eq!(
+        env,
+        vec![("foo".into(), "bar".into()), ("baz".into(), "42".into())]
+    );
 }
 
 fn test_get_arguments() {
