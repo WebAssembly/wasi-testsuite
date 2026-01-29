@@ -7,17 +7,20 @@
     {
       "type": "connect",
       "id": "echo-server",
-      "protocol_type": "tcp"
+      "protocol_type": "udp"
     },
     {
       "type": "send",
       "id": "echo-server",
-      "payload": "Hello, world"
+      "payload": "Hello, world!"
     },
     {
       "type": "recv",
       "id": "echo-server",
-      "payload": "Hello, world"
+      "payload": "Hello, world!"
+    },
+    {
+      "type": "wait"
     }
   ]
 }

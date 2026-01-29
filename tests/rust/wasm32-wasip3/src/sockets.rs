@@ -18,6 +18,37 @@ use wasi::sockets::types::{
     IpAddress, IpAddressFamily, IpSocketAddress, Ipv4SocketAddress, Ipv6SocketAddress,
 };
 
+use std::fmt;
+
+impl fmt::Display for IpSocketAddress {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            IpSocketAddress::Ipv4(Ipv4SocketAddress { port, address }) => {
+                write!(
+                    f,
+                    "{}.{}.{}.{}:{}",
+                    address.0, address.1, address.2, address.3, port
+                )
+            }
+            IpSocketAddress::Ipv6(Ipv6SocketAddress { port, address, .. }) => {
+                write!(
+                    f,
+                    "{}.{}.{}.{}.{}.{}.{}.{}:{}",
+                    address.0,
+                    address.1,
+                    address.2,
+                    address.3,
+                    address.4,
+                    address.5,
+                    address.6,
+                    address.7,
+                    port
+                )
+            }
+        }
+    }
+}
+
 impl IpSocketAddress {
     pub fn ipv4_localhost(port: u16) -> IpSocketAddress {
         IpSocketAddress::Ipv4(Ipv4SocketAddress {

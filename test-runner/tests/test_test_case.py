@@ -1,11 +1,20 @@
 from json import JSONDecodeError
 from pathlib import Path
-from unittest.mock import Mock, patch, mock_open
+from unittest.mock import Mock, mock_open, patch
 
 import pytest
-
 from wasi_test_runner.test_case import (
-    Config, Failure, Result, Run, Wait, Read, Connect, Send, Recv, ProtocolType, WasiProposal
+    Config,
+    Connect,
+    Failure,
+    ProtocolType,
+    Read,
+    Recv,
+    Result,
+    Run,
+    Send,
+    Wait,
+    WasiProposal,
 )
 
 
@@ -92,7 +101,7 @@ def test_run_from_config_with_values() -> None:
     config = {
         "args": ["arg1", "arg2"],
         "env": {"KEY": "value"},
-        "dirs": [".", "subdir"]
+        "dirs": [".", "subdir"],
     }
     run = Run.from_config(Path("/test/path"), config)
 
@@ -222,7 +231,9 @@ def test_dry_run_valid_config_should_not_raise() -> None:
 
 def test_dry_run_run_without_wait() -> None:
     config = Config(operations=[Run(), Run()])
-    with pytest.raises(ValueError, match="each Run operation must be paired with a Wait operation"):
+    with pytest.raises(
+        ValueError, match="each Run operation must be paired with a Wait operation"
+    ):
         config.dry_run()
 
 
@@ -244,19 +255,10 @@ def test_dry_run_connect_before_run() -> None:
         config.dry_run()
 
 
-def test_dry_run_connect_with_non_tcp_protocol() -> None:
-    config = Config(operations=[Run(), Connect(protocol_type=ProtocolType.UDP), Wait()])
-    with pytest.raises(ValueError, match="udp not supported"):
-        config.dry_run()
-
-
 def test_dry_run_connect_with_duplicate_id() -> None:
-    config = Config(operations=[
-        Run(),
-        Connect(id="conn1"),
-        Connect(id="conn1"),
-        Wait()
-    ])
+    config = Config(
+        operations=[Run(), Connect(id="conn1"), Connect(id="conn1"), Wait()]
+    )
     with pytest.raises(ValueError, match="Duplicate definition of id conn1"):
         config.dry_run()
 
