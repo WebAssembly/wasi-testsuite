@@ -1,9 +1,9 @@
-import logging
 import json
+import logging
 import socket
-from pathlib import Path
 from enum import StrEnum
-from typing import List, NamedTuple, TypeVar, Type, Dict, Any, Set, Tuple
+from pathlib import Path
+from typing import Any, Dict, List, NamedTuple, Set, Tuple, Type, TypeVar
 
 # Top level configuration keys
 LEGACY_CONFIG_KEYS = {"args", "dirs", "env", "exit_code", "stderr", "stdout"}
@@ -15,9 +15,9 @@ SUPPORTED_OPERATIONS = {"run", "wait", "read", "connect", "send", "recv"}
 
 
 class WasiVersion(StrEnum):
-    WASM32_WASIP1 = 'wasm32-wasip1'
-    WASM32_WASIP2 = 'wasm32-wasip2'
-    WASM32_WASIP3 = 'wasm32-wasip3'
+    WASM32_WASIP1 = "wasm32-wasip1"
+    WASM32_WASIP2 = "wasm32-wasip2"
+    WASM32_WASIP3 = "wasm32-wasip3"
 
 
 F = TypeVar("F", bound="Failure")
@@ -46,9 +46,9 @@ class Result(NamedTuple):
 
 
 class ProtocolType(StrEnum):
-    TCP = 'tcp'
-    UDP = 'udp'
-    HTTP = 'http'
+    TCP = "tcp"
+    UDP = "udp"
+    HTTP = "http"
 
 
 R = TypeVar("R", bound="Run")
@@ -67,7 +67,7 @@ class Run(NamedTuple):
         return cls(
             args=config.get("args", default.args),
             env=config.get("env", default.env),
-            dirs=dir_pairs
+            dirs=dir_pairs,
         )
 
 
@@ -80,9 +80,7 @@ class Wait(NamedTuple):
     @classmethod
     def from_config(cls: Type[W], config: Dict[str, Any]) -> W:
         default = cls()
-        return cls(
-            exit_code=config.get("exit_code", default.exit_code)
-        )
+        return cls(exit_code=config.get("exit_code", default.exit_code))
 
 
 S = TypeVar("S", bound="Send")
@@ -96,10 +94,7 @@ class Send(NamedTuple):
     def from_config(cls: Type[S], config: Dict[str, Any]) -> S:
         if "id" not in config:
             raise ValueError("Send operation requires 'id' field")
-        return cls(
-            id=config["id"],
-            payload=config.get("payload", "")
-        )
+        return cls(id=config["id"], payload=config.get("payload", ""))
 
 
 Rv = TypeVar("Rv", bound="Recv")
@@ -113,10 +108,7 @@ class Recv(NamedTuple):
     def from_config(cls: Type[Rv], config: Dict[str, Any]) -> Rv:
         if "id" not in config:
             raise ValueError("Recv operation requires 'id' field")
-        return cls(
-            id=config["id"],
-            payload=config.get("payload", "")
-        )
+        return cls(id=config["id"], payload=config.get("payload", ""))
 
 
 Rx = TypeVar("Rx", bound="Read")
@@ -131,7 +123,7 @@ class Read(NamedTuple):
         default = cls()
         return cls(
             id=config.get("id", default.id),
-            payload=config.get("payload", default.payload)
+            payload=config.get("payload", default.payload),
         )
 
 
@@ -147,7 +139,9 @@ class Connect(NamedTuple):
         default = cls()
         return cls(
             id=config.get("id", default.id),
-            protocol_type=ProtocolType(config.get("protocol_type", default.protocol_type))
+            protocol_type=ProtocolType(
+                config.get("protocol_type", default.protocol_type)
+            ),
         )
 
 
@@ -155,8 +149,8 @@ Operation = Run | Wait | Read | Connect | Send | Recv
 
 
 class WasiProposal(StrEnum):
-    HTTP = 'http'
-    SOCKETS = 'sockets'
+    HTTP = "http"
+    SOCKETS = "sockets"
 
 
 T = TypeVar("T", bound="Config")
@@ -176,22 +170,23 @@ class Config(NamedTuple):
             dict_config = json.load(file)
 
         test_config_path = Path(config_file)
-        if dict_config.get("operations") is not None or dict_config.get("proposals") is not None:
+        if (
+            dict_config.get("operations") is not None
+            or dict_config.get("proposals") is not None
+        ):
             cls._validate_config(dict_config, CONFIG_KEYS)
 
             operations = []
             if dict_config.get("operations") is not None:
-                operations = cls._operations_from_config(test_config_path, dict_config.get("operations"))
+                operations = cls._operations_from_config(
+                    test_config_path, dict_config.get("operations")
+                )
 
             proposals = []
             if dict_config.get("proposals") is not None:
                 proposals = cls._proposals_from_config(dict_config.get("proposals"))
 
-            return cls(
-                operations=operations,
-                connections={},
-                proposals=proposals
-            )
+            return cls(operations=operations, connections={}, proposals=proposals)
 
         cls._validate_config(dict_config, LEGACY_CONFIG_KEYS)
 
@@ -206,14 +201,16 @@ class Config(NamedTuple):
         legacy_operations: List[Operation] = [run_op]
 
         if dict_config.get("stdout") is not None:
-            legacy_operations.append(Read(id="stdout", payload=dict_config.get("stdout")))
+            legacy_operations.append(
+                Read(id="stdout", payload=dict_config.get("stdout"))
+            )
 
         if dict_config.get("stderr") is not None:
-            legacy_operations.append(Read(id="stderr", payload=dict_config.get("stderr")))
+            legacy_operations.append(
+                Read(id="stderr", payload=dict_config.get("stderr"))
+            )
 
-        wait_op = Wait(
-            exit_code=dict_config.get("exit_code", 0)
-        )
+        wait_op = Wait(exit_code=dict_config.get("exit_code", 0))
         legacy_operations.append(wait_op)
 
         return cls(
@@ -240,7 +237,7 @@ class Config(NamedTuple):
         return [p.value for p in self.proposals]
 
     # Performs a dry run of the configuration validating its structure.
-    def dry_run(self) -> None:
+    def dry_run(self) -> None:  # pylint: disable=too-many-branches
         run_found = False
         procs: List[str] = []
         errors: List[str] = []
@@ -249,7 +246,9 @@ class Config(NamedTuple):
             match op:
                 case Run() as run:
                     if run_found:
-                        errors.append(f"{run}: each Run operation must be paired with a Wait operation")
+                        errors.append(
+                            f"{run}: each Run operation must be paired with a Wait operation"
+                        )
                     run_found = True
                 case Read() as read:
                     if not run_found:
@@ -261,7 +260,7 @@ class Config(NamedTuple):
                 case Connect(conn_id, protocol_type) as conn:
                     if not run_found:
                         errors.append(f"{conn}: Found Connect operation before Run")
-                    if protocol_type != ProtocolType.TCP:
+                    if protocol_type not in (ProtocolType.TCP, ProtocolType.UDP):
                         errors.append(f"{conn}: {protocol_type} not supported")
                     if conn_id in procs:
                         errors.append(f"{conn}: Duplicate definition of id {conn_id}")
@@ -279,7 +278,9 @@ class Config(NamedTuple):
             raise ValueError("\n".join(errors))
 
     @classmethod
-    def _validate_config(cls: Type[T], dict_config: Dict[str, Any], expected_keys: Set[str]) -> None:
+    def _validate_config(
+        cls: Type[T], dict_config: Dict[str, Any], expected_keys: Set[str]
+    ) -> None:
         # Check that the test configuration is unique, either v0 or v1
         actual_keys = set(dict_config.keys())
         if (actual_keys & CONFIG_KEYS) and (actual_keys & LEGACY_CONFIG_KEYS):
@@ -292,7 +293,9 @@ class Config(NamedTuple):
                 logging.warning("Unknown field in the config file: %s", field_name)
 
     @classmethod
-    def _operations_from_config(cls: Type[T], test_config_path: Path, ops: List[Any]) -> List[Operation]:
+    def _operations_from_config(
+        cls: Type[T], test_config_path: Path, ops: List[Any]
+    ) -> List[Operation]:
         operations: List[Operation] = []
         for op in ops:
             ty = op.get("type")
@@ -316,7 +319,9 @@ class Config(NamedTuple):
         return operations
 
     @classmethod
-    def _proposals_from_config(cls: Type[T], proposals: List[Any]) -> List[WasiProposal]:
+    def _proposals_from_config(
+        cls: Type[T], proposals: List[Any]
+    ) -> List[WasiProposal]:
         return [WasiProposal(p) for p in proposals]
 
 

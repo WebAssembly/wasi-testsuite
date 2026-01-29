@@ -1,12 +1,24 @@
 import importlib.util
-import subprocess
-import sys
 import shutil
 import socket
+import subprocess
+import sys
 from pathlib import Path
-from typing import NamedTuple, List, Tuple, Any
+from typing import Any, List, NamedTuple, Tuple
 
-from .test_case import Result, WasiVersion, Config, Run, Read, Wait, Send, Recv, Failure, Connect, ProtocolType
+from .test_case import (
+    Config,
+    Connect,
+    Failure,
+    ProtocolType,
+    Read,
+    Recv,
+    Result,
+    Run,
+    Send,
+    Wait,
+    WasiVersion,
+)
 
 
 class RuntimeMeta(NamedTuple):
@@ -44,10 +56,9 @@ def _assert_not_legacy_adapter(adapter_path: str) -> None:
     """
     argv = [sys.executable, adapter_path, "--version"]
     try:
-        result = subprocess.run(argv, encoding="UTF-8", check=True,
-                                capture_output=True)
+        result = subprocess.run(argv, encoding="UTF-8", check=True, capture_output=True)
     except subprocess.CalledProcessError as e:
-        if 'FileNotFoundError' in e.stderr:
+        if "FileNotFoundError" in e.stderr:
             # The adapter is valid Python.  Running it tries to spawn
             # the engine subprocess, but couldn't find the binary.  This
             # indicates a legacy adapter.py.
@@ -94,16 +105,18 @@ class RuntimeAdapter:
     def get_meta(self) -> RuntimeMeta:
         return self._meta
 
-    def compute_argv(self, test_path: str,
-                     config: Config,
-                     wasi_version: WasiVersion) -> List[str]:
+    def compute_argv(
+        self, test_path: str, config: Config, wasi_version: WasiVersion
+    ) -> List[str]:
         # too-many-positional-arguments is a post-3.0 pylint message.
         # pylint: disable-msg=unknown-option-value
         # pylint: disable-msg=too-many-arguments
         # pylint: disable-msg=too-many-positional-arguments
         args_env_dirs = config.args_env_dirs()
         proposals = config.proposals_as_str()
-        argv = self._adapter.compute_argv(test_path, args_env_dirs, proposals, wasi_version.value)
+        argv = self._adapter.compute_argv(
+            test_path, args_env_dirs, proposals, wasi_version.value
+        )
         assert isinstance(argv, list)
         assert all(isinstance(arg, str) for arg in argv)
         return argv
@@ -122,10 +135,17 @@ class RuntimeAdapter:
                         _cleanup_test_output(dirs)
                         # pylint: disable=consider-using-with
                         try:
-                            proc = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                            proc = subprocess.Popen(
+                                argv,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                text=True,
+                            )
                             cleanup_dirs = dirs
                         except (OSError, ValueError) as e:
-                            result.failures.append(Failure.unexpected(f"Failed to start process: {e}"))
+                            result.failures.append(
+                                Failure.unexpected(f"Failed to start process: {e}")
+                            )
                             break
                     case Read() as read:
                         assert proc is not None
@@ -179,7 +199,11 @@ def _handle_read(proc: subprocess.Popen[Any], spec: Read, result: Result) -> Non
 
     payload = stream.readline().strip()
     if payload != spec.payload:
-        result.failures.append(Failure.expectation(f"{spec} {spec.id} failed: expected {spec.payload}, got {payload}"))
+        result.failures.append(
+            Failure.expectation(
+                f"{spec} {spec.id} failed: expected {spec.payload}, got {payload}"
+            )
+        )
 
 
 def _handle_wait(proc: subprocess.Popen[Any], spec: Wait, result: Result) -> None:
@@ -196,24 +220,28 @@ def _handle_wait(proc: subprocess.Popen[Any], spec: Wait, result: Result) -> Non
         result.failures.append(Failure.expectation(f"{spec} failed: timeout expired"))
 
 
-def _handle_connect(proc: subprocess.Popen[Any], config: Config, spec: Connect, result: Result) -> None:
-    if spec.protocol_type != ProtocolType.TCP:
-        raise RuntimeError(f"Unimplemented support for protocol {spec.protocol_type}")
+def _handle_connect(
+    proc: subprocess.Popen[Any], config: Config, spec: Connect, result: Result
+) -> None:
     # Server not running, something's wrong.
     if proc.poll() is not None:
         _, err = proc.communicate()
-        result.failures.append(Failure.unexpected(f"{spec}: Could not connect to server {err}"))
+        result.failures.append(
+            Failure.unexpected(f"{spec}: Could not connect to server {err}")
+        )
         return
 
     # In the connect case, we need to discover the port.
     # If there's no stdout, add a failure.
     if proc.stdout is None:
-        result.failures.append(Failure.unexpected(f"{spec}: No connection information available"))
+        result.failures.append(
+            Failure.unexpected(f"{spec}: No connection information available")
+        )
         return
 
     try:
         line = proc.stdout.readline().strip()
-        parts = line.split(':')
+        parts = line.split(":")
         if len(parts) != 2:
             msg = f"{spec}: Expected address information to be available as <host>: <port>, found {line}"
             result.failures.append(Failure.unexpected(msg))
@@ -225,25 +253,34 @@ def _handle_connect(proc: subprocess.Popen[Any], config: Config, spec: Connect, 
             return
         port = int(port_str)
     except ValueError as e:
-        result.failures.append(Failure.unexpected(f"{spec}: Failed to parse connection information: {e}"))
+        result.failures.append(
+            Failure.unexpected(f"{spec}: Failed to parse connection information: {e}")
+        )
         return
 
     sock = None
     try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        socket_type = (
+            socket.SOCK_STREAM
+            if spec.protocol_type == ProtocolType.TCP
+            else socket.SOCK_DGRAM
+        )
+        sock = socket.socket(socket.AF_INET, socket_type)
         sock.connect((host, port))
         config.connections[spec.id] = sock
     except (socket.timeout, ConnectionRefusedError, OSError) as e:
         if sock is not None:
             sock.close()
-        result.failures.append(Failure.unexpected(f"{spec}: Could not connect to {host}: {port} - {e}"))
+        result.failures.append(
+            Failure.unexpected(f"{spec}: Could not connect to {host}: {port} - {e}")
+        )
 
 
 def _handle_send(config: Config, spec: Send, result: Result) -> None:
     sock = config.connections[spec.id]
     assert sock is not None
     try:
-        sock.sendall(spec.payload.encode('utf-8'))
+        sock.sendall(spec.payload.encode("utf-8"))
     except (OSError, socket.error) as e:
         result.failures.append(Failure.unexpected(f"{spec}: Failed to send data: {e}"))
 
@@ -253,13 +290,19 @@ def _handle_recv(config: Config, spec: Recv, result: Result) -> None:
     assert sock is not None
     try:
         response_bytes = sock.recv(len(spec.payload))
-        response = response_bytes.decode('utf-8')
+        response = response_bytes.decode("utf-8")
         if response != spec.payload:
-            result.failures.append(Failure.unexpected(f"{spec}: Expected {spec.payload}, got {response}"))
+            result.failures.append(
+                Failure.unexpected(f"{spec}: Expected {spec.payload}, got {response}")
+            )
     except (OSError, socket.error) as e:
-        result.failures.append(Failure.unexpected(f"{spec}: Failed to receive data: {e}"))
+        result.failures.append(
+            Failure.unexpected(f"{spec}: Failed to receive data: {e}")
+        )
     except UnicodeDecodeError as e:
-        result.failures.append(Failure.unexpected(f"{spec}: Failed to decode response: {e}"))
+        result.failures.append(
+            Failure.unexpected(f"{spec}: Failed to decode response: {e}")
+        )
 
 
 def _cleanup_test_output(dirs: List[Tuple[Path, str]]) -> None:

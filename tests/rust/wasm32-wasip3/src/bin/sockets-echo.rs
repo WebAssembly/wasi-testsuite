@@ -1,52 +1,11 @@
-wit_bindgen::generate!({
-    inline: r"
-	package wasi-testsuite:test;
-
-	world test {
-	    include wasi:sockets/imports@0.3.0-rc-2026-01-06;
-	    include wasi:cli/command@0.3.0-rc-2026-01-06;
-	}
-    ",
-    features:["clocks-timezone"],
-    generate_all
-});
-
-use std::fmt;
-use wasi::sockets::types::{
-    IpAddressFamily, IpSocketAddress, Ipv4SocketAddress, Ipv6SocketAddress, TcpSocket,
-};
-
 use futures::join;
+use test_wasm32_wasip3::sockets::{
+    export,
+    exports::wasi::cli::run::Guest,
+    wasi::sockets::types::{IpAddressFamily, IpSocketAddress, Ipv4SocketAddress, TcpSocket},
+    wit_stream,
+};
 use wit_bindgen::StreamResult;
-
-impl std::fmt::Display for IpSocketAddress {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            IpSocketAddress::Ipv4(Ipv4SocketAddress { port, address }) => {
-                write!(
-                    f,
-                    "{}.{}.{}.{}:{}",
-                    address.0, address.1, address.2, address.3, port
-                )
-            }
-            IpSocketAddress::Ipv6(Ipv6SocketAddress { port, address, .. }) => {
-                write!(
-                    f,
-                    "{}.{}.{}.{}.{}.{}.{}.{}:{}",
-                    address.0,
-                    address.1,
-                    address.2,
-                    address.3,
-                    address.4,
-                    address.5,
-                    address.6,
-                    address.7,
-                    port
-                )
-            }
-        }
-    }
-}
 
 async fn echo(family: IpAddressFamily, addr: IpSocketAddress) {
     let listener = TcpSocket::create(family).unwrap();
@@ -87,7 +46,7 @@ async fn echo(family: IpAddressFamily, addr: IpSocketAddress) {
 struct Component;
 export!(Component);
 
-impl exports::wasi::cli::run::Guest for Component {
+impl Guest for Component {
     async fn run() -> Result<(), ()> {
         echo(
             IpAddressFamily::Ipv4,
