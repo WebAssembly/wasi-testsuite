@@ -138,7 +138,7 @@ fn test_non_unicast(family: IpAddressFamily) {
     }
 }
 
-fn test_dual_stack_support() {
+fn test_reject_dual_stack() {
     let sock = TcpSocket::create(IpAddressFamily::Ipv6).unwrap();
     let addr = IpSocketAddress::ipv6_mapped_localhost(0);
     let result = sock.bind(addr);
@@ -240,7 +240,7 @@ impl exports::wasi::cli::run::Guest for Component {
         test_ephemeral_port_assignment(IpAddressFamily::Ipv6);
         test_non_unicast(IpAddressFamily::Ipv4);
         test_non_unicast(IpAddressFamily::Ipv6);
-        test_dual_stack_support();
+        test_reject_dual_stack();
         test_bind_addrinuse(IpAddressFamily::Ipv4);
         test_bind_addrinuse(IpAddressFamily::Ipv6);
         test_not_bindable(IpAddressFamily::Ipv4);
