@@ -1,13 +1,13 @@
-use test_wasm32_wasip3::sockets::{
-    self,
-    wasi::sockets::types::{ErrorCode, IpAddressFamily, IpSocketAddress, UdpSocket},
+use test_wasm32_wasip3::cli::{export, exports::wasi::cli::run::Guest};
+use test_wasm32_wasip3::sockets::wasi::sockets::types::{
+    ErrorCode, IpAddressFamily, IpSocketAddress, UdpSocket,
 };
 
 const PORT: u16 = 42;
 
 struct Component;
 
-sockets::export!(Component);
+export!(Component);
 
 fn test_invalid_address_family(family: IpAddressFamily) {
     let sock = UdpSocket::create(family).unwrap();
@@ -106,7 +106,7 @@ fn test_reconnect_different_address(family: IpAddressFamily) {
     assert_eq!(sock.get_remote_address().unwrap(), addr2);
 }
 
-impl sockets::exports::wasi::cli::run::Guest for Component {
+impl Guest for Component {
     async fn run() -> Result<(), ()> {
         test_invalid_address_family(IpAddressFamily::Ipv4);
         test_invalid_address_family(IpAddressFamily::Ipv6);

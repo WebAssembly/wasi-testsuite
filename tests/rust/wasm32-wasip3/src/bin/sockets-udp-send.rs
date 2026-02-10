@@ -1,13 +1,13 @@
-use test_wasm32_wasip3::sockets::{
-    self,
-    wasi::sockets::types::{ErrorCode, IpAddressFamily, IpSocketAddress, UdpSocket},
+use test_wasm32_wasip3::cli::{export, exports::wasi::cli::run::Guest};
+use test_wasm32_wasip3::sockets::wasi::sockets::types::{
+    ErrorCode, IpAddressFamily, IpSocketAddress, UdpSocket,
 };
 
 struct Component;
 
 const PORT: u16 = 42;
 
-sockets::export!(Component);
+export!(Component);
 
 async fn test_wrong_address_family(family: IpAddressFamily) {
     let sock = UdpSocket::create(family).unwrap();
@@ -88,7 +88,7 @@ async fn test_datagram_too_large(family: IpAddressFamily) {
     assert!(matches!(result, Err(ErrorCode::DatagramTooLarge)));
 }
 
-impl sockets::exports::wasi::cli::run::Guest for Component {
+impl Guest for Component {
     async fn run() -> Result<(), ()> {
         test_wrong_address_family(IpAddressFamily::Ipv4).await;
         test_wrong_address_family(IpAddressFamily::Ipv6).await;

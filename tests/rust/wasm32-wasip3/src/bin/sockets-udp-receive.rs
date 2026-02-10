@@ -1,11 +1,11 @@
-use test_wasm32_wasip3::sockets::{
-    self,
-    wasi::sockets::types::{ErrorCode, IpAddressFamily, IpSocketAddress, UdpSocket},
+use test_wasm32_wasip3::cli::{export, exports::wasi::cli::run::Guest};
+use test_wasm32_wasip3::sockets::wasi::sockets::types::{
+    ErrorCode, IpAddressFamily, IpSocketAddress, UdpSocket,
 };
 
 struct Component;
 
-sockets::export!(Component);
+export!(Component);
 
 async fn test_not_bound(family: IpAddressFamily) {
     let sock = UdpSocket::create(family).unwrap();
@@ -33,7 +33,7 @@ async fn test_receive_data(family: IpAddressFamily) {
     );
 }
 
-impl sockets::exports::wasi::cli::run::Guest for Component {
+impl Guest for Component {
     async fn run() -> Result<(), ()> {
         test_not_bound(IpAddressFamily::Ipv4).await;
         test_not_bound(IpAddressFamily::Ipv6).await;
