@@ -46,10 +46,11 @@ async fn test_inherited_properties(family: IpAddressFamily) {
             );
             assert_eq!(next.get_keep_alive_count(), sock.get_keep_alive_count());
             assert_eq!(next.get_hop_limit(), sock.get_hop_limit());
-            // TODO: In wasmtime, these values are different, even though according to the
-            //       spec they should be inherited.
-            // assert_eq!(next.get_receive_buffer_size(), sock.get_receive_buffer_size());
-            // assert_eq!(next.get_send_buffer_size(), sock.get_send_buffer_size());
+            assert_eq!(
+                next.get_receive_buffer_size(),
+                sock.get_receive_buffer_size()
+            );
+            assert_eq!(next.get_send_buffer_size(), sock.get_send_buffer_size());
         },
         async {
             client.connect(local_addr).await.unwrap();
