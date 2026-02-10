@@ -1,8 +1,5 @@
-use test_wasm32_wasip3::random::{
-    export,
-    exports::wasi::cli::run::Guest,
-    wasi::random::{insecure, insecure_seed, random},
-};
+use test_wasm32_wasip3::cli::{export, exports::wasi::cli::run::Guest};
+use test_wasm32_wasip3::random::wasi::random::{insecure, insecure_seed, random};
 
 struct Component;
 
