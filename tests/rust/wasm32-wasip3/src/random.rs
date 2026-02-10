@@ -2,7 +2,7 @@ wit_bindgen::generate!({
     inline: r"
 	package wasi-testsuite:test;
 
-	world test {
+	world random-test {
 	    include wasi:random/imports@0.3.0-rc-2026-01-06;
 	}
     ",
