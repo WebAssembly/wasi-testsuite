@@ -32,7 +32,15 @@ fn test_get_insecure_seed() {
 
 fn test_get_insecure_random_bytes() {
     let a = insecure::get_insecure_random_bytes(100);
+    let b = insecure::get_insecure_random_bytes(100);
     assert_eq!(a.len(), 100);
+    assert_ne!(a, b);
+}
+
+fn test_get_insecure_random_u64() {
+    let a = insecure::get_insecure_random_u64();
+    let b = insecure::get_insecure_random_u64();
+    assert_ne!(a, b);
 }
 
 impl Guest for Component {
@@ -41,6 +49,7 @@ impl Guest for Component {
         test_get_random_u64();
         test_get_insecure_seed();
         test_get_insecure_random_bytes();
+        test_get_insecure_random_u64();
         Ok(())
     }
 }
