@@ -4,7 +4,6 @@ wit_bindgen::generate!({
 
 	world test {
 	    include wasi:random/imports@0.3.0-rc-2026-01-06;
-		include wasi:cli/command@0.3.0-rc-2026-01-06;
 	}
     ",
     features:["clocks-timezone"],
