@@ -1,11 +1,11 @@
-use test_wasm32_wasip3::sockets::{
-    self,
-    wasi::sockets::types::{ErrorCode, IpAddressFamily, IpSocketAddress, TcpSocket},
+use test_wasm32_wasip3::cli::{export, exports::wasi::cli::run::Guest};
+use test_wasm32_wasip3::sockets::wasi::sockets::types::{
+    ErrorCode, IpAddressFamily, IpSocketAddress, TcpSocket,
 };
 
 struct Component;
 
-sockets::export!(Component);
+export!(Component);
 
 fn test_with_bind(family: IpAddressFamily) {
     let addr = IpSocketAddress::localhost(family, 0);
@@ -67,7 +67,7 @@ fn test_listening(fam: IpAddressFamily) {
     assert!(matches!(result, Err(ErrorCode::InvalidState)));
 }
 
-impl sockets::exports::wasi::cli::run::Guest for Component {
+impl Guest for Component {
     async fn run() -> Result<(), ()> {
         test_with_bind(IpAddressFamily::Ipv4);
         test_with_bind(IpAddressFamily::Ipv6);

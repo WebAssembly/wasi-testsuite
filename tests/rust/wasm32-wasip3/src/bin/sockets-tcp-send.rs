@@ -1,3 +1,4 @@
+use test_wasm32_wasip3::cli::{export, exports::wasi::cli::run::Guest};
 use test_wasm32_wasip3::sockets::{
     self,
     wasi::sockets::types::{ErrorCode, IpAddressFamily, IpSocketAddress, TcpSocket},
@@ -5,7 +6,7 @@ use test_wasm32_wasip3::sockets::{
 
 struct Component;
 
-sockets::export!(Component);
+export!(Component);
 
 async fn test_connected_state(family: IpAddressFamily) {
     let sock = TcpSocket::create(family).unwrap();
@@ -72,7 +73,7 @@ async fn test_drop_write_half(family: IpAddressFamily) {
     );
 }
 
-impl sockets::exports::wasi::cli::run::Guest for Component {
+impl Guest for Component {
     async fn run() -> Result<(), ()> {
         test_connected_state(IpAddressFamily::Ipv4).await;
         test_connected_state(IpAddressFamily::Ipv6).await;
