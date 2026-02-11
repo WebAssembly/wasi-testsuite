@@ -21,9 +21,9 @@ fn test_invalid_address_family(family: IpAddressFamily) {
     assert!(matches!(result, Err(ErrorCode::InvalidArgument)));
 }
 
-fn test_dual_stack_support() {
+fn test_reject_dual_stack() {
     let sock = UdpSocket::create(IpAddressFamily::Ipv6).unwrap();
-    let addr = IpSocketAddress::ipv6_mapped_localhost(PORT);
+    let addr = IpSocketAddress::ipv4_mapped_ipv6_localhost(PORT);
     let result = sock.connect(addr);
 
     assert!(matches!(result, Err(ErrorCode::InvalidArgument)));
@@ -111,7 +111,7 @@ impl Guest for Component {
         test_invalid_address_family(IpAddressFamily::Ipv4);
         test_invalid_address_family(IpAddressFamily::Ipv6);
 
-        test_dual_stack_support();
+        test_reject_dual_stack();
 
         test_unspecified_remote_addr(IpAddressFamily::Ipv4);
         test_unspecified_remote_addr(IpAddressFamily::Ipv6);

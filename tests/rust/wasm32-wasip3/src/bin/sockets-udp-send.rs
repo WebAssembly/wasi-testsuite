@@ -52,7 +52,7 @@ async fn test_connected_with_addr(family: IpAddressFamily) {
         Err(ErrorCode::InvalidArgument)
     );
 
-    assert!(sock.send(vec![0; 1], Some(remote_addr)).await.is_ok());
+    sock.send(vec![0; 1], Some(remote_addr)).await.unwrap();
 }
 
 async fn test_not_connected_empty_addr(family: IpAddressFamily) {
@@ -70,7 +70,7 @@ async fn test_unspecified_remote_addr(family: IpAddressFamily) {
     // FIXME: According to the spec this should return
     //     `invalid-argument`: The IP address in `remote-address` is
     //     set to INADDR_ANY (`0.0.0.0` / `::`).
-    assert!(matches!(result, Err(ErrorCode::RemoteUnreachable)));
+    assert!(matches!(result, Err(ErrorCode::InvalidArgument)));
 }
 
 async fn test_remote_addr_with_port_0(family: IpAddressFamily) {

@@ -62,9 +62,9 @@ fn test_ephemeral_port_assignment(family: IpAddressFamily) {
     assert_ne!(addr.port(), bound.port());
 }
 
-fn test_dual_stack_support() {
+fn test_reject_dual_stack() {
     let sock = UdpSocket::create(IpAddressFamily::Ipv6).unwrap();
-    let addr = IpSocketAddress::ipv6_mapped_localhost(0);
+    let addr = IpSocketAddress::ipv4_mapped_ipv6_localhost(0);
     let result = sock.bind(addr);
 
     assert!(matches!(result, Err(ErrorCode::InvalidArgument)));
@@ -88,7 +88,7 @@ impl Guest for Component {
         test_not_bindable(IpAddressFamily::Ipv6);
         test_ephemeral_port_assignment(IpAddressFamily::Ipv4);
         test_ephemeral_port_assignment(IpAddressFamily::Ipv6);
-        test_dual_stack_support();
+        test_reject_dual_stack();
         test_unspecified_addr(IpAddressFamily::Ipv4);
         test_unspecified_addr(IpAddressFamily::Ipv6);
 
