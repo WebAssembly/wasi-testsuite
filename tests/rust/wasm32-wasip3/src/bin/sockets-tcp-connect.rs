@@ -52,7 +52,7 @@ async fn test_non_unicast(family: IpAddressFamily) {
 
 async fn test_reject_dual_stack() {
     let sock = TcpSocket::create(IpAddressFamily::Ipv6).unwrap();
-    let addr = IpSocketAddress::ipv6_mapped_localhost(PORT);
+    let addr = IpSocketAddress::ipv4_mapped_ipv6_localhost(PORT);
     let result = sock.connect(addr).await;
 
     assert!(matches!(result, Err(ErrorCode::InvalidArgument)));

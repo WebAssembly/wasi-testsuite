@@ -34,7 +34,7 @@ impl IpSocketAddress {
         })
     }
 
-    pub fn ipv6_mapped_localhost(port: u16) -> IpSocketAddress {
+    pub fn ipv4_mapped_ipv6_localhost(port: u16) -> IpSocketAddress {
         IpSocketAddress::Ipv6(Ipv6SocketAddress {
             port,
             address: (0, 0, 0, 0, 0, 0xFFFF, 0x7F00, 0x0001),
