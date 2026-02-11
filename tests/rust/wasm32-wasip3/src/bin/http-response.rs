@@ -5,7 +5,7 @@ wit_bindgen::generate!({
   package test:test;
 
   world test {
-      include wasi:http/service@0.3.0-rc-2026-01-06;
+      import wasi:http/types@0.3.0-rc-2026-01-06;
       include wasi:cli/command@0.3.0-rc-2026-01-06;
   }
 ",
@@ -14,7 +14,7 @@ wit_bindgen::generate!({
     generate_all
 });
 
-use wasi::http::types::{ErrorCode, Fields, HeaderError, Request, Response};
+use wasi::http::types::{Fields, HeaderError, Response};
 
 fn test_response_field_default_values(response: &Response) {
     assert_eq!(response.get_status_code(), 200);
@@ -64,12 +64,6 @@ async fn test_response() -> Response {
 
 struct Component;
 export!(Component);
-
-impl exports::wasi::http::handler::Guest for Component {
-    async fn handle(_r: Request) -> Result<Response, ErrorCode> {
-        Ok(test_response().await)
-    }
-}
 
 impl exports::wasi::cli::run::Guest for Component {
     async fn run() -> Result<(), ()> {
