@@ -50,7 +50,7 @@ async fn test_non_unicast(family: IpAddressFamily) {
     }
 }
 
-async fn test_dual_stack_support() {
+async fn test_reject_dual_stack() {
     let sock = TcpSocket::create(IpAddressFamily::Ipv6).unwrap();
     let addr = IpSocketAddress::ipv6_mapped_localhost(PORT);
     let result = sock.connect(addr).await;
@@ -161,7 +161,7 @@ impl Guest for Component {
         test_invalid_address_family(IpAddressFamily::Ipv6).await;
         test_non_unicast(IpAddressFamily::Ipv4).await;
         test_non_unicast(IpAddressFamily::Ipv6).await;
-        test_dual_stack_support().await;
+        test_reject_dual_stack().await;
         test_unspecified_remote_addr(IpAddressFamily::Ipv4).await;
         test_unspecified_remote_addr(IpAddressFamily::Ipv6).await;
         test_connect_0_port(IpAddressFamily::Ipv4).await;
