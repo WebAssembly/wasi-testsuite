@@ -105,8 +105,12 @@ async fn test_listening_state(family: IpAddressFamily) {
 
 async fn test_connection_refused(family: IpAddressFamily) {
     let sock = TcpSocket::create(family).unwrap();
-    let addr = IpSocketAddress::localhost(family, 59999);
-    let result = sock.connect(addr).await;
+    sock.bind(IpSocketAddress::localhost(family, 0)).unwrap();
+    let addr = sock.get_local_address().unwrap();
+    drop(sock);
+
+    let sock2 = TcpSocket::create(family).unwrap();
+    let result = sock2.connect(addr).await;
 
     assert!(matches!(result, Err(ErrorCode::ConnectionRefused)));
 }
