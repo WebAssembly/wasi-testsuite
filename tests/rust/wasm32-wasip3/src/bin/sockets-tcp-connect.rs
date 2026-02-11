@@ -83,16 +83,11 @@ async fn test_connected_state(family: IpAddressFamily) {
     listener.listen().unwrap();
 
     let sock = TcpSocket::create(family).unwrap();
-    futures::join!(
-        async {
-            let result = sock.connect(server_addr).await;
-            assert!(result.is_ok());
-        },
-        async {
-            let result = sock.connect(server_addr).await;
-            assert!(matches!(result, Err(ErrorCode::InvalidState)));
-        }
-    );
+    let result = sock.connect(server_addr).await;
+    assert!(result.is_ok());
+
+    let result = sock.connect(server_addr).await;
+    assert!(matches!(result, Err(ErrorCode::InvalidState)));
 }
 
 async fn test_listening_state(family: IpAddressFamily) {
