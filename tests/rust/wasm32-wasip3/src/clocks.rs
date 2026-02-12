@@ -2,9 +2,8 @@ wit_bindgen::generate!({
     inline: r"
 	package wasi-testsuite:test;
 
-	world test {
+	world clocks-test {
 	    include wasi:clocks/imports@0.3.0-rc-2026-01-06;
-	    include wasi:cli/command@0.3.0-rc-2026-01-06;
 	}
     ",
     features:["clocks-timezone"],
