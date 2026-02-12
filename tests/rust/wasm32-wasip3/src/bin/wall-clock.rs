@@ -1,6 +1,5 @@
-use test_wasm32_wasip3::clocks::{
-    export, exports::wasi::cli::run::Guest, wasi::clocks::system_clock,
-};
+use test_wasm32_wasip3::cli::{export, exports::wasi::cli::run::Guest};
+use test_wasm32_wasip3::clocks::wasi::clocks::system_clock;
 
 const NANOSECOND: u32 = 1;
 const MICROSECOND: u32 = NANOSECOND * 1_000;
