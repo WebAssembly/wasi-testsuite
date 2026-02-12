@@ -17,6 +17,11 @@ fn test_get_arguments() {
 }
 
 fn test_get_initial_cwd() {
+    // FIXME:
+    // Currently we can only test that the returned value is None, since the
+    // currently implementation is incomplete. See
+    // https://github.com/bytecodealliance/wasmtime/pull/9831 and
+    // https://github.com/WebAssembly/wasi-testsuite/issues/216
     let cwd = environment::get_initial_cwd();
     assert!(cwd.is_none());
 }
