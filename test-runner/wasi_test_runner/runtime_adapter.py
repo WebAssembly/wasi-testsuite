@@ -199,12 +199,8 @@ def _handle_write(proc: subprocess.Popen[Any], spec: Write, result: Result) -> N
         result.failures.append(Failure.unexpected(f"{spec}: {spec.id} is not available"))
         return
 
-    if proc.stdin is None:
-        result.failures.append(Failure.unexpected(f"{spec}: stdin is not available"))
-        return
-
-    proc.stdin.write(spec.payload)
-    proc.stdin.flush()
+    stream.write(spec.payload)
+    stream.flush()
 
 
 def _handle_wait(proc: subprocess.Popen[Any], spec: Wait, result: Result) -> None:
