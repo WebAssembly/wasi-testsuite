@@ -5,10 +5,15 @@ export!(Component);
 
 fn test_get_environment() {
     let env = environment::get_environment();
-    assert_eq!(
-        env,
-        vec![("foo".into(), "bar".into()), ("baz".into(), "42".into())]
-    );
+    assert_eq!(env.len(), 2);
+
+    for (k, v) in env {
+        match k.as_str() {
+            "foo" => assert_eq!(v, "bar"),
+            "baz" => assert_eq!(v, "42"),
+            unknown => panic!("Unexpected option {}", unknown),
+        }
+    }
 }
 
 fn test_get_arguments() {
