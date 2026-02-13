@@ -1,6 +1,6 @@
+use test_wasm32_wasip3::cli::{export, exports::wasi::cli::run::Guest};
 use test_wasm32_wasip3::clocks::{
-    DAY, MILLISECOND, export,
-    exports::wasi::cli::run::Guest,
+    DAY, MILLISECOND,
     wasi::clocks::monotonic_clock::{self, Duration, Mark},
 };
 

@@ -1,10 +1,7 @@
 use core::task::{Context, Poll, Waker};
 use std::future::Future;
-use test_wasm32_wasip3::clocks::{
-    export,
-    exports::wasi::cli::run::Guest,
-    wasi::clocks::monotonic_clock::{self, Mark},
-};
+use test_wasm32_wasip3::cli::{export, exports::wasi::cli::run::Guest};
+use test_wasm32_wasip3::clocks::wasi::clocks::monotonic_clock::{self, Mark};
 
 // Offsets relative to "now" at which to wait_until(), in nanoseconds.
 // These are 20 values chosen uniformly randomly over the range [-5
