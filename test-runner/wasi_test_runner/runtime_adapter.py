@@ -6,7 +6,7 @@ import socket
 from pathlib import Path
 from typing import NamedTuple, List, Tuple, Any
 
-from .test_case import Result, WasiVersion, Config, Run, Read, Wait, Send, Recv, Failure, Connect, ProtocolType
+from .test_case import Result, WasiVersion, Config, Run, Read, Write, Wait, Send, Recv, Failure, Connect, ProtocolType
 
 
 class RuntimeMeta(NamedTuple):
@@ -122,11 +122,21 @@ class RuntimeAdapter:
                         _cleanup_test_output(dirs)
                         # pylint: disable=consider-using-with
                         try:
-                            proc = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                            proc = subprocess.Popen(
+                                argv,
+                                stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                text=True
+                            )
                             cleanup_dirs = dirs
                         except (OSError, ValueError) as e:
                             result.failures.append(Failure.unexpected(f"Failed to start process: {e}"))
                             break
+                    case Write() as write:
+                        assert proc is not None
+                        assert isinstance(write, Write)
+                        _handle_write(proc, write, result)
                     case Read() as read:
                         assert proc is not None
                         # Instance asserts might seem redudant here, given the match.
@@ -177,9 +187,20 @@ def _handle_read(proc: subprocess.Popen[Any], spec: Read, result: Result) -> Non
         result.failures.append(Failure.unexpected(f"{spec} {spec.id} is not available"))
         return
 
-    payload = stream.readline().strip()
+    expected_length = len(spec.payload)
+    payload = stream.read(expected_length)
     if payload != spec.payload:
         result.failures.append(Failure.expectation(f"{spec} {spec.id} failed: expected {spec.payload}, got {payload}"))
+
+
+def _handle_write(proc: subprocess.Popen[Any], spec: Write, result: Result) -> None:
+    stream = getattr(proc, spec.id, None)
+    if stream is None:
+        result.failures.append(Failure.unexpected(f"{spec}: {spec.id} is not available"))
+        return
+
+    stream.write(spec.payload)
+    stream.flush()
 
 
 def _handle_wait(proc: subprocess.Popen[Any], spec: Wait, result: Result) -> None:
