@@ -1,11 +1,8 @@
-import subprocess
 import os
 import shlex
-import sys
+import subprocess
 from pathlib import Path
 from typing import Dict, List, Tuple
-import importlib
-
 
 # shlex.split() splits according to shell quoting rules
 WASMTIME = shlex.split(os.getenv("WASMTIME", "wasmtime"))
@@ -55,7 +52,7 @@ def compute_argv(test_path: str,
 # options, so that the user can override our choices.
 def _add_wasi_version_options(argv: List[str], wasi_version: str, proposals: List[str]) -> None:
     splice_pos = len(WASMTIME)
-    while splice_pos > 1 and args[splice_pos-1].startswith("-"):
+    while splice_pos > 1 and argv[splice_pos - 1].startswith("-"):
         splice_pos -= 1
     match wasi_version:
         case "wasm32-wasip1":
