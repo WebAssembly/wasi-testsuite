@@ -3,8 +3,8 @@ wit_bindgen::generate!({
 	package wasi-testsuite:test;
 
 	world test {
-	    include wasi:sockets/imports@0.3.0-rc-2026-01-06;
-	    include wasi:cli/command@0.3.0-rc-2026-01-06;
+	    include wasi:sockets/imports@0.3.0-rc-2026-02-09;
+	    include wasi:cli/command@0.3.0-rc-2026-02-09;
 	}
     ",
     features:["clocks-timezone"],
