@@ -117,6 +117,9 @@ class RuntimeAdapter:
         cleanup_dirs = None
         try:
             for op in config.operations:
+                if result.failures:
+                    break
+
                 match op:
                     case Run(_, _, dirs):
                         _cleanup_test_output(dirs)
