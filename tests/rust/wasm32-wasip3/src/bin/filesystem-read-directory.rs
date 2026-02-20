@@ -6,8 +6,8 @@ wit_bindgen::generate!({
   package test:test;
 
   world test {
-      include wasi:filesystem/imports@0.3.0-rc-2026-01-06;
-      include wasi:cli/command@0.3.0-rc-2026-01-06;
+      include wasi:filesystem/imports@0.3.0-rc-2026-02-09;
+      include wasi:cli/command@0.3.0-rc-2026-02-09;
   }
 ",
     additional_derives: [PartialEq, Eq, Hash, Clone],
@@ -22,7 +22,7 @@ use wasi::filesystem::types::DirectoryEntry;
 
 async fn test_read_directory(dir: &Descriptor) {
     // read-directory: async func() -> tuple<stream<directory-entry>, future<result<_, error-code>>>;
-    let (stream, result) = dir.read_directory().await;
+    let (stream, result) = dir.read_directory();
     let mut entries = stream.collect().await;
     result.await.unwrap();
     entries.sort_by_key(|e| e.name.clone());
