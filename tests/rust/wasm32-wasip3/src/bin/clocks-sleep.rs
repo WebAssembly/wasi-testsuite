@@ -5,8 +5,8 @@ wit_bindgen::generate!({
   package test:test;
 
   world test {
-      include wasi:clocks/imports@0.3.0-rc-2025-09-16;
-      include wasi:cli/command@0.3.0-rc-2025-09-16;
+      include wasi:clocks/imports@0.3.0-rc-2026-02-09;
+      include wasi:cli/command@0.3.0-rc-2026-02-09;
   }
 ",
     // Work around https://github.com/bytecodealliance/wasm-tools/issues/2285.
