@@ -5,7 +5,8 @@ wit_bindgen::generate!({
   package test:test;
 
   world test {
-      include wasi:http/imports@0.3.0-rc-2025-09-16;
+      import wasi:http/types@0.3.0-rc-2026-02-09;
+      include wasi:cli/command@0.3.0-rc-2026-02-09;
   }
 ",
     additional_derives: [PartialEq, Eq, Hash, Clone],
@@ -13,9 +14,7 @@ wit_bindgen::generate!({
     generate_all
 });
 
-use wasi::http::types::{
-    Fields, HeaderError, Request, Method, Scheme
-};
+use wasi::http::types::{Fields, HeaderError, Method, Request, Scheme};
 
 fn test_request_field_default_values(request: &Request) {
     assert_eq!(request.get_method(), Method::Get);
@@ -52,15 +51,17 @@ fn compute_valid_method_chars(len: usize) -> Vec<bool> {
 }
 
 fn test_method_names(request: &Request) {
-    for (m, name) in [(Method::Get, "GET"),
-                      (Method::Head, "HEAD"),
-                      (Method::Post, "POST"),
-                      (Method::Put, "PUT"),
-                      (Method::Delete, "DELETE"),
-                      (Method::Connect, "CONNECT"),
-                      (Method::Options, "OPTIONS"),
-                      (Method::Trace, "TRACE"),
-                      (Method::Patch, "PATCH")] {
+    for (m, name) in [
+        (Method::Get, "GET"),
+        (Method::Head, "HEAD"),
+        (Method::Post, "POST"),
+        (Method::Put, "PUT"),
+        (Method::Delete, "DELETE"),
+        (Method::Connect, "CONNECT"),
+        (Method::Options, "OPTIONS"),
+        (Method::Trace, "TRACE"),
+        (Method::Patch, "PATCH"),
+    ] {
         assert_eq!(request.set_method(&m), Ok(()));
         assert_eq!(request.get_method(), m);
         // https://github.com/WebAssembly/wasi-http/issues/194
@@ -68,10 +69,14 @@ fn test_method_names(request: &Request) {
         assert_eq!(request.get_method(), m);
     }
 
-    request.set_method(&Method::Other("coucou".to_string())).unwrap();
+    request
+        .set_method(&Method::Other("coucou".to_string()))
+        .unwrap();
     assert_eq!(request.get_method(), Method::Other("coucou".to_string()));
 
-    request.set_method(&Method::Other("".to_string())).unwrap_err();
+    request
+        .set_method(&Method::Other("".to_string()))
+        .unwrap_err();
     assert_eq!(request.get_method(), Method::Other("coucou".to_string()));
 
     let max_codepoint_to_test = 1024;
@@ -84,12 +89,10 @@ fn test_method_names(request: &Request) {
         }
         let method = Method::Other(method_name);
         if valid[ch] {
-            assert_eq!(request.set_method(&method),
-                       Ok(()));
+            assert_eq!(request.set_method(&method), Ok(()));
             assert_eq!(request.get_method(), method);
         } else {
-            assert_eq!(request.set_method(&method),
-                       Err(()));
+            assert_eq!(request.set_method(&method), Err(()));
         }
     }
 }
@@ -101,9 +104,13 @@ fn test_schemes(request: &Request) {
     }
 
     // https://github.com/WebAssembly/wasi-http/issues/194
-    request.set_scheme(Some(&Scheme::Other("https".to_string()))).unwrap();
+    request
+        .set_scheme(Some(&Scheme::Other("https".to_string())))
+        .unwrap();
     assert_eq!(request.get_scheme(), Some(Scheme::Https));
-    request.set_scheme(Some(&Scheme::Other("http".to_string()))).unwrap();
+    request
+        .set_scheme(Some(&Scheme::Other("http".to_string())))
+        .unwrap();
     assert_eq!(request.get_scheme(), Some(Scheme::Http));
 
     // https://github.com/WebAssembly/wasi-http/issues/194
@@ -122,12 +129,10 @@ fn test_schemes(request: &Request) {
             continue;
         }
         if ch.is_ascii_alphabetic() {
-            assert_eq!(request.set_scheme(Some(&scheme)),
-                       Ok(()));
+            assert_eq!(request.set_scheme(Some(&scheme)), Ok(()));
             assert_eq!(request.get_scheme(), Some(scheme));
         } else {
-            assert_eq!(request.set_scheme(Some(&scheme)),
-                       Err(()));
+            assert_eq!(request.set_scheme(Some(&scheme)), Err(()));
         }
     }
 }
@@ -139,29 +144,29 @@ fn is_valid_path_char(ch: char) -> bool {
         || ch == '%'                                  // pct-encoded
         || "!$&'()*+,;=".contains(ch)                 // sub-delims
         || ":@".contains(ch)
+        || ch as u32 >= 0x80 // Raw UTF-8.  It happens!
 }
 
 fn test_path_with_query(request: &Request) {
     request.set_scheme(Some(&Scheme::Http)).unwrap();
     request.set_method(&Method::Get).unwrap();
     for abs in ["/", "/a/b/c", "/a/../../bar", "/?foo"] {
-        request.set_path_with_query(Some(&abs.to_string()))
+        request
+            .set_path_with_query(Some(&abs.to_string()))
             .expect(abs);
-        assert_eq!(request.get_path_with_query(),
-                   Some(abs.to_string()));
+        assert_eq!(request.get_path_with_query(), Some(abs.to_string()));
     }
 
     // https://github.com/WebAssembly/wasi-http/issues/178#issuecomment-3359974132
     for rel in ["a/b/c", "../..", "?foo"] {
-        request.set_path_with_query(Some(&rel.to_string()))
+        request
+            .set_path_with_query(Some(&rel.to_string()))
             .expect(rel);
-        assert_eq!(request.get_path_with_query(),
-                   Some(rel.to_string()));
+        assert_eq!(request.get_path_with_query(), Some(rel.to_string()));
     }
 
     request.set_path_with_query(Some(&"".to_string())).unwrap();
-    assert_eq!(request.get_path_with_query(),
-               Some("/".to_string()));
+    assert_eq!(request.get_path_with_query(), Some("/".to_string()));
 
     for ch in 0..1024 {
         let ch = char::from_u32(ch).unwrap();
@@ -170,11 +175,12 @@ fn test_path_with_query(request: &Request) {
             if is_valid_path_char(ch) {
                 request.set_path_with_query(Some(&s)).unwrap();
                 assert_eq!(request.get_path_with_query(), Some(s));
+            } else if "\"{|}^[]\\#".contains(ch) {
+                // https://github.com/bytecodealliance/wasmtime/issues/11779
+                continue;
+            } else if ch as u32 == 0x7F {
+                // Bonkers; https://github.com/hyperium/http/issues/820.
             } else {
-                if "\"{|}^[]\\#".contains(ch) {
-                    // https://github.com/bytecodealliance/wasmtime/issues/11779                    
-                    continue;
-                }
                 request.set_path_with_query(Some(&s)).unwrap_err();
             }
         }
@@ -194,7 +200,7 @@ fn is_valid_authority_char(ch: char) -> bool {
     // IPv4address is a subset of reg-name.  IP-literal is IPv6: [...]
     ch.is_ascii_alphanumeric() || "-._~".contains(ch) // unreserved
         || ch == '%'                                  // pct-encoded
-        || "!$&'()*+,;=".contains(ch)                 // sub-delims
+        || "!$&'()*+,;=".contains(ch) // sub-delims
 }
 
 fn test_authority(request: &Request) {
@@ -220,16 +226,7 @@ fn test_authority(request: &Request) {
         assert_eq!(request.get_authority(), Some(authority));
     }
 
-    for invalid in [
-        "::",
-        ":@",
-        "@@",
-        "@:",
-        " ",
-        "",
-        "#",
-        "localhost:what",
-    ] {
+    for invalid in ["::", ":@", "@@", "@:", " ", "", "#", "localhost:what"] {
         let authority = String::from(invalid);
         request.set_authority(Some(&authority)).expect_err(invalid);
     }
@@ -256,15 +253,17 @@ fn test_authority(request: &Request) {
 }
 
 fn test_immutable_headers(headers: &Fields) {
-    assert_eq!(headers.append("Last-Modified", b"whatever"),
-               Err(HeaderError::Immutable));
+    assert_eq!(
+        headers.append("Last-Modified", b"whatever"),
+        Err(HeaderError::Immutable)
+    );
 }
 
 fn test_headers_same(left: &Fields, right: &Fields) {
     assert_eq!(left.copy_all(), right.copy_all());
 }
 
-fn main() {
+fn test() {
     let headers = Fields::new();
     headers.append("Last-Modified", b"whatever").unwrap();
     let contents = None;
@@ -280,4 +279,18 @@ fn main() {
     test_authority(&request);
     test_immutable_headers(&request.get_headers());
     test_headers_same(&request.get_headers(), &headers_copy);
+}
+
+struct Component;
+export!(Component);
+
+impl exports::wasi::cli::run::Guest for Component {
+    async fn run() -> Result<(), ()> {
+        test();
+        Ok(())
+    }
+}
+
+fn main() {
+    unreachable!("main is a stub");
 }
