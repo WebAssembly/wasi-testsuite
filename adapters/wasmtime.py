@@ -63,6 +63,10 @@ def _add_wasi_version_options(argv: List[str], wasi_version: str, proposals: Lis
                 flags_from_proposals += ",http"
             if "sockets" in proposals:
                 flags_from_proposals += ",inherit-network"
+            if "http/service" in proposals:
+                flags_from_proposals += ",cli"
+                argv[splice_pos:splice_pos] = ["serve", "--addr=127.0.0.1:0"]
+                splice_pos += 1
 
             argv[splice_pos:splice_pos] = ["-Wcomponent-model-async",
                                            f"-Sp3{flags_from_proposals}"]
