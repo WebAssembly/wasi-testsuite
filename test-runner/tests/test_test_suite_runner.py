@@ -38,16 +38,15 @@ def test_runner_end_to_end() -> None:
     test_files = ["test1.wasm", "test2.wasm", "test3.wasm", "test4.wasm"]
     test_paths = [Path(test_suite_dir) / f for f in test_files]
 
-    failures = [tc.Failure("a", "b"), tc.Failure("x", "y"), tc.Failure("x", "z")]
     test_dirs = [".", "deep/dir"]
     runtime_name = "rt1"
 
     expected_argv = [runtime_name, "<test>"]
     expected_results = [
         tc.Result(True, []),
-        tc.Result(True, [failures[1]]),
-        tc.Result(True, [failures[0], failures[2]]),
-        tc.Result(True, [])
+        tc.Result(True, [ANY]),
+        tc.Result(True, [ANY, ANY]),
+        tc.Result(True, [ANY])
     ]
     expected_config = [
         tc.Config(
@@ -91,7 +90,6 @@ def test_runner_end_to_end() -> None:
     runtime = Mock()
     runtime.get_name.return_value = runtime_name
     runtime.get_meta.return_value = runtime_meta
-    runtime.run_test.side_effect = expected_results
     runtime.compute_argv.return_value = expected_argv
 
     reporters = [Mock(), Mock()]
@@ -100,8 +98,16 @@ def test_runner_end_to_end() -> None:
     filt.should_skip.return_value = (False, None)
     filters = [filt]
 
+    process = Mock()
+    process.stdin = mock_open().return_value
+    process.stdout = mock_open(read_data='').return_value
+    process.stderr = mock_open(read_data='').return_value
+    process.returncode = 0
+    process.communicate.return_value = ('', '')
+
     with (patch("glob.glob", return_value=[str(p) for p in test_paths]),
-          patch("wasi_test_runner.runtime_adapter._cleanup_test_output")):
+          patch("wasi_test_runner.test_suite_runner._cleanup_test_output"),
+          patch("subprocess.Popen", return_value=process)):
         suite = tsr.run_tests_from_test_suite(test_suite_dir, runtime,
                                               reporters,   # type: ignore
                                               filters)     # type: ignore
@@ -114,10 +120,7 @@ def test_runner_end_to_end() -> None:
     assert suite.test_cases == expected_test_cases
 
     # Assert test runner calls
-    assert runtime.run_test.call_count == 4
-
-    for config in expected_config:
-        runtime.run_test.assert_any_call(config, expected_argv)
+    assert process.communicate.call_count == 4
 
     # Assert reporters calls
     for reporter in reporters:

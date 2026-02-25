@@ -20,6 +20,9 @@
 	    "type": "recv",
 	    "id": "echo-server",
 	    "payload": "Hello, world"
+	},
+	{
+	    "type": "wait"
 	}
     ]
 }

@@ -2,19 +2,22 @@ import glob
 import json
 import os
 import re
+import shutil
+import subprocess
+import socket
 import time
 
 from datetime import datetime
 from pathlib import Path
-from typing import List, NamedTuple
+from typing import List, NamedTuple, Tuple, Dict, Any, IO
 
 from .filters import TestFilter
 from .runtime_adapter import RuntimeAdapter
 from .test_case import (
-    Result,
-    Config,
-    TestCase,
-    WasiVersion
+    Result, Failure, WasiVersion, Config,
+    TestCase, TestCaseRunnerBase, TestCaseValidator,
+    # Operation types
+    Run, Read, Write, Wait, Send, Recv, Connect
 )
 from .reporters import TestReporter
 from .test_suite import TestSuite, TestSuiteMeta
@@ -25,12 +28,179 @@ class Manifest(NamedTuple):
     wasi_version: WasiVersion
 
 
+class TestCaseRunner(TestCaseRunnerBase):
+    # pylint: disable-msg=too-many-instance-attributes
+    _test_path: str
+    _wasi_version: WasiVersion
+    _runtime: RuntimeAdapter
+    _proc: subprocess.Popen[Any] | None
+    _cleanup_dirs: List[Path]
+    _pipes: Dict[str, IO[str]]
+    _sockets: Dict[str, socket.socket]
+    _last_argv: List[str]
+
+    def __init__(self, config: Config, test_path: str, wasi_version: WasiVersion,
+                 runtime: RuntimeAdapter) -> None:
+        TestCaseRunnerBase.__init__(self, config)
+        self._test_path = test_path
+        self._wasi_version = wasi_version
+        self._runtime = runtime
+        self._proc = None
+        self._cleanup_dirs = []
+        self._pipes = {}
+        self._sockets = {}
+        self._last_argv = []
+
+    def _add_cleanup_dir(self, d: Path) -> None:
+        _cleanup_test_output(d)
+        self._cleanup_dirs.append(d)
+
+    def _wait(self, timeout: float | None) -> Tuple[int, str, str]:
+        proc = self._proc
+        assert proc is not None
+        out, err = proc.communicate(timeout=timeout)
+        self._proc = None
+        return proc.returncode, out, err
+
+    def fail_unexpected(self, msg: str) -> None:
+        self._failures.append(Failure.unexpected(msg))
+
+    def fail_expectation(self, msg: str) -> None:
+        self._failures.append(Failure.expectation(msg))
+
+    def has_failure(self) -> bool:
+        return bool(self._failures)
+
+    def add_socket(self, name: str, sock: socket.socket) -> None:
+        self._sockets[name] = sock
+
+    def add_pipe(self, name: str, pipe: IO[str]) -> None:
+        self._pipes[name] = pipe
+
+    def get_socket(self, name: str) -> socket.socket:
+        assert name in self._sockets
+        return self._sockets[name]
+
+    def get_pipe(self, name: str) -> IO[str]:
+        assert name in self._pipes
+        return self._pipes[name]
+
+    def last_argv(self) -> List[str]:
+        return self._last_argv
+
+    def do_run(self, run: Run) -> None:
+        for (host, _guest) in run.dirs:
+            self._add_cleanup_dir(host)
+        proposals = self.config.proposals_as_str()
+        argv = self._runtime.compute_argv(
+            self._test_path, run.args, run.env, run.dirs, proposals,
+            self._wasi_version)
+        self._last_argv = argv
+        try:
+            # pylint: disable-msg=consider-using-with
+            self._proc = subprocess.Popen(
+                argv,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+            stdin, stdout, stderr = \
+                self._proc.stdin, self._proc.stdout, self._proc.stderr
+            assert stdin is not None
+            assert stdout is not None
+            assert stderr is not None
+            self.add_pipe('stdin', stdin)
+            self.add_pipe('stdout', stdout)
+            self.add_pipe('stderr', stderr)
+        except (OSError, ValueError) as e:
+            self.fail_unexpected(f"Failed to start process: {e}")
+
+    def do_read(self, read: Read) -> None:
+        stream = self.get_pipe(read.id)
+        expected_length = len(read.payload)
+        payload = stream.read(expected_length)
+        if payload != read.payload:
+            self.fail_expectation(f"{read} {read.id} failed: expected {read.payload}, got {payload}")
+
+    def do_write(self, write: Write) -> None:
+        stream = self.get_pipe(write.id)
+        stream.write(write.payload)
+        stream.flush()
+
+    def do_wait(self, wait: Wait) -> None:
+        try:
+            exit_code, out, err = self._wait(5)
+            if wait.exit_code != exit_code:
+                msg = f"{wait} failed: expected {wait.exit_code}, got {exit_code}"
+                msg = _append_stdout_and_stderr(msg, out, err)
+                self.fail_expectation(msg)
+
+        except subprocess.TimeoutExpired:
+            self.fail_expectation(f"{wait} failed: timeout expired")
+
+    def do_connect(self, conn: Connect) -> None:
+        # Discover the port.
+        line = self.get_pipe('stdout').readline().strip()
+        match line.split(':'):
+            case [host, port_str] if port_str.isnumeric():
+                port = int(port_str)
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                try:
+                    sock.connect((host, port))
+                    self.add_socket(conn.id, sock)
+                except (socket.timeout, ConnectionRefusedError, OSError) as e:
+                    sock.close()
+                    self.fail_unexpected(
+                        f"{conn}: Could not connect to {host}:{port}: {e}")  # noqa: E231
+                    return
+            case _:
+                self.fail_unexpected(
+                    f"{conn}: Expected address information to be available as <host>: <port>, found {line}")
+                return
+
+    def do_send(self, send: Send) -> None:
+        sock = self.get_socket(send.id)
+        try:
+            sock.sendall(send.payload.encode('utf-8'))
+        except (OSError, socket.error) as e:
+            self.fail_unexpected(f"{send}: Failed to send data: {e}")
+
+    def do_recv(self, recv: Recv) -> None:
+        sock = self.get_socket(recv.id)
+        try:
+            response_bytes = sock.recv(len(recv.payload))
+            response = response_bytes.decode('utf-8')
+            if response != recv.payload:
+                self.fail_unexpected(f"{recv}: Expected {recv.payload}, got {response}")
+        except (OSError, socket.error) as e:
+            self.fail_unexpected(f"{recv}: Failed to receive data: {e}")
+        except UnicodeDecodeError as e:
+            self.fail_unexpected(f"{recv}: Failed to decode response: {e}")
+
+    def do_cleanup(self, successful: bool) -> None:
+        if self._proc:
+            self._proc.kill()
+            try:
+                _, out, err = self._wait(timeout=5)
+                self.fail_unexpected(
+                    _append_stdout_and_stderr("", out, err))
+            except subprocess.TimeoutExpired:
+                self.fail_unexpected(
+                    f"Timeout expired after killing proc {self._proc}")
+                self._proc = None
+
+        for d in self._cleanup_dirs:
+            _cleanup_test_output(d)
+        self._cleanup_dirs = []
+
+
 # pylint: disable-msg=too-many-locals
 def run_tests_from_test_suite(
     test_suite_path: str,
     runtime: RuntimeAdapter,
     reporters: List[TestReporter],
-    filters: List[TestFilter],
+    filters: List[TestFilter]
 ) -> TestSuite:
     test_cases: List[TestCase] = []
     test_start = datetime.now()
@@ -46,7 +216,7 @@ def run_tests_from_test_suite(
             # useful to make reporters report it.
             skip, _ = filt.should_skip(meta, test_name)
             if skip:
-                test_case = _skip_single_test(runtime, meta, test_path)
+                test_case = _skip_single_test(test_path)
                 break
         else:
             test_case = _execute_single_test(runtime, meta, test_path)
@@ -64,33 +234,47 @@ def run_tests_from_test_suite(
     )
 
 
-def _skip_single_test(
-    runtime: RuntimeAdapter, meta: TestSuiteMeta, test_path: str
-) -> TestCase:
+def _skip_single_test(test_path: str) -> TestCase:
     config = _read_test_config(test_path)
-    argv = runtime.compute_argv(test_path, config, meta.wasi_version)
-
     return TestCase(
         name=os.path.splitext(os.path.basename(test_path))[0],
-        argv=argv,
+        argv=[],
         config=config,
         result=Result(is_executed=False, failures=[]),
         duration_s=0,
     )
 
 
+def _append_stdout_and_stderr(msg: str, out: str | None, err: str | None) -> str:
+    if out:
+        msg += f"\n\n==STDOUT==\n{out}"
+
+    if err:
+        msg += f"\n\n==STDERR==\n{err}"
+
+    return msg
+
+
+def _cleanup_test_output(host_dir: Path) -> None:
+    for f in host_dir.glob("**/*.cleanup"):
+        if f.is_file():
+            f.unlink()
+        elif f.is_dir():
+            shutil.rmtree(f)
+
+
 def _execute_single_test(
     runtime: RuntimeAdapter, meta: TestSuiteMeta, test_path: str
 ) -> TestCase:
     config = _read_test_config(test_path)
-    argv = runtime.compute_argv(test_path, config, meta.wasi_version)
+    runner = TestCaseRunner(config, test_path, meta.wasi_version, runtime)
     test_start = time.time()
-    result = runtime.run_test(config, argv)
+    result = runner.run()
     elapsed = time.time() - test_start
 
     return TestCase(
         name=os.path.splitext(os.path.basename(test_path))[0],
-        argv=argv,
+        argv=runner.last_argv(),
         config=config,
         result=result,
         duration_s=elapsed,
@@ -100,7 +284,9 @@ def _execute_single_test(
 def _read_test_config(test_path: str) -> Config:
     config_file = re.sub("\\.wasm$", ".json", test_path)
     if os.path.exists(config_file):
-        return Config.from_file(config_file)
+        config = Config.from_file(config_file)
+        TestCaseValidator(config, config_file).validate()
+        return config
     return Config()
 
 
