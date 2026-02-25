@@ -1,20 +1,8 @@
-extern crate wit_bindgen;
-
-wit_bindgen::generate!({
-    inline: r"
-  package test:test;
-
-  world test {
-      import wasi:http/types@0.3.0-rc-2026-02-09;
-      include wasi:cli/command@0.3.0-rc-2026-02-09;
-  }
-",
-    additional_derives: [PartialEq, Eq, Hash, Clone],
-    features:["clocks-timezone"],
-    generate_all
-});
-
-use wasi::http::types::{Fields, HeaderError, Method, Request, Scheme};
+use test_wasm32_wasip3::cli::{export, exports::wasi::cli::run::Guest};
+use test_wasm32_wasip3::http::{
+    wasi::http::types::{Fields, HeaderError, Method, Request, Scheme},
+    wit_future,
+};
 
 fn test_request_field_default_values(request: &Request) {
     assert_eq!(request.get_method(), Method::Get);
@@ -284,7 +272,7 @@ fn test() {
 struct Component;
 export!(Component);
 
-impl exports::wasi::cli::run::Guest for Component {
+impl Guest for Component {
     async fn run() -> Result<(), ()> {
         test();
         Ok(())
