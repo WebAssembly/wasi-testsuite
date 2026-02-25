@@ -1,7 +1,7 @@
 import logging
 import json
 from pathlib import Path
-from enum import StrEnum
+from enum import Enum, StrEnum, auto
 from typing import List, NamedTuple, TypeVar, Type, Dict, Any, Set, Tuple
 
 # Top level configuration keys
@@ -237,13 +237,6 @@ class Config(NamedTuple):
             proposals=[],
         )
 
-    def args_env_dirs(self) -> Tuple[List[str], Dict[str, str], List[Tuple[Path, str]]]:
-        for op in self.operations:
-            match op:
-                case Run(args, env, dirs):
-                    return (args, env, dirs)
-        return ([], {}, [])
-
     def proposals_as_str(self) -> List[str]:
         return [p.value for p in self.proposals]
 
@@ -381,45 +374,57 @@ class TestCaseRunnerBase:
         return self.as_result()
 
 
+class StreamType(Enum):
+    READABLE_PIPE = auto()
+    WRITABLE_PIPE = auto()
+    SOCKET = auto()
+
+
 class TestCaseValidator(TestCaseRunnerBase):
     _config_path: str
     _has_proc: bool
-    _streams: Set[str]
+    _streams: Dict[str, StreamType]
 
     def __init__(self, config: Config, config_path: str) -> None:
         TestCaseRunnerBase.__init__(self, config)
         self._config_path = config_path
         self._has_proc = False
-        self._streams = set()
+        self._streams = {}
 
     def assert_proc(self, op: Any) -> None:
-        assert self._has_proc, f"{op}: no process running"
+        assert self._has_proc, \
+            f"{self._config_path}: {op}: no process running"
 
     def assert_no_proc(self, op: Any) -> None:
-        assert not self._has_proc, f"{op}: process still running"
+        assert not self._has_proc, \
+            f"{self._config_path}: {op}: process still running"
 
-    def assert_stream(self, op: Any, name: str) -> None:
-        assert name in self._streams, f"{op}: no such stream: {name}"
+    def assert_stream(self, op: Any, name: str, typ: StreamType) -> None:
+        assert name in self._streams, \
+            f"{self._config_path}: {op}: no such stream: {name}"
+        t = self._streams[name]
+        assert t == typ, \
+            f"{self._config_path}: {op}: expected {typ}, but got {t}: {name}"
 
-    def assert_no_stream(self, op: Any, name: str) -> None:
-        assert name not in self._streams, f"{op}: stream exists: {name}"
+    def add_stream(self, op: Any, name: str, typ: StreamType) -> None:
+        assert name not in self._streams, \
+            f"{self._config_path}: {op}: stream exists: {name}"
+        self._streams[name] = typ
 
     def do_run(self, run: Run) -> None:
         self.assert_no_proc(run)
+        self.add_stream(run, "stdin", StreamType.WRITABLE_PIPE)
+        self.add_stream(run, "stdout", StreamType.READABLE_PIPE)
+        self.add_stream(run, "stderr", StreamType.READABLE_PIPE)
         self._has_proc = True
 
     def do_write(self, write: Write) -> None:
         self.assert_proc(write)
-        match write.id:
-            case "stdin": pass
-            case name: self.assert_stream(write, name)
+        self.assert_stream(write, write.id, StreamType.WRITABLE_PIPE)
 
     def do_read(self, read: Read) -> None:
         self.assert_proc(read)
-        match read.id:
-            case "stdout": pass
-            case "stderr": pass
-            case name: self.assert_stream(read, name)
+        self.assert_stream(read, read.id, StreamType.READABLE_PIPE)
 
     def do_wait(self, wait: Wait) -> None:
         self.assert_proc(wait)
@@ -428,18 +433,17 @@ class TestCaseValidator(TestCaseRunnerBase):
 
     def do_connect(self, conn: Connect) -> None:
         self.assert_proc(conn)
-        self.assert_no_stream(conn, conn.id)
         assert conn.protocol_type == ProtocolType.TCP, \
-            f"{conn}: {conn.protocol_type} not supported"
-        self._streams.add(conn.id)
+            f"{self._config_path}: {conn}: {conn.protocol_type} not supported"
+        self.add_stream(conn, conn.id, StreamType.SOCKET)
 
     def do_send(self, send: Send) -> None:
         self.assert_proc(send)
-        self.assert_stream(send, send.id)
+        self.assert_stream(send, send.id, StreamType.SOCKET)
 
     def do_recv(self, recv: Recv) -> None:
         self.assert_proc(recv)
-        self.assert_stream(recv, recv.id)
+        self.assert_stream(recv, recv.id, StreamType.SOCKET)
 
     def do_cleanup(self, successful: bool) -> None:
         if successful:

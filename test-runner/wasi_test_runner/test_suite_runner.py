@@ -28,40 +28,6 @@ class Manifest(NamedTuple):
     wasi_version: WasiVersion
 
 
-class ArgvExtractor(TestCaseRunnerBase):
-    _test_path: str
-    _wasi_version: WasiVersion
-    _runtime: RuntimeAdapter
-    _argv: List[str]
-
-    def __init__(self, config: Config, test_path: str,
-                 wasi_version: WasiVersion, runtime: RuntimeAdapter) -> None:
-        TestCaseRunnerBase.__init__(self, config)
-        self._test_path = test_path
-        self._wasi_version = wasi_version
-        self._runtime = runtime
-        self._argv = []
-
-    def do_run(self, run: Run) -> None:
-        proposals = self.config.proposals_as_str()
-        self._argv = self._runtime.compute_argv(
-            self._test_path, run.args, run.env, run.dirs, proposals,
-            self._wasi_version)
-
-    # pylint: disable-msg=multiple-statements
-    def do_read(self, read: Read) -> None: pass
-    def do_write(self, write: Write) -> None: pass
-    def do_wait(self, wait: Wait) -> None: pass
-    def do_connect(self, conn: Connect) -> None: pass
-    def do_send(self, send: Send) -> None: pass
-    def do_recv(self, recv: Recv) -> None: pass
-    def do_cleanup(self, successful: bool) -> None: pass
-
-    def extract(self) -> List[str]:
-        self.run()
-        return self._argv
-
-
 class TestCaseRunner(TestCaseRunnerBase):
     # pylint: disable-msg=too-many-instance-attributes
     _test_path: str
@@ -250,7 +216,7 @@ def run_tests_from_test_suite(
             # useful to make reporters report it.
             skip, _ = filt.should_skip(meta, test_name)
             if skip:
-                test_case = _skip_single_test(runtime, meta, test_path)
+                test_case = _skip_single_test(test_path)
                 break
         else:
             test_case = _execute_single_test(runtime, meta, test_path)
@@ -268,16 +234,11 @@ def run_tests_from_test_suite(
     )
 
 
-def _skip_single_test(
-    runtime: RuntimeAdapter, meta: TestSuiteMeta, test_path: str
-) -> TestCase:
+def _skip_single_test(test_path: str) -> TestCase:
     config = _read_test_config(test_path)
-    argv = ArgvExtractor(
-        config, test_path, meta.wasi_version, runtime).extract()
-
     return TestCase(
         name=os.path.splitext(os.path.basename(test_path))[0],
-        argv=argv,
+        argv=[],
         config=config,
         result=Result(is_executed=False, failures=[]),
         duration_s=0,
