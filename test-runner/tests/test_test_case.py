@@ -9,7 +9,7 @@ import pytest
 from wasi_test_runner.test_case import (
     Config, Failure, Result,
     Run, Wait, Read, Write, Connect, Send, Recv, Request, Response, Kill,
-    ProtocolType, WasiProposal, TestCaseValidator
+    ProtocolType, WasiProposal, WasiWorld, TestCaseValidator
 )
 
 
@@ -225,12 +225,13 @@ def test_new_config_with_empty_proposals(_mock_file: Mock) -> None:
     config = Config.from_file("file")
 
     assert len(config.proposals) == 0
+    assert config.world == WasiWorld.CLI_COMMAND
 
 
 @patch(
     "builtins.open",
     new_callable=mock_open,
-    read_data='{"operations": [{"type": "run"}], "proposals": ["http", "sockets"]}',
+    read_data='{"operations": [{"type": "run"}], "proposals": ["http", "sockets"], "world": "wasi:http/service"}',
 )
 def test_new_config_with_multiple_proposals(_mock_file: Mock) -> None:
     config = Config.from_file("file")
@@ -238,6 +239,7 @@ def test_new_config_with_multiple_proposals(_mock_file: Mock) -> None:
     assert len(config.proposals) == 2
     assert config.proposals[0] == WasiProposal.HTTP
     assert config.proposals[1] == WasiProposal.SOCKETS
+    assert config.world == WasiWorld.HTTP_SERVICE
 
 
 @patch(
@@ -246,6 +248,16 @@ def test_new_config_with_multiple_proposals(_mock_file: Mock) -> None:
     read_data='{"operations": [{"type": "run"}], "proposals": ["invalid"]}',
 )
 def test_new_config_should_fail_with_invalid_proposal(_mock_file: Mock) -> None:
+    with pytest.raises(ValueError):
+        Config.from_file("file")
+
+
+@patch(
+    "builtins.open",
+    new_callable=mock_open,
+    read_data='{"operations": [{"type": "run"}], world: "invalid"}',
+)
+def test_new_config_should_fail_with_invalid_world(_mock_file: Mock) -> None:
     with pytest.raises(ValueError):
         Config.from_file("file")
 

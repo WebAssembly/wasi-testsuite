@@ -27,9 +27,15 @@ def get_version() -> str:
 def get_wasi_versions() -> List[str]:
     return ["wasm32-wasip1"]
 
+
+def get_wasi_worlds() -> List[str]:
+    return ["wasi:cli/command"]
+
+
 def compute_argv(test_path: str,
                  args_env_dirs: Tuple[List[str], Dict[str, str], List[Tuple[Path, str]]],
                  proposals: List[str],
+                 wasi_world: str,
                  wasi_version: str) -> List[str]:
 
     argv = []
