@@ -11,13 +11,15 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, NamedTuple, Tuple, Dict, Any, IO
 
+import requests
+
 from .filters import TestFilter
 from .runtime_adapter import RuntimeAdapter
 from .test_case import (
     Result, Failure, WasiVersion, Config,
     TestCase, TestCaseRunnerBase, TestCaseValidator,
     # Operation types
-    Run, Read, Write, Wait, Send, Recv, Connect
+    Run, Read, Write, Wait, Send, Recv, Connect, Request, Kill
 )
 from .reporters import TestReporter
 from .test_suite import TestSuite, TestSuiteMeta
@@ -38,6 +40,7 @@ class TestCaseRunner(TestCaseRunnerBase):
     _pipes: Dict[str, IO[str]]
     _sockets: Dict[str, socket.socket]
     _last_argv: List[str]
+    _http_server: str | None
 
     def __init__(self, config: Config, test_path: str, wasi_version: WasiVersion,
                  runtime: RuntimeAdapter) -> None:
@@ -50,6 +53,7 @@ class TestCaseRunner(TestCaseRunnerBase):
         self._pipes = {}
         self._sockets = {}
         self._last_argv = []
+        self._http_server = None
 
     def _add_cleanup_dir(self, d: Path) -> None:
         _cleanup_test_output(d)
@@ -87,6 +91,18 @@ class TestCaseRunner(TestCaseRunnerBase):
 
     def last_argv(self) -> List[str]:
         return self._last_argv
+
+    def get_http_server(self) -> str | None:
+        if self._http_server:
+            return self._http_server
+        line = self.get_pipe('stderr').readline().strip()
+        start = line.find('http://')
+        if start < 0:
+            self.fail_unexpected(f"Expected 'http://' in first line, got {line}")  # noqa: E231
+            return None
+        # The server URL starts with http:// and ends at EOL or whitespace.
+        self._http_server = line[start:].split()[0]
+        return self._http_server
 
     def do_run(self, run: Run) -> None:
         for (host, _guest) in run.dirs:
@@ -177,6 +193,46 @@ class TestCaseRunner(TestCaseRunnerBase):
             self.fail_unexpected(f"{recv}: Failed to receive data: {e}")
         except UnicodeDecodeError as e:
             self.fail_unexpected(f"{recv}: Failed to decode response: {e}")
+
+    def do_request(self, req: Request) -> None:
+        # pylint: disable-msg=too-many-return-statements
+        http_server = self.get_http_server()
+        if http_server is None:
+            return
+        url = http_server + req.path
+        try:
+            response = requests.request(req.method, url, timeout=5)
+        except requests.exceptions.Timeout:
+            self.fail_unexpected(f"{req}: Timeout waiting for response")
+            return
+        except requests.exceptions.RequestException as e:
+            self.fail_unexpected(f"{req}: Failed to make request: {e}")
+            return
+        if response.status_code != req.response.status:
+            self.fail_unexpected(
+                f"{req}: Expected status {req.response.status}, got {response.status_code}")
+            return
+        for h, expected in req.response.headers.items():
+            if h not in response.headers:
+                self.fail_unexpected(f"{req}: Response missing header {h}")
+                return
+            actual = response.headers[h]
+            if actual != expected:
+                self.fail_unexpected(
+                    f"{req}: Expected response header {h}={expected}, got {actual}")
+                return
+        if response.text != req.response.body:
+            self.fail_unexpected(
+                f"{req}: Expected response body '{req.response.body}', got '{response.text}'")
+            return
+
+    def do_kill(self, kill: Kill) -> None:
+        try:
+            proc = self._proc
+            assert proc is not None
+            proc.send_signal(kill.signal)
+        except OSError as e:
+            self.fail_unexpected(f"{kill}: Failed to send {kill.signal}: {e}")
 
     def do_cleanup(self, successful: bool) -> None:
         if self._proc:

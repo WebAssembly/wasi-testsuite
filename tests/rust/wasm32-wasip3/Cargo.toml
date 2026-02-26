@@ -4,5 +4,5 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-wit-bindgen = "0.53.1"
+wit-bindgen = { git = "https://github.com/bytecodealliance/wit-bindgen.git", rev = "85d10eb33a54191220d34215bbcc4e29cb959884", features = ["async-spawn"] }
 futures = "0.3.31"
