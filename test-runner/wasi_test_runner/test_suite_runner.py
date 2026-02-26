@@ -110,7 +110,7 @@ class TestCaseRunner(TestCaseRunnerBase):
         proposals = self.config.proposals_as_str()
         argv = self._runtime.compute_argv(
             self._test_path, run.args, run.env, run.dirs, proposals,
-            self._wasi_version)
+            self.config.world, self._wasi_version)
         self._last_argv = argv
         try:
             # pylint: disable-msg=consider-using-with

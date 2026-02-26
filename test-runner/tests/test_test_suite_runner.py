@@ -17,7 +17,8 @@ def get_mock_open() -> Mock:
             "my-path/test3.json": '{"stdout": "output", "env": {"x": "1"}}',
             "my-path/test4.json": (
                 '{"operations": [{"type": "run"}, {"type": "wait", "exit_code": 1}], '
-                '"proposals": []}'
+                '"proposals": [], '
+                '"world": "wasi:http/service"}'
             ),
         }
         if filename in file_content:
@@ -54,19 +55,23 @@ def test_runner_end_to_end() -> None:
                 tc.Run(dirs=[(Path(test_suite_dir) / d, d) for d in test_dirs]),
                 tc.Wait(exit_code=0)
             ],
-            proposals=[]
+            proposals=[],
+            world=tc.WasiWorld.CLI_COMMAND
         ),
         tc.Config(
             operations=[tc.Run(args=["a", "b"]), tc.Wait(exit_code=1)],
-            proposals=[]
+            proposals=[],
+            world=tc.WasiWorld.CLI_COMMAND
         ),
         tc.Config(
             operations=[tc.Run(env={"x": "1"}), tc.Read(id="stdout", payload="output"), tc.Wait(exit_code=0)],
-            proposals=[]
+            proposals=[],
+            world=tc.WasiWorld.CLI_COMMAND
         ),
         tc.Config(
             operations=[tc.Run(), tc.Wait(exit_code=1)],
-            proposals=[]
+            proposals=[],
+            world=tc.WasiWorld.HTTP_SERVICE
         ),
     ]
 

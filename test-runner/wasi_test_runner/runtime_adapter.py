@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 from typing import NamedTuple, List, Tuple, Dict, Any
 
-from .test_case import WasiVersion
+from .test_case import WasiVersion, WasiWorld
 
 
 class RuntimeMeta(NamedTuple):
@@ -93,9 +93,11 @@ class RuntimeAdapter:
         return self._meta
 
     def compute_argv(self, test_path: str,
-                     args: List[str], env: Dict[str, str],
+                     args: List[str],
+                     env: Dict[str, str],
                      dirs: List[Tuple[Path, str]],
                      proposals: List[str],
+                     wasi_world: WasiWorld,
                      wasi_version: WasiVersion) -> List[str]:
         # too-many-positional-arguments is a post-3.0 pylint message.
         # pylint: disable-msg=unknown-option-value
@@ -103,7 +105,8 @@ class RuntimeAdapter:
         # pylint: disable-msg=too-many-positional-arguments
         args_env_dirs = [args, env, dirs]
         argv = self._adapter.compute_argv(test_path, args_env_dirs,
-                                          proposals, wasi_version.value)
+                                          proposals, wasi_world.value,
+                                          wasi_version.value)
         assert isinstance(argv, list)
         assert all(isinstance(arg, str) for arg in argv)
         return argv
