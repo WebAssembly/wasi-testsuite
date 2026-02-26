@@ -4,3 +4,4 @@ mypy==0.991
 pylint==3.3.8
 pytest==6.2.5
 coverage==6.3.3
+types-requests

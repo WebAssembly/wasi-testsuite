@@ -3,7 +3,7 @@ wit_bindgen::generate!({
 	package wasi-testsuite:test;
 
 	world http-test {
-	    import wasi:http/types@0.3.0-rc-2026-02-09;
+	    include wasi:http/service@0.3.0-rc-2026-02-09;
 	}
     ",
     additional_derives: [PartialEq, Eq, Hash, Clone],
