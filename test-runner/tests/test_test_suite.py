@@ -21,7 +21,8 @@ def test_test_suite_should_return_correct_count() -> None:
         ts.TestSuiteMeta("suite",
                          tc.WasiVersion.WASM32_WASIP1,
                          RuntimeMeta("test-runtime", "3.14",
-                                     frozenset([tc.WasiVersion.WASM32_WASIP1]))),
+                                     frozenset([tc.WasiVersion.WASM32_WASIP1]),
+                                     frozenset([tc.WasiWorld.CLI_COMMAND]))),
         10.0,
         datetime.now(),
         [

@@ -78,8 +78,10 @@ def test_runner_end_to_end() -> None:
     runtime_version_str = "4.2"
     the_runtime_wasi_version = tc.WasiVersion.WASM32_WASIP1
     runtime_wasi_versions = frozenset([the_runtime_wasi_version])
+    runtime_wasi_worlds = frozenset([tc.WasiWorld.CLI_COMMAND])
     runtime_meta = RuntimeMeta(runtime_name, runtime_version_str,
-                               runtime_wasi_versions)
+                               runtime_wasi_versions,
+                               runtime_wasi_worlds)
 
     expected_test_suite_meta = ts.TestSuiteMeta(test_suite_name,
                                                 the_runtime_wasi_version,
@@ -139,7 +141,8 @@ def test_runner_end_to_end() -> None:
         assert filt.should_skip.call_count == 4
         for test_case in expected_test_cases:
             filt.should_skip.assert_any_call(expected_test_suite_meta,
-                                             test_case.name)
+                                             test_case.name,
+                                             test_case.config)
 
 
 @patch("os.path.exists", Mock(return_value=False))

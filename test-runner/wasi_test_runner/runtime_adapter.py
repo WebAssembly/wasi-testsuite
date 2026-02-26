@@ -11,6 +11,7 @@ class RuntimeMeta(NamedTuple):
     name: str
     version: str
     supported_wasi_versions: frozenset[WasiVersion]
+    supported_wasi_worlds: frozenset[WasiWorld]
 
     def __str__(self) -> str:
         return f"{self.name} {self.version}"
@@ -83,11 +84,14 @@ class RuntimeAdapter:
             wasi_versions = frozenset(
                 WasiVersion(v) for v in self._adapter.get_wasi_versions()
             )
+            wasi_worlds = frozenset(
+                WasiWorld(w) for w in self._adapter.get_wasi_worlds()
+            )
         except subprocess.CalledProcessError as e:
             raise UnavailableRuntimeAdapterError(adapter_path, e) from e
         except FileNotFoundError as e:
             raise UnavailableRuntimeAdapterError(adapter_path, e) from e
-        self._meta = RuntimeMeta(name, version, wasi_versions)
+        self._meta = RuntimeMeta(name, version, wasi_versions, wasi_worlds)
 
     def get_meta(self) -> RuntimeMeta:
         return self._meta
