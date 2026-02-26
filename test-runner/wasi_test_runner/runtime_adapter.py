@@ -1,12 +1,10 @@
 import importlib.util
 import subprocess
 import sys
-import shutil
-import socket
 from pathlib import Path
-from typing import NamedTuple, List, Tuple, Any
+from typing import NamedTuple, List, Tuple, Dict, Any
 
-from .test_case import Result, WasiVersion, Config, Run, Read, Write, Wait, Send, Recv, Failure, Connect, ProtocolType
+from .test_case import WasiVersion
 
 
 class RuntimeMeta(NamedTuple):
@@ -95,211 +93,17 @@ class RuntimeAdapter:
         return self._meta
 
     def compute_argv(self, test_path: str,
-                     config: Config,
+                     args: List[str], env: Dict[str, str],
+                     dirs: List[Tuple[Path, str]],
+                     proposals: List[str],
                      wasi_version: WasiVersion) -> List[str]:
         # too-many-positional-arguments is a post-3.0 pylint message.
         # pylint: disable-msg=unknown-option-value
         # pylint: disable-msg=too-many-arguments
         # pylint: disable-msg=too-many-positional-arguments
-        args_env_dirs = config.args_env_dirs()
-        proposals = config.proposals_as_str()
-        argv = self._adapter.compute_argv(test_path, args_env_dirs, proposals, wasi_version.value)
+        args_env_dirs = [args, env, dirs]
+        argv = self._adapter.compute_argv(test_path, args_env_dirs,
+                                          proposals, wasi_version.value)
         assert isinstance(argv, list)
         assert all(isinstance(arg, str) for arg in argv)
         return argv
-
-    def run_test(self, config: Config, argv: List[str]) -> Result:
-        # pylint: disable=too-many-branches,too-many-locals
-        config.dry_run()
-        result = Result(is_executed=True, failures=[])
-
-        proc: subprocess.Popen[Any] | None = None
-        cleanup_dirs = None
-        try:
-            for op in config.operations:
-                if result.failures:
-                    break
-
-                match op:
-                    case Run(_, _, dirs):
-                        _cleanup_test_output(dirs)
-                        # pylint: disable=consider-using-with
-                        try:
-                            proc = subprocess.Popen(
-                                argv,
-                                stdin=subprocess.PIPE,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                text=True
-                            )
-                            cleanup_dirs = dirs
-                        except (OSError, ValueError) as e:
-                            result.failures.append(Failure.unexpected(f"Failed to start process: {e}"))
-                            break
-                    case Write() as write:
-                        assert proc is not None
-                        assert isinstance(write, Write)
-                        _handle_write(proc, write, result)
-                    case Read() as read:
-                        assert proc is not None
-                        # Instance asserts might seem redudant here, given the match.
-                        # Asserts merely exist to ensure that mypy can fully resolve the underlying type;
-                        # else it will report errors like:
-                        #   wasi_test_runner/runtime_adapter.py:131: error: Argument 2 to "_handle_read"
-                        #   has incompatible type "Read"; expected "Read" [arg-type]
-                        assert isinstance(read, Read)
-                        _handle_read(proc, read, result)
-                    case Wait() as wait:
-                        assert proc is not None
-                        assert isinstance(wait, Wait)
-                        _handle_wait(proc, wait, result)
-                        # The wait handler will `kill` the process
-                        proc = None
-                    case Connect() as conn:
-                        assert proc is not None
-                        assert isinstance(conn, Connect)
-                        _handle_connect(proc, config, conn, result)
-                    case Send() as send:
-                        assert isinstance(send, Send)
-                        _handle_send(config, send, result)
-                    case Recv() as recv:
-                        assert isinstance(recv, Recv)
-                        _handle_recv(config, recv, result)
-
-        finally:
-            if cleanup_dirs:
-                _cleanup_test_output(cleanup_dirs)
-            # If we finalized processing all the operations, ensure
-            # the the subprocess is correctly terminated.
-            if proc:
-                try:
-                    _, _ = proc.communicate(timeout=5)
-                except subprocess.TimeoutExpired:
-                    proc.kill()
-                    out, err = proc.communicate()
-                    msg = "Process timed out"
-                    msg = _append_stdout_and_stderr(msg, out, err)
-                    result.failures.append(Failure.unexpected(msg))
-
-        return result
-
-
-def _handle_read(proc: subprocess.Popen[Any], spec: Read, result: Result) -> None:
-    stream = getattr(proc, spec.id, None)
-    if stream is None:
-        result.failures.append(Failure.unexpected(f"{spec} {spec.id} is not available"))
-        return
-
-    expected_length = len(spec.payload)
-    payload = stream.read(expected_length)
-    if payload != spec.payload:
-        result.failures.append(Failure.expectation(f"{spec} {spec.id} failed: expected {spec.payload}, got {payload}"))
-
-
-def _handle_write(proc: subprocess.Popen[Any], spec: Write, result: Result) -> None:
-    stream = getattr(proc, spec.id, None)
-    if stream is None:
-        result.failures.append(Failure.unexpected(f"{spec}: {spec.id} is not available"))
-        return
-
-    stream.write(spec.payload)
-    stream.flush()
-
-
-def _handle_wait(proc: subprocess.Popen[Any], spec: Wait, result: Result) -> None:
-    try:
-        out, err = proc.communicate(timeout=5)
-        if spec.exit_code != proc.returncode:
-            msg = f"{spec} failed: expected {spec.exit_code}, got {proc.returncode}"
-            msg = _append_stdout_and_stderr(msg, out, err)
-            result.failures.append(Failure.expectation(msg))
-
-    except subprocess.TimeoutExpired:
-        proc.kill()
-        out, err = proc.communicate()
-        result.failures.append(Failure.expectation(f"{spec} failed: timeout expired"))
-
-
-def _handle_connect(proc: subprocess.Popen[Any], config: Config, spec: Connect, result: Result) -> None:
-    if spec.protocol_type != ProtocolType.TCP:
-        raise RuntimeError(f"Unimplemented support for protocol {spec.protocol_type}")
-    # Server not running, something's wrong.
-    if proc.poll() is not None:
-        _, err = proc.communicate()
-        result.failures.append(Failure.unexpected(f"{spec}: Could not connect to server {err}"))
-        return
-
-    # In the connect case, we need to discover the port.
-    # If there's no stdout, add a failure.
-    if proc.stdout is None:
-        result.failures.append(Failure.unexpected(f"{spec}: No connection information available"))
-        return
-
-    try:
-        line = proc.stdout.readline().strip()
-        parts = line.split(':')
-        if len(parts) != 2:
-            msg = f"{spec}: Expected address information to be available as <host>: <port>, found {line}"
-            result.failures.append(Failure.unexpected(msg))
-            return
-        host, port_str = parts
-        if not host or not port_str:
-            msg = f"{spec}: Expected address information to be available as <host>: <port>, found {line}"
-            result.failures.append(Failure.unexpected(msg))
-            return
-        port = int(port_str)
-    except ValueError as e:
-        result.failures.append(Failure.unexpected(f"{spec}: Failed to parse connection information: {e}"))
-        return
-
-    sock = None
-    try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((host, port))
-        config.connections[spec.id] = sock
-    except (socket.timeout, ConnectionRefusedError, OSError) as e:
-        if sock is not None:
-            sock.close()
-        result.failures.append(Failure.unexpected(f"{spec}: Could not connect to {host}: {port} - {e}"))
-
-
-def _handle_send(config: Config, spec: Send, result: Result) -> None:
-    sock = config.connections[spec.id]
-    assert sock is not None
-    try:
-        sock.sendall(spec.payload.encode('utf-8'))
-    except (OSError, socket.error) as e:
-        result.failures.append(Failure.unexpected(f"{spec}: Failed to send data: {e}"))
-
-
-def _handle_recv(config: Config, spec: Recv, result: Result) -> None:
-    sock = config.connections[spec.id]
-    assert sock is not None
-    try:
-        response_bytes = sock.recv(len(spec.payload))
-        response = response_bytes.decode('utf-8')
-        if response != spec.payload:
-            result.failures.append(Failure.unexpected(f"{spec}: Expected {spec.payload}, got {response}"))
-    except (OSError, socket.error) as e:
-        result.failures.append(Failure.unexpected(f"{spec}: Failed to receive data: {e}"))
-    except UnicodeDecodeError as e:
-        result.failures.append(Failure.unexpected(f"{spec}: Failed to decode response: {e}"))
-
-
-def _cleanup_test_output(dirs: List[Tuple[Path, str]]) -> None:
-    for host, _guest in dirs:
-        for f in host.glob("**/*.cleanup"):
-            if f.is_file():
-                f.unlink()
-            elif f.is_dir():
-                shutil.rmtree(f)
-
-
-def _append_stdout_and_stderr(msg: str, out: str | None, err: str | None) -> str:
-    if out:
-        msg += f"\n\n==STDOUT==\n{out}"
-
-    if err:
-        msg += f"\n\n==STDERR==\n{err}"
-
-    return msg
