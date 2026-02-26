@@ -110,7 +110,7 @@ class TestCaseRunner(TestCaseRunnerBase):
         proposals = self.config.proposals_as_str()
         argv = self._runtime.compute_argv(
             self._test_path, run.args, run.env, run.dirs, proposals,
-            self._wasi_version)
+            self.config.world, self._wasi_version)
         self._last_argv = argv
         try:
             # pylint: disable-msg=consider-using-with
@@ -265,17 +265,24 @@ def run_tests_from_test_suite(
     meta = TestSuiteMeta(manifest.name, manifest.wasi_version,
                          runtime.get_meta())
 
-    for test_path in glob.glob(os.path.join(test_suite_path, "*.wasm")):
-        test_name = os.path.splitext(os.path.basename(test_path))[0]
+    all_tests = [
+        (test_path,
+         os.path.splitext(os.path.basename(test_path))[0],
+         _read_test_config(test_path))
+        for test_path in glob.glob(os.path.join(test_suite_path, "*.wasm"))
+    ]
+
+    for test_path, name, config in all_tests:
         for filt in filters:
             # for now, just drop the skip reason string. it might be
             # useful to make reporters report it.
-            skip, _ = filt.should_skip(meta, test_name)
+            skip, _ = filt.should_skip(meta, name, config)
             if skip:
-                test_case = _skip_single_test(test_path)
+                test_case = _skip_single_test(name, config)
                 break
         else:
-            test_case = _execute_single_test(runtime, meta, test_path)
+            test_case = _execute_single_test(
+                runtime, meta, test_path, name, config)
         test_cases.append(test_case)
         for reporter in reporters:
             reporter.report_test(meta, test_case)
@@ -290,10 +297,9 @@ def run_tests_from_test_suite(
     )
 
 
-def _skip_single_test(test_path: str) -> TestCase:
-    config = _read_test_config(test_path)
+def _skip_single_test(name: str, config: Config) -> TestCase:
     return TestCase(
-        name=os.path.splitext(os.path.basename(test_path))[0],
+        name=name,
         argv=[],
         config=config,
         result=Result(is_executed=False, failures=[]),
@@ -320,16 +326,16 @@ def _cleanup_test_output(host_dir: Path) -> None:
 
 
 def _execute_single_test(
-    runtime: RuntimeAdapter, meta: TestSuiteMeta, test_path: str
+        runtime: RuntimeAdapter, meta: TestSuiteMeta, test_path: str,
+        name: str, config: Config
 ) -> TestCase:
-    config = _read_test_config(test_path)
     runner = TestCaseRunner(config, test_path, meta.wasi_version, runtime)
     test_start = time.time()
     result = runner.run()
     elapsed = time.time() - test_start
 
     return TestCase(
-        name=os.path.splitext(os.path.basename(test_path))[0],
+        name=name,
         argv=runner.last_argv(),
         config=config,
         result=result,

@@ -17,7 +17,8 @@ def get_mock_open() -> Mock:
             "my-path/test3.json": '{"stdout": "output", "env": {"x": "1"}}',
             "my-path/test4.json": (
                 '{"operations": [{"type": "run"}, {"type": "wait", "exit_code": 1}], '
-                '"proposals": []}'
+                '"proposals": [], '
+                '"world": "wasi:http/service"}'
             ),
         }
         if filename in file_content:
@@ -54,27 +55,33 @@ def test_runner_end_to_end() -> None:
                 tc.Run(dirs=[(Path(test_suite_dir) / d, d) for d in test_dirs]),
                 tc.Wait(exit_code=0)
             ],
-            proposals=[]
+            proposals=[],
+            world=tc.WasiWorld.CLI_COMMAND
         ),
         tc.Config(
             operations=[tc.Run(args=["a", "b"]), tc.Wait(exit_code=1)],
-            proposals=[]
+            proposals=[],
+            world=tc.WasiWorld.CLI_COMMAND
         ),
         tc.Config(
             operations=[tc.Run(env={"x": "1"}), tc.Read(id="stdout", payload="output"), tc.Wait(exit_code=0)],
-            proposals=[]
+            proposals=[],
+            world=tc.WasiWorld.CLI_COMMAND
         ),
         tc.Config(
             operations=[tc.Run(), tc.Wait(exit_code=1)],
-            proposals=[]
+            proposals=[],
+            world=tc.WasiWorld.HTTP_SERVICE
         ),
     ]
 
     runtime_version_str = "4.2"
     the_runtime_wasi_version = tc.WasiVersion.WASM32_WASIP1
     runtime_wasi_versions = frozenset([the_runtime_wasi_version])
+    runtime_wasi_worlds = frozenset([tc.WasiWorld.CLI_COMMAND])
     runtime_meta = RuntimeMeta(runtime_name, runtime_version_str,
-                               runtime_wasi_versions)
+                               runtime_wasi_versions,
+                               runtime_wasi_worlds)
 
     expected_test_suite_meta = ts.TestSuiteMeta(test_suite_name,
                                                 the_runtime_wasi_version,
@@ -134,7 +141,8 @@ def test_runner_end_to_end() -> None:
         assert filt.should_skip.call_count == 4
         for test_case in expected_test_cases:
             filt.should_skip.assert_any_call(expected_test_suite_meta,
-                                             test_case.name)
+                                             test_case.name,
+                                             test_case.config)
 
 
 @patch("os.path.exists", Mock(return_value=False))

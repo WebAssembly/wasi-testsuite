@@ -7,12 +7,17 @@ from typing import List, NamedTuple, TypeVar, Type, Dict, Any, Set, Tuple
 
 # Top level configuration keys
 LEGACY_CONFIG_KEYS = {"args", "dirs", "env", "exit_code", "stderr", "stdout"}
-CONFIG_KEYS = {"operations", "proposals"}
+CONFIG_KEYS = {"operations", "proposals", "world"}
 
 
 # Supported operations
 SUPPORTED_OPERATIONS = {"run", "wait", "read", "write", "connect",
                         "send", "recv", "request", "kill"}
+
+
+class WasiWorld(StrEnum):
+    CLI_COMMAND = 'wasi:cli/command'
+    HTTP_SERVICE = 'wasi:http/service'
 
 
 class WasiVersion(StrEnum):
@@ -243,27 +248,7 @@ Operation = Run | Wait | Read | Write | Connect | Send | Recv | Request | Kill
 
 class WasiProposal(StrEnum):
     HTTP = 'http'
-    HTTP_SERVICE = 'http/service'
     SOCKETS = 'sockets'
-
-
-def _infer_proposals_from_operations(ops: List[Operation]) -> List[WasiProposal]:
-    sockets = False
-    http_service = False
-    for op in ops:
-        match op:
-            case Recv() | Send() | Connect():
-                sockets = True
-            case Request():
-                http_service = True
-            case _:
-                pass
-    ret = []
-    if sockets:
-        ret.append(WasiProposal.SOCKETS)
-    if http_service:
-        ret.append(WasiProposal.HTTP_SERVICE)
-    return ret
 
 
 T = TypeVar("T", bound="Config")
@@ -274,6 +259,7 @@ class Config(NamedTuple):
     operations: List[Operation] = [Run(), Wait()]
     # WASI proposals needed for the test.
     proposals: List[WasiProposal] = []
+    world: WasiWorld = WasiWorld.CLI_COMMAND
 
     @classmethod
     def from_file(cls: Type[T], config_file: str) -> T:
@@ -288,12 +274,16 @@ class Config(NamedTuple):
             if dict_config.get("operations") is not None:
                 operations = cls._operations_from_config(test_config_path, dict_config.get("operations"))
 
-            if dict_config.get("proposals") is None:
-                proposals = _infer_proposals_from_operations(operations)
-            else:
+            proposals = []
+            if dict_config.get("proposals") is not None:
                 proposals = cls._proposals_from_config(dict_config.get("proposals"))
 
-            return cls(operations=operations, proposals=proposals)
+            world = dict_config.get("world", WasiWorld.CLI_COMMAND.value)
+            if world not in WasiWorld:
+                raise ValueError(f"Unknown WASI world: {world}")
+
+            return cls(operations=operations, proposals=proposals,
+                       world=WasiWorld(world))
 
         cls._validate_config(dict_config, LEGACY_CONFIG_KEYS)
 
@@ -328,6 +318,7 @@ class Config(NamedTuple):
             # reliable, plus we'd be introducing a third level of
             # configuration.
             proposals=[],
+            world=WasiWorld.CLI_COMMAND
         )
 
     def proposals_as_str(self) -> List[str]:
