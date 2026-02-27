@@ -1,16 +1,23 @@
 import logging
 import json
+import signal
 from pathlib import Path
 from enum import Enum, StrEnum, auto
 from typing import List, NamedTuple, TypeVar, Type, Dict, Any, Set, Tuple
 
 # Top level configuration keys
 LEGACY_CONFIG_KEYS = {"args", "dirs", "env", "exit_code", "stderr", "stdout"}
-CONFIG_KEYS = {"operations", "proposals"}
+CONFIG_KEYS = {"operations", "proposals", "world"}
 
 
 # Supported operations
-SUPPORTED_OPERATIONS = {"run", "wait", "read", "write", "connect", "send", "recv"}
+SUPPORTED_OPERATIONS = {"run", "wait", "read", "write", "connect",
+                        "send", "recv", "request", "kill"}
+
+
+class WasiWorld(StrEnum):
+    CLI_COMMAND = 'wasi:cli/command'
+    HTTP_SERVICE = 'wasi:http/service'
 
 
 class WasiVersion(StrEnum):
@@ -166,7 +173,77 @@ class Connect(NamedTuple):
         )
 
 
-Operation = Run | Wait | Read | Write | Connect | Send | Recv
+Resp = TypeVar("Resp", bound="Response")
+
+
+class Response(NamedTuple):
+    status: int
+    headers: Dict[str, str]
+    body: str
+
+    @classmethod
+    def from_config(cls: Type[Resp], config: Dict[str, Any]) -> Resp:
+        status = config.get("status", 200)
+        headers = config.get("headers", {})
+        body = config.get("body", "")
+
+        if not isinstance(status, int):
+            raise ValueError("Response status code should be an int")
+        if not isinstance(headers, dict):
+            raise ValueError("Response expected headers should be a dict")
+        for k, v in headers.items():
+            if not isinstance(k, str):
+                raise ValueError("Response expected header name should be a str")
+            if not isinstance(v, str):
+                raise ValueError("Response expected header value should be a str")
+        if not isinstance(body, str):
+            raise ValueError("Response expected body should be a str")
+
+        return cls(status, headers, body)
+
+
+Req = TypeVar("Req", bound="Request")
+
+
+class Request(NamedTuple):
+    method: str
+    path: str
+    response: Response
+
+    @classmethod
+    def from_config(cls: Type[Req], config: Dict[str, Any]) -> Req:
+        method = config.get("method", "GET")
+        path = config.get("path", "/")
+        response = config.get("response", {})
+
+        if not isinstance(method, str):
+            raise ValueError("Request method should be a str")
+        if not isinstance(path, str):
+            raise ValueError("Request path should be a str")
+        response = Response.from_config(response)
+
+        return cls(method, path, response)
+
+
+K = TypeVar("K", bound="Kill")
+
+
+class Kill(NamedTuple):
+    signal: signal.Signals
+
+    @classmethod
+    def from_config(cls: Type[K], config: Dict[str, Any]) -> K:
+        signame = config.get("signal", "SIGTERM")
+
+        if not isinstance(signame, str):
+            raise ValueError(f"Signal name should be a str: {signame}")
+        if signame not in signal.Signals.__members__:
+            raise ValueError(f"Unknown signal name: {signame}")
+
+        return cls(signal.Signals[signame])
+
+
+Operation = Run | Wait | Read | Write | Connect | Send | Recv | Request | Kill
 
 
 class WasiProposal(StrEnum):
@@ -182,6 +259,7 @@ class Config(NamedTuple):
     operations: List[Operation] = [Run(), Wait()]
     # WASI proposals needed for the test.
     proposals: List[WasiProposal] = []
+    world: WasiWorld = WasiWorld.CLI_COMMAND
 
     @classmethod
     def from_file(cls: Type[T], config_file: str) -> T:
@@ -200,7 +278,12 @@ class Config(NamedTuple):
             if dict_config.get("proposals") is not None:
                 proposals = cls._proposals_from_config(dict_config.get("proposals"))
 
-            return cls(operations=operations, proposals=proposals)
+            world = dict_config.get("world", WasiWorld.CLI_COMMAND.value)
+            if world not in WasiWorld:
+                raise ValueError(f"Unknown WASI world: {world}")
+
+            return cls(operations=operations, proposals=proposals,
+                       world=WasiWorld(world))
 
         cls._validate_config(dict_config, LEGACY_CONFIG_KEYS)
 
@@ -235,6 +318,7 @@ class Config(NamedTuple):
             # reliable, plus we'd be introducing a third level of
             # configuration.
             proposals=[],
+            world=WasiWorld.CLI_COMMAND
         )
 
     def proposals_as_str(self) -> List[str]:
@@ -276,6 +360,10 @@ class Config(NamedTuple):
                     operations.append(Send.from_config(op))
                 case "recv":
                     operations.append(Recv.from_config(op))
+                case "request":
+                    operations.append(Request.from_config(op))
+                case "kill":
+                    operations.append(Kill.from_config(op))
 
         return operations
 
@@ -321,6 +409,12 @@ class TestCaseRunnerBase:
     def do_recv(self, recv: Recv) -> None:
         raise NotImplementedError()
 
+    def do_request(self, req: Request) -> None:
+        raise NotImplementedError()
+
+    def do_kill(self, kill: Kill) -> None:
+        raise NotImplementedError()
+
     def do_cleanup(self, successful: bool) -> None:
         raise NotImplementedError()
 
@@ -345,27 +439,33 @@ class TestCaseRunnerBase:
                 #   wasi_test_runner/runtime_adapter.py:131: error: Argument 2 to "_handle_read"
                 #   has incompatible type "Read"; expected "Read" [arg-type]
                 match op:
-                    case Run() as run:
-                        assert isinstance(run, Run)
-                        self.do_run(run)
-                    case Write() as write:
-                        assert isinstance(write, Write)
-                        self.do_write(write)
-                    case Read() as read:
-                        assert isinstance(read, Read)
-                        self.do_read(read)
-                    case Wait() as wait:
-                        assert isinstance(wait, Wait)
-                        self.do_wait(wait)
-                    case Connect() as conn:
-                        assert isinstance(conn, Connect)
-                        self.do_connect(conn)
-                    case Send() as send:
-                        assert isinstance(send, Send)
-                        self.do_send(send)
-                    case Recv() as recv:
-                        assert isinstance(recv, Recv)
-                        self.do_recv(recv)
+                    case Run():
+                        assert isinstance(op, Run)
+                        self.do_run(op)
+                    case Write():
+                        assert isinstance(op, Write)
+                        self.do_write(op)
+                    case Read():
+                        assert isinstance(op, Read)
+                        self.do_read(op)
+                    case Wait():
+                        assert isinstance(op, Wait)
+                        self.do_wait(op)
+                    case Connect():
+                        assert isinstance(op, Connect)
+                        self.do_connect(op)
+                    case Send():
+                        assert isinstance(op, Send)
+                        self.do_send(op)
+                    case Recv():
+                        assert isinstance(op, Recv)
+                        self.do_recv(op)
+                    case Request():
+                        assert isinstance(op, Request)
+                        self.do_request(op)
+                    case Kill():
+                        assert isinstance(op, Kill)
+                        self.do_kill(op)
 
             successful = not self.has_failure()
         finally:
@@ -444,6 +544,12 @@ class TestCaseValidator(TestCaseRunnerBase):
     def do_recv(self, recv: Recv) -> None:
         self.assert_proc(recv)
         self.assert_stream(recv, recv.id, StreamType.SOCKET)
+
+    def do_request(self, req: Request) -> None:
+        self.assert_proc(req)
+
+    def do_kill(self, kill: Kill) -> None:
+        self.assert_proc(kill)
 
     def do_cleanup(self, successful: bool) -> None:
         if successful:

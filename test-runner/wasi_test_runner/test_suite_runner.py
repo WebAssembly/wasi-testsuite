@@ -11,13 +11,15 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, NamedTuple, Tuple, Dict, Any, IO
 
+import requests
+
 from .filters import TestFilter
 from .runtime_adapter import RuntimeAdapter
 from .test_case import (
     Result, Failure, WasiVersion, Config,
     TestCase, TestCaseRunnerBase, TestCaseValidator,
     # Operation types
-    Run, Read, Write, Wait, Send, Recv, Connect
+    Run, Read, Write, Wait, Send, Recv, Connect, Request, Kill
 )
 from .reporters import TestReporter
 from .test_suite import TestSuite, TestSuiteMeta
@@ -38,6 +40,7 @@ class TestCaseRunner(TestCaseRunnerBase):
     _pipes: Dict[str, IO[str]]
     _sockets: Dict[str, socket.socket]
     _last_argv: List[str]
+    _http_server: str | None
 
     def __init__(self, config: Config, test_path: str, wasi_version: WasiVersion,
                  runtime: RuntimeAdapter) -> None:
@@ -50,6 +53,7 @@ class TestCaseRunner(TestCaseRunnerBase):
         self._pipes = {}
         self._sockets = {}
         self._last_argv = []
+        self._http_server = None
 
     def _add_cleanup_dir(self, d: Path) -> None:
         _cleanup_test_output(d)
@@ -88,13 +92,25 @@ class TestCaseRunner(TestCaseRunnerBase):
     def last_argv(self) -> List[str]:
         return self._last_argv
 
+    def get_http_server(self) -> str | None:
+        if self._http_server:
+            return self._http_server
+        line = self.get_pipe('stderr').readline().strip()
+        start = line.find('http://')
+        if start < 0:
+            self.fail_unexpected(f"Expected 'http://' in first line, got {line}")  # noqa: E231
+            return None
+        # The server URL starts with http:// and ends at EOL or whitespace.
+        self._http_server = line[start:].split()[0]
+        return self._http_server
+
     def do_run(self, run: Run) -> None:
         for (host, _guest) in run.dirs:
             self._add_cleanup_dir(host)
         proposals = self.config.proposals_as_str()
         argv = self._runtime.compute_argv(
             self._test_path, run.args, run.env, run.dirs, proposals,
-            self._wasi_version)
+            self.config.world, self._wasi_version)
         self._last_argv = argv
         try:
             # pylint: disable-msg=consider-using-with
@@ -178,6 +194,46 @@ class TestCaseRunner(TestCaseRunnerBase):
         except UnicodeDecodeError as e:
             self.fail_unexpected(f"{recv}: Failed to decode response: {e}")
 
+    def do_request(self, req: Request) -> None:
+        # pylint: disable-msg=too-many-return-statements
+        http_server = self.get_http_server()
+        if http_server is None:
+            return
+        url = http_server + req.path
+        try:
+            response = requests.request(req.method, url, timeout=5)
+        except requests.exceptions.Timeout:
+            self.fail_unexpected(f"{req}: Timeout waiting for response")
+            return
+        except requests.exceptions.RequestException as e:
+            self.fail_unexpected(f"{req}: Failed to make request: {e}")
+            return
+        if response.status_code != req.response.status:
+            self.fail_unexpected(
+                f"{req}: Expected status {req.response.status}, got {response.status_code}")
+            return
+        for h, expected in req.response.headers.items():
+            if h not in response.headers:
+                self.fail_unexpected(f"{req}: Response missing header {h}")
+                return
+            actual = response.headers[h]
+            if actual != expected:
+                self.fail_unexpected(
+                    f"{req}: Expected response header {h}={expected}, got {actual}")
+                return
+        if response.text != req.response.body:
+            self.fail_unexpected(
+                f"{req}: Expected response body '{req.response.body}', got '{response.text}'")
+            return
+
+    def do_kill(self, kill: Kill) -> None:
+        try:
+            proc = self._proc
+            assert proc is not None
+            proc.send_signal(kill.signal)
+        except OSError as e:
+            self.fail_unexpected(f"{kill}: Failed to send {kill.signal}: {e}")
+
     def do_cleanup(self, successful: bool) -> None:
         if self._proc:
             self._proc.kill()
@@ -209,17 +265,24 @@ def run_tests_from_test_suite(
     meta = TestSuiteMeta(manifest.name, manifest.wasi_version,
                          runtime.get_meta())
 
-    for test_path in glob.glob(os.path.join(test_suite_path, "*.wasm")):
-        test_name = os.path.splitext(os.path.basename(test_path))[0]
+    all_tests = [
+        (test_path,
+         os.path.splitext(os.path.basename(test_path))[0],
+         _read_test_config(test_path))
+        for test_path in glob.glob(os.path.join(test_suite_path, "*.wasm"))
+    ]
+
+    for test_path, name, config in all_tests:
         for filt in filters:
             # for now, just drop the skip reason string. it might be
             # useful to make reporters report it.
-            skip, _ = filt.should_skip(meta, test_name)
+            skip, _ = filt.should_skip(meta, name, config)
             if skip:
-                test_case = _skip_single_test(test_path)
+                test_case = _skip_single_test(name, config)
                 break
         else:
-            test_case = _execute_single_test(runtime, meta, test_path)
+            test_case = _execute_single_test(
+                runtime, meta, test_path, name, config)
         test_cases.append(test_case)
         for reporter in reporters:
             reporter.report_test(meta, test_case)
@@ -234,10 +297,9 @@ def run_tests_from_test_suite(
     )
 
 
-def _skip_single_test(test_path: str) -> TestCase:
-    config = _read_test_config(test_path)
+def _skip_single_test(name: str, config: Config) -> TestCase:
     return TestCase(
-        name=os.path.splitext(os.path.basename(test_path))[0],
+        name=name,
         argv=[],
         config=config,
         result=Result(is_executed=False, failures=[]),
@@ -264,16 +326,16 @@ def _cleanup_test_output(host_dir: Path) -> None:
 
 
 def _execute_single_test(
-    runtime: RuntimeAdapter, meta: TestSuiteMeta, test_path: str
+        runtime: RuntimeAdapter, meta: TestSuiteMeta, test_path: str,
+        name: str, config: Config
 ) -> TestCase:
-    config = _read_test_config(test_path)
     runner = TestCaseRunner(config, test_path, meta.wasi_version, runtime)
     test_start = time.time()
     result = runner.run()
     elapsed = time.time() - test_start
 
     return TestCase(
-        name=os.path.splitext(os.path.basename(test_path))[0],
+        name=name,
         argv=runner.last_argv(),
         config=config,
         result=result,

@@ -25,9 +25,14 @@ def get_wasi_versions() -> List[str]:
     return ["wasm32-wasip1", "wasm32-wasip3"]
 
 
+def get_wasi_worlds() -> List[str]:
+    return ["wasi:cli/command", "wasi:http/service"]
+
+
 def compute_argv(test_path: str,
                  args_env_dirs: Tuple[List[str], Dict[str, str], List[Tuple[Path, str]]],
                  proposals: List[str],
+                 wasi_world: str,
                  wasi_version: str) -> List[str]:
 
     argv = []
@@ -43,17 +48,26 @@ def compute_argv(test_path: str,
     argv += [test_path]
 
     argv += args
-    _add_wasi_version_options(argv, wasi_version, proposals)
+    _add_wasi_version_options(argv, wasi_version, proposals, wasi_world)
     return argv
 
 
 # The user might provide WASMTIME="wasmtime --option -Sfoo".  Let's
 # insert the options to choose the WASI version before the user's
 # options, so that the user can override our choices.
-def _add_wasi_version_options(argv: List[str], wasi_version: str, proposals: List[str]) -> None:
+def _add_wasi_version_options(argv: List[str], wasi_version: str,
+                              proposals: List[str], wasi_world: str) -> None:
     splice_pos = len(WASMTIME)
     while splice_pos > 1 and argv[splice_pos - 1].startswith("-"):
         splice_pos -= 1
+    match wasi_world:
+        case "wasi:cli/command":
+            pass
+        case "wasi:http/service":
+            argv[splice_pos:splice_pos] = \
+                ["serve", "-Scli", "--addr=127.0.0.1:0"]
+            splice_pos += 1
+
     match wasi_version:
         case "wasm32-wasip1":
             pass
@@ -66,6 +80,3 @@ def _add_wasi_version_options(argv: List[str], wasi_version: str, proposals: Lis
 
             argv[splice_pos:splice_pos] = ["-Wcomponent-model-async",
                                            f"-Sp3{flags_from_proposals}"]
-
-        case _:
-            pass

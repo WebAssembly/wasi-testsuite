@@ -1,3 +1,5 @@
+import signal
+
 from json import JSONDecodeError
 from pathlib import Path
 from unittest.mock import Mock, patch, mock_open
@@ -5,8 +7,9 @@ from unittest.mock import Mock, patch, mock_open
 import pytest
 
 from wasi_test_runner.test_case import (
-    Config, Failure, Result, Run, Wait, Read, Write, Connect, Send, Recv,
-    ProtocolType, WasiProposal, TestCaseValidator
+    Config, Failure, Result,
+    Run, Wait, Read, Write, Connect, Send, Recv, Request, Response, Kill,
+    ProtocolType, WasiProposal, WasiWorld, TestCaseValidator
 )
 
 
@@ -196,6 +199,23 @@ def test_recv_from_config_with_default_payload() -> None:
     assert recv.payload == ""
 
 
+def test_request_from_config() -> None:
+    req = Request.from_config({"method": "POST", "response": {"body": "hey"}})
+    assert req.method == "POST"
+    assert req.path == "/"
+    assert req.response == Response(status=200, headers={}, body="hey")
+
+
+def test_kill_from_config_with_signal() -> None:
+    kill = Kill.from_config({"signal": "SIGABRT"})
+    assert kill.signal == signal.SIGABRT
+
+
+def test_kill_from_config_with_defaults() -> None:
+    kill = Kill.from_config({})
+    assert kill.signal == signal.SIGTERM
+
+
 @patch(
     "builtins.open",
     new_callable=mock_open,
@@ -205,12 +225,13 @@ def test_new_config_with_empty_proposals(_mock_file: Mock) -> None:
     config = Config.from_file("file")
 
     assert len(config.proposals) == 0
+    assert config.world == WasiWorld.CLI_COMMAND
 
 
 @patch(
     "builtins.open",
     new_callable=mock_open,
-    read_data='{"operations": [{"type": "run"}], "proposals": ["http", "sockets"]}',
+    read_data='{"operations": [{"type": "run"}], "proposals": ["http", "sockets"], "world": "wasi:http/service"}',
 )
 def test_new_config_with_multiple_proposals(_mock_file: Mock) -> None:
     config = Config.from_file("file")
@@ -218,6 +239,7 @@ def test_new_config_with_multiple_proposals(_mock_file: Mock) -> None:
     assert len(config.proposals) == 2
     assert config.proposals[0] == WasiProposal.HTTP
     assert config.proposals[1] == WasiProposal.SOCKETS
+    assert config.world == WasiWorld.HTTP_SERVICE
 
 
 @patch(
@@ -226,6 +248,16 @@ def test_new_config_with_multiple_proposals(_mock_file: Mock) -> None:
     read_data='{"operations": [{"type": "run"}], "proposals": ["invalid"]}',
 )
 def test_new_config_should_fail_with_invalid_proposal(_mock_file: Mock) -> None:
+    with pytest.raises(ValueError):
+        Config.from_file("file")
+
+
+@patch(
+    "builtins.open",
+    new_callable=mock_open,
+    read_data='{"operations": [{"type": "run"}], world: "invalid"}',
+)
+def test_new_config_should_fail_with_invalid_world(_mock_file: Mock) -> None:
     with pytest.raises(ValueError):
         Config.from_file("file")
 
@@ -300,6 +332,12 @@ def test_dry_run_send_with_undefined_id() -> None:
 
 def test_dry_run_recv_before_run() -> None:
     config = Config(operations=[Recv(id="conn1", payload="test")])
+    with pytest.raises(AssertionError, match="no process running"):
+        validate_config(config)
+
+
+def test_dry_run_request_before_run() -> None:
+    config = Config(operations=[Request.from_config({})])
     with pytest.raises(AssertionError, match="no process running"):
         validate_config(config)
 
