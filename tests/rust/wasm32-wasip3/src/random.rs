@@ -3,7 +3,7 @@ wit_bindgen::generate!({
 	package wasi-testsuite:test;
 
 	world random-test {
-		include wasi:random/imports@0.3.0-rc-2026-02-09;
+		include wasi:random/imports@0.3.0-rc-2026-03-15;
 	}
     ",
     features:["clocks-timezone"],
