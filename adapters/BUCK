@@ -1,0 +1,8 @@
+export_file(
+    name = "wasmtime.py",
+    src = "wasmtime.py",
+    visibility = [
+        "toolchains//...",
+        "//tests/...",
+    ],
+)

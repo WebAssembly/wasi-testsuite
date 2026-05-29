@@ -71,6 +71,30 @@ Optionally you can specify test cases to skip with the `--exclude-filter` option
 ./run-tests --exclude-filter examples/skip.json
 ```
 
+### Experimental Buck2 workflow
+
+This repository also has an experimental Buck2 setup for building tests from
+source and running them through the existing test runner. The first slice covers
+C, Rust, and AssemblyScript WASI Preview 1 tests with Wasmtime:
+
+Install [Dotslash](https://dotslash-cli.com/docs/installation/) once before
+using the checked-in `./buck2` launcher, for example with `cargo install dotslash`.
+
+```bash
+./buck2 test //tests/...
+```
+
+or if you prefer using `just`
+
+``` bash
+just build
+just test
+```
+
+Buck2 fetches the WASI SDK, Node/AssemblyScript, and Wasmtime through the Buck
+toolchain graph, then uses a generic `wasi_test` rule to invoke
+`wasi_test_runner` for each Buck test target.
+
 ## Contributing
 
 Want to add a new test?  [There's a doc for that!](doc/writing-tests.md)

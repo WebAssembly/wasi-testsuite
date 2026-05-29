@@ -1,0 +1,6 @@
+python_library(
+    name = "wasi_test_runner",
+    srcs = glob(["wasi_test_runner/**/*.py"]),
+    base_module = "",
+    visibility = ["//tools/..."],
+)

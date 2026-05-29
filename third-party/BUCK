@@ -1,0 +1,22 @@
+load("@prelude//rust:cargo_package.bzl", "cargo")
+
+http_archive(
+    name = "wasi-0.11.0+wasi-snapshot-preview1.crate",
+    sha256 = "9c8d87e72b64a3b4db28d11ce29237c246188f4f51057d65a7eab63b7987e423",
+    strip_prefix = "wasi-0.11.0+wasi-snapshot-preview1",
+    urls = [
+        "https://static.crates.io/crates/wasi/0.11.0+wasi-snapshot-preview1/download",
+    ],
+)
+
+cargo.rust_library(
+    name = "wasi",
+    srcs = [":wasi-0.11.0+wasi-snapshot-preview1.crate"],
+    crate = "wasi",
+    crate_root = "wasi-0.11.0+wasi-snapshot-preview1.crate/src/lib.rs",
+    doctests = False,
+    edition = "2018",
+    _cxx_toolchain = "toolchains//:rust_linker",
+    _rust_toolchain = "toolchains//:rust_wasi_p1",
+    visibility = ["PUBLIC"],
+)

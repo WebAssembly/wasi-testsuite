@@ -1,0 +1,48 @@
+load("@wasmono//:defs.bzl", "assemblyscript_binary")
+load("//tools:conformance.bzl", "wasi_suite", "wasi_test")
+
+_WASI_ASSEMBLYSCRIPT_SUITE = wasi_suite(
+    name = "WASI AssemblyScript tests [wasm32-wasip1]",
+    version = "wasm32-wasip1",
+)
+
+assemblyscript_binary(
+    name = "args_get-multiple-arguments",
+    src = "src/args_get-multiple-arguments.ts",
+    visibility = ["//tests/..."],
+)
+
+wasi_test(
+    name = "args_get-multiple-arguments_wasmtime",
+    wasm = ":args_get-multiple-arguments",
+    runtime = "toolchains//:wasmtime_runtime",
+    suite = _WASI_ASSEMBLYSCRIPT_SUITE,
+    config = "src/args_get-multiple-arguments.json",
+    labels = ["assemblyscript-wasip1"],
+    visibility = ["//tests/..."],
+)
+
+assemblyscript_binary(
+    name = "fd_write-to-stdout",
+    src = "src/fd_write-to-stdout.ts",
+    visibility = ["//tests/..."],
+)
+
+wasi_test(
+    name = "fd_write-to-stdout_wasmtime",
+    wasm = ":fd_write-to-stdout",
+    runtime = "toolchains//:wasmtime_runtime",
+    suite = _WASI_ASSEMBLYSCRIPT_SUITE,
+    config = "src/fd_write-to-stdout.json",
+    labels = ["assemblyscript-wasip1"],
+    visibility = ["//tests/..."],
+)
+
+test_suite(
+    name = "wasmtime",
+    tests = [
+        ":args_get-multiple-arguments_wasmtime",
+        ":fd_write-to-stdout_wasmtime",
+    ],
+    visibility = ["//tests/..."],
+)

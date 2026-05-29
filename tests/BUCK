@@ -1,0 +1,8 @@
+test_suite(
+    name = "wasmtime",
+    tests = [
+        "//tests/c:wasmtime",
+        "//tests/rust/wasm32-wasip1:wasmtime",
+        "//tests/assemblyscript/wasm32-wasip1:wasmtime",
+    ],
+)
