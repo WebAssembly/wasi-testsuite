@@ -1,0 +1,73 @@
+# Adapted from https://github.com/dtolnay/buck2-rustc-bootstrap/blob/master/scripts/check.bxl
+#
+# Report C/C++ warnings from every dependency of the Wasmtime suite:
+#   buck2 bxl scripts/check.bxl:main -- --kind cxx --target //tests:wasmtime --output check | xargs cat
+#
+# Run clippy on every Rust dependency of the Wasmtime suite:
+#   buck2 bxl scripts/check.bxl:main -- --kind rust --target //tests:wasmtime --output clippy.txt | xargs cat
+#
+# Run checks for targets that own a specific source path:
+#   buck2 bxl scripts/check.bxl:main -- --kind rust --path tests/rust/wasm32-wasip1/src/bin/sched_yield.rs --output clippy.txt | xargs cat
+
+_KIND_REGEX = {
+    "cxx": "^(cxx_binary|cxx_library)$",
+    "rust": "^(rust_binary|rust_library)$",
+}
+
+def _collect_unconfigured_targets(ctx: bxl.Context):
+    targets = utarget_set()
+
+    for path in ctx.cli_args.path:
+        targets += ctx.uquery().owner(path)
+
+    for target in ctx.cli_args.target:
+        targets += ctx.unconfigured_targets(target)
+
+    return targets
+
+def main_impl(ctx: bxl.Context) -> None:
+    if len(ctx.cli_args.path) == 0 and len(ctx.cli_args.target) == 0:
+        fail("pass at least one --target or --path")
+
+    targets = _collect_unconfigured_targets(ctx)
+    configured_targets = ctx.configured_targets(
+        targets,
+        modifiers = ctx.cli_args.modifier,
+    )
+
+    transitive_targets = ctx.cquery().deps(configured_targets)
+    checked_targets = ctx.cquery().kind(
+        _KIND_REGEX[ctx.cli_args.kind],
+        transitive_targets,
+    )
+
+    result = ctx.build([
+        target.label.with_sub_target(ctx.cli_args.output)
+        for target in checked_targets
+    ])
+
+    if len(result) == 0:
+        fail("no {} targets matched".format(ctx.cli_args.kind))
+
+    failed_targets = []
+    for target, value in result.items():
+        if len(value.failures()) > 0:
+            failed_targets.append(target.raw_target())
+        else:
+            artifacts = ctx.output.ensure_multiple(value.artifacts())
+            ctx.output.stream(sep = "\n", wait_on = artifacts, *artifacts)
+
+    if len(failed_targets) != 0:
+        ctx.output.stream_json({"failed_targets": failed_targets})
+        fail("{} targets failed to build".format(len(failed_targets)))
+
+main = bxl.main(
+    impl = main_impl,
+    cli_args = {
+        "kind": cli_args.enum(["cxx", "rust"]),
+        "modifier": cli_args.list(cli_args.string(), short = "m", default = []),
+        "output": cli_args.string(),
+        "path": cli_args.list(cli_args.string(), default = []),
+        "target": cli_args.list(cli_args.target_expr(), default = []),
+    },
+)

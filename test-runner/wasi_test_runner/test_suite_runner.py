@@ -11,8 +11,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, NamedTuple, Tuple, Dict, Any, IO
 
-import requests
-
 from .filters import TestFilter
 from .runtime_adapter import RuntimeAdapter
 from .test_case import (
@@ -196,6 +194,9 @@ class TestCaseRunner(TestCaseRunnerBase):
 
     def do_request(self, req: Request) -> None:
         # pylint: disable-msg=too-many-return-statements
+        # Only HTTP tests need requests; keep CLI tests runnable without it.
+        import requests  # pylint: disable=import-outside-toplevel
+
         http_server = self.get_http_server()
         if http_server is None:
             return
@@ -371,8 +372,7 @@ def _read_manifest(test_suite_path: Path) -> Manifest:
                         assert isinstance(v, str)
                         name = v
                     case "version":
-                        assert v in WasiVersion
-                        wasi_version = WasiVersion[v]
+                        wasi_version = WasiVersion(v)
                     case _:
                         raise RuntimeError(f"unexpected manifest option: {k}={v}")
 
