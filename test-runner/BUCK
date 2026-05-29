@@ -9,12 +9,13 @@ python_library(
 )
 
 remote_file(
-  name = "colorama-download",
-  url = "https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl",
-  sha1 = "d6ab1608850fecfc0e1cf50bf93d743695c04027",
+    name = "colorama-download",
+    url = "https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl",
+    sha1 = "d6ab1608850fecfc0e1cf50bf93d743695c04027",
+    out = "colorama-0.4.6-py2.py3-none-any.whl",
 )
 
 prebuilt_python_library(
-  name = "colorama",
-  binary_src = ":colorama-download",
+    name = "colorama",
+    binary_src = ":colorama-download",
 )
