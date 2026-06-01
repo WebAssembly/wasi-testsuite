@@ -2,7 +2,7 @@ buck := env_var_or_default("BUCK2", "./buck2")
 
 set shell := ["bash", "-o", "pipefail", "-c"]
 
-default:
+_default:
     @just --list
 
 # Pass arbitrary arguments through to buck2.
@@ -20,6 +20,10 @@ build:
 # Run the Buck2 first-slice Wasmtime tests.
 test:
     {{buck}} test //tests:wasmtime
+
+# Run all Buck tests under //tests.
+test-all:
+    {{buck}} test //tests/...
 
 # Run one Buck test target, e.g. `just test-one //tests/c:lseek_wasmtime`.
 test-one target:

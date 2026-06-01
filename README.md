@@ -86,9 +86,17 @@ using the checked-in `./buck2` launcher, for example with `cargo install dotslas
 
 or if you prefer using `just`
 
-``` bash
+```bash
 just build
 just test
+```
+
+The Buck2 lint helpers mirror the CI checks:
+
+```bash
+just lint-starlark
+just lint-cxx
+just lint-rust
 ```
 
 Buck2 fetches the WASI SDK, Node/AssemblyScript, and Wasmtime through the Buck
