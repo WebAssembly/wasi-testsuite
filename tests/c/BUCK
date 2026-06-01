@@ -1,0 +1,51 @@
+load("//tools:conformance.bzl", "wasi_suite", "wasi_test")
+
+_WASI_C_SUITE = wasi_suite(
+    name = "WASI C tests [wasm32-wasip1]",
+    version = "wasm32-wasip1",
+)
+
+cxx_binary(
+    name = "clock_getres-monotonic",
+    srcs = ["src/clock_getres-monotonic.c"],
+    _cxx_toolchain = "toolchains//:cxx_wasi_p1",
+    visibility = ["//tests/..."],
+)
+
+wasi_test(
+    name = "clock_getres-monotonic_wasmtime",
+    wasm = ":clock_getres-monotonic",
+    runtime = "toolchains//:wasmtime_runtime",
+    suite = _WASI_C_SUITE,
+    labels = ["c-wasip1"],
+    visibility = ["//tests/..."],
+)
+
+cxx_binary(
+    name = "lseek",
+    srcs = ["src/lseek.c"],
+    _cxx_toolchain = "toolchains//:cxx_wasi_p1",
+    visibility = ["//tests/..."],
+)
+
+wasi_test(
+    name = "lseek_wasmtime",
+    wasm = ":lseek",
+    runtime = "toolchains//:wasmtime_runtime",
+    suite = _WASI_C_SUITE,
+    config = "src/lseek.json",
+    fixture_dirs = {
+        "fs-tests.dir": "src/fs-tests.dir",
+    },
+    labels = ["c-wasip1"],
+    visibility = ["//tests/..."],
+)
+
+test_suite(
+    name = "wasmtime",
+    tests = [
+        ":clock_getres-monotonic_wasmtime",
+        ":lseek_wasmtime",
+    ],
+    visibility = ["//tests/..."],
+)
