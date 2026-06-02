@@ -1,8 +1,21 @@
-test_suite(
+load("//tools:conformance.bzl", "wasi_suite")
+load("//tools:dist.bzl", "wasi_dist")
+
+wasi_suite(
     name = "wasmtime",
     tests = [
         "//tests/c:wasmtime",
         "//tests/rust/wasm32-wasip1:wasmtime",
         "//tests/assemblyscript/wasm32-wasip1:wasmtime",
     ],
+)
+
+wasi_dist(
+    name = "dist",
+    suites = [":wasmtime"],
+    extra_files = {
+        "run-tests": "//:run-tests",
+        "adapters": "//adapters:dist_files",
+        "test-runner": "//test-runner:dist_files",
+    },
 )

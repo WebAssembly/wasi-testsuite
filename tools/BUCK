@@ -5,3 +5,9 @@ python_binary(
     deps = ["//test-runner:wasi_test_runner"],
     visibility = ["//tests/..."],
 )
+
+python_binary(
+    name = "package_dist",
+    main = "package_dist.py",
+    visibility = ["//tests/..."],
+)
