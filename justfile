@@ -17,6 +17,10 @@ targets:
 build:
     {{buck}} build //...
 
+# Build the distribution archive.
+dist:
+    {{buck}} build --show-output //tests:dist
+
 # Run the Buck2 first-slice Wasmtime tests.
 test:
     {{buck}} test //tests:wasmtime

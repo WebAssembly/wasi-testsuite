@@ -6,3 +6,11 @@ export_file(
         "//tests/...",
     ],
 )
+
+filegroup(
+    name = "dist_files",
+    srcs = glob(["*.py"]),
+    out = "adapters",
+    copy = True,
+    visibility = ["//tests/..."],
+)

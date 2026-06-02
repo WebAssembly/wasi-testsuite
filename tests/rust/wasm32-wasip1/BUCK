@@ -1,8 +1,9 @@
-load("//tools:conformance.bzl", "wasi_suite", "wasi_test")
+load("//tools:conformance.bzl", "wasi_manifest", "wasi_suite", "wasi_test")
 
-_WASI_RUST_SUITE = wasi_suite(
-    name = "WASI Rust tests [wasm32-wasip1]",
+_WASI_RUST = wasi_manifest(
+    name = "WASI Rust tests",
     version = "wasm32-wasip1",
+    labels = ["rust-wasip1"],
 )
 
 rust_binary(
@@ -21,8 +22,7 @@ wasi_test(
     name = "clock_time_get_wasmtime",
     wasm = ":clock_time_get",
     runtime = "toolchains//:wasmtime_runtime",
-    suite = _WASI_RUST_SUITE,
-    labels = ["rust-wasip1"],
+    manifest = _WASI_RUST,
     visibility = ["//tests/..."],
 )
 
@@ -42,12 +42,11 @@ wasi_test(
     name = "sched_yield_wasmtime",
     wasm = ":sched_yield",
     runtime = "toolchains//:wasmtime_runtime",
-    suite = _WASI_RUST_SUITE,
-    labels = ["rust-wasip1"],
+    manifest = _WASI_RUST,
     visibility = ["//tests/..."],
 )
 
-test_suite(
+wasi_suite(
     name = "wasmtime",
     tests = [
         ":clock_time_get_wasmtime",

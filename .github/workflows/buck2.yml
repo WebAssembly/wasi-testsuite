@@ -41,10 +41,15 @@ jobs:
 
       - name: Configure Buck2 launcher on Windows
         if: runner.os == 'Windows'
-        run: echo 'BUCK2=dotslash ./buck2' >> "$GITHUB_ENV"
+        run: |
+          echo 'BUCK2=dotslash ./buck2' >> "$GITHUB_ENV"
+          echo 'MSYS2_ARG_CONV_EXCL=//' >> "$GITHUB_ENV"
 
       - name: Run Starlark lint
         run: just lint-starlark
 
       - name: Run Buck2 tests
         run: just test-all
+
+      - name: Build dist archive
+        run: just dist
