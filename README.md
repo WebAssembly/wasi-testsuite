@@ -84,11 +84,33 @@ using the checked-in `./buck2` launcher, for example with `cargo install dotslas
 ./buck2 test //tests/...
 ```
 
+Build the Buck produced test data archive with:
+
+```bash
+./buck2 build --show-output //tests:dist
+```
+
+The archive includes the test runner, adapters, Python requirements, and Buck built
+test data. It can be run like this:
+
+```bash
+# extract:
+mkdir -p dist
+tar -xzf buck-out/.../wasi-testsuite.tar.gz -C dist
+# setup Python:
+python3 -m venv dist/venv
+dist/venv/bin/python -m pip install -r dist/wasi-testsuite/test-runner/requirements.txt
+# run:
+cd dist/wasi-testsuite
+WASMTIME=/path/to/wasmtime ../venv/bin/python ./run-tests --runtime-adapter adapters/wasmtime.py
+```
+
 or if you prefer using `just`
 
 ```bash
 just build
 just test
+just dist
 ```
 
 The Buck2 lint helpers mirror the CI checks:

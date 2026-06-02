@@ -1,9 +1,10 @@
 load("@wasmono//:defs.bzl", "assemblyscript_binary")
-load("//tools:conformance.bzl", "wasi_suite", "wasi_test")
+load("//tools:conformance.bzl", "wasi_manifest", "wasi_suite", "wasi_test")
 
-_WASI_ASSEMBLYSCRIPT_SUITE = wasi_suite(
-    name = "WASI AssemblyScript tests [wasm32-wasip1]",
+_WASI_ASSEMBLYSCRIPT = wasi_manifest(
+    name = "WASI AssemblyScript tests",
     version = "wasm32-wasip1",
+    labels = ["assemblyscript-wasip1"],
 )
 
 assemblyscript_binary(
@@ -16,9 +17,8 @@ wasi_test(
     name = "args_get-multiple-arguments_wasmtime",
     wasm = ":args_get-multiple-arguments",
     runtime = "toolchains//:wasmtime_runtime",
-    suite = _WASI_ASSEMBLYSCRIPT_SUITE,
+    manifest = _WASI_ASSEMBLYSCRIPT,
     config = "src/args_get-multiple-arguments.json",
-    labels = ["assemblyscript-wasip1"],
     visibility = ["//tests/..."],
 )
 
@@ -32,13 +32,12 @@ wasi_test(
     name = "fd_write-to-stdout_wasmtime",
     wasm = ":fd_write-to-stdout",
     runtime = "toolchains//:wasmtime_runtime",
-    suite = _WASI_ASSEMBLYSCRIPT_SUITE,
+    manifest = _WASI_ASSEMBLYSCRIPT,
     config = "src/fd_write-to-stdout.json",
-    labels = ["assemblyscript-wasip1"],
     visibility = ["//tests/..."],
 )
 
-test_suite(
+wasi_suite(
     name = "wasmtime",
     tests = [
         ":args_get-multiple-arguments_wasmtime",
