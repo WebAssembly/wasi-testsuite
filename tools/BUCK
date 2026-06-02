@@ -1,0 +1,7 @@
+python_binary(
+    name = "run_wasi_test",
+    main = "run_wasi_test.py",
+    base_module = "",
+    deps = ["//test-runner:wasi_test_runner"],
+    visibility = ["//tests/..."],
+)

@@ -1,0 +1,50 @@
+name: Buck2
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  buck2:
+    name: Buck2 smoke test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install Buck2 helper tools
+        uses: taiki-e/install-action@15413b256f995d819248ea62704771a959284285 # v2.79.13
+        with:
+          tool: dotslash,just
+
+      - name: Install Rust WASI target
+        run: rustup target add wasm32-wasip1
+
+      - name: Configure Buck2 launcher on Windows
+        if: runner.os == 'Windows'
+        run: echo 'BUCK2=dotslash ./buck2' >> "$GITHUB_ENV"
+
+      - name: Run Starlark lint
+        run: just lint-starlark
+
+      - name: Run Buck2 tests
+        run: just test-all

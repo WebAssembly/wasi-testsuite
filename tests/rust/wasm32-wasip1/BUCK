@@ -1,0 +1,57 @@
+load("//tools:conformance.bzl", "wasi_suite", "wasi_test")
+
+_WASI_RUST_SUITE = wasi_suite(
+    name = "WASI Rust tests [wasm32-wasip1]",
+    version = "wasm32-wasip1",
+)
+
+rust_binary(
+    name = "clock_time_get",
+    crate = "clock_time_get",
+    crate_root = "src/bin/clock_time_get.rs",
+    srcs = ["src/bin/clock_time_get.rs"],
+    edition = "2021",
+    deps = ["//third-party:wasi"],
+    _cxx_toolchain = "toolchains//:rust_linker",
+    _rust_toolchain = "toolchains//:rust_wasi_p1",
+    visibility = ["//tests/..."],
+)
+
+wasi_test(
+    name = "clock_time_get_wasmtime",
+    wasm = ":clock_time_get",
+    runtime = "toolchains//:wasmtime_runtime",
+    suite = _WASI_RUST_SUITE,
+    labels = ["rust-wasip1"],
+    visibility = ["//tests/..."],
+)
+
+rust_binary(
+    name = "sched_yield",
+    crate = "sched_yield",
+    crate_root = "src/bin/sched_yield.rs",
+    srcs = ["src/bin/sched_yield.rs"],
+    edition = "2021",
+    deps = ["//third-party:wasi"],
+    _cxx_toolchain = "toolchains//:rust_linker",
+    _rust_toolchain = "toolchains//:rust_wasi_p1",
+    visibility = ["//tests/..."],
+)
+
+wasi_test(
+    name = "sched_yield_wasmtime",
+    wasm = ":sched_yield",
+    runtime = "toolchains//:wasmtime_runtime",
+    suite = _WASI_RUST_SUITE,
+    labels = ["rust-wasip1"],
+    visibility = ["//tests/..."],
+)
+
+test_suite(
+    name = "wasmtime",
+    tests = [
+        ":clock_time_get_wasmtime",
+        ":sched_yield_wasmtime",
+    ],
+    visibility = ["//tests/..."],
+)

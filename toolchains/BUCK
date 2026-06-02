@@ -1,0 +1,85 @@
+load("@prelude//tests:test_toolchain.bzl", "noop_test_toolchain")
+load("@prelude//toolchains:cxx.bzl", "system_cxx_toolchain")
+load("@prelude//toolchains:genrule.bzl", "system_genrule_toolchain")
+load("@prelude//toolchains:python.bzl", "remote_python_toolchain")
+load("@prelude//toolchains:remote_test_execution.bzl", "remote_test_execution_toolchain")
+load("@prelude//toolchains:rust.bzl", "system_rust_toolchain")
+load("@root//tools:runtime.bzl", "wasi_runtime")
+load(":runtimes.bzl", "download_wasmtime_runtime")
+load(
+    "@wasmono//:defs.bzl",
+    "asc_toolchain",
+    "cxx_wasi_toolchain",
+    "download_node",
+    "download_wasi_sdk",
+    "install_asc",
+    "node_toolchain",
+)
+
+# Host execution toolchains used by Buck rules and helper scripts.
+system_genrule_toolchain(name = "genrule", visibility = ["PUBLIC"])
+system_cxx_toolchain(name = "cxx", visibility = ["PUBLIC"])
+remote_python_toolchain(name = "python", visibility = ["PUBLIC"])
+
+# Rust toolchains: host Rust for ordinary Rust rules, plus a WASI P1 toolchain
+# for compiling Rust tests to wasm artifacts.
+system_rust_toolchain(
+    name = "rust",
+    default_edition = "2021",
+    visibility = ["PUBLIC"],
+)
+
+system_rust_toolchain(
+    name = "rust_wasi_p1",
+    default_edition = "2021",
+    rustc_target_triple = "wasm32-wasip1",
+    visibility = ["PUBLIC"],
+)
+
+# WASI SDK-based C/C++ toolchains. The C/C++ test toolchain emits WASI P1
+# modules; the wasm-ld variant is used as Rust's linker for the WASI target.
+download_wasi_sdk(name = "wasi_sdk", version = "27.0")
+
+cxx_wasi_toolchain(
+    name = "cxx_wasi_p1",
+    distribution = ":wasi_sdk",
+    c_compiler_flags = ["-Wno-unused-command-line-argument"],
+    cxx_compiler_flags = ["-Wno-unused-command-line-argument"],
+    target = "wasm32-wasip1",
+    visibility = ["PUBLIC"],
+)
+
+cxx_wasi_toolchain(
+    name = "rust_linker",
+    distribution = ":wasi_sdk",
+    linker_tool = "wasm-ld",
+    visibility = ["PUBLIC"],
+)
+
+# Runtime distributions and descriptors. The descriptor is what `wasi_test`
+# consumes, so adding a runtime means adding another descriptor target here.
+download_wasmtime_runtime(name = "wasmtime_dist", version = "45.0.0")
+
+wasi_runtime(
+    name = "wasmtime_runtime",
+    adapter = "root//adapters:wasmtime.py",
+    runtime = ":wasmtime_dist",
+    runtime_env_var = "WASMTIME",
+    labels = ["wasmtime"],
+    visibility = ["PUBLIC"],
+)
+
+# AssemblyScript compiler toolchain.
+download_node(name = "node_dist", version = "20.18.0")
+node_toolchain(name = "node", distribution = ":node_dist", visibility = ["PUBLIC"])
+
+install_asc(name = "asc_dist", version = "0.27.31", node = ":node_dist")
+asc_toolchain(name = "asc", distribution = ":asc_dist", visibility = ["PUBLIC"])
+
+# Test execution toolchains required by Buck's test command.
+noop_test_toolchain(name = "test", visibility = ["PUBLIC"])
+
+remote_test_execution_toolchain(
+    name = "remote_test_execution",
+    visibility = ["PUBLIC"],
+)
