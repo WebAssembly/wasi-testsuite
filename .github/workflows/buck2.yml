@@ -36,8 +36,8 @@ jobs:
         with:
           tool: dotslash,just
 
-      - name: Install Rust WASI target
-        run: rustup target add wasm32-wasip1
+      - name: Install Rust WASI targets
+        run: rustup target add wasm32-wasip1 wasm32-wasip2
 
       - name: Configure Buck2 launcher on Windows
         if: runner.os == 'Windows'

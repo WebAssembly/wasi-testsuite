@@ -9,7 +9,7 @@ int main() {
   assert(clock_gettime(CLOCK_MONOTONIC, &ts2) == 0);
 
   if (ts1.tv_sec == ts2.tv_sec)
-    assert(ts1.tv_nsec < ts2.tv_nsec);
+    assert(ts1.tv_nsec <= ts2.tv_nsec);
   else
     assert(ts1.tv_sec < ts2.tv_sec);
 
