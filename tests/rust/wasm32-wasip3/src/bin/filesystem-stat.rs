@@ -42,6 +42,10 @@ fn check_stat(stat: &DescriptorStat, type_: DescriptorType) {
 }
 
 async fn test_stat(dir: &Descriptor) {
+    dir.symlink_at("..".to_string(), "parent.cleanup".to_string())
+        .await
+        .unwrap();
+
     let afd = dir
         .open_at(
             PathFlags::empty(),
@@ -81,9 +85,12 @@ async fn test_stat(dir: &Descriptor) {
 
     assert_eq!(stat("").await, Err(ErrorCode::NoEntry));
     assert_eq!(stat("..").await, Err(ErrorCode::NotPermitted));
-    assert_eq!(stat_follow("parent").await, Err(ErrorCode::NotPermitted));
     assert_eq!(
-        stat_follow("parent/fs-tests.dir").await,
+        stat_follow("parent.cleanup").await,
+        Err(ErrorCode::NotPermitted)
+    );
+    assert_eq!(
+        stat_follow("parent.cleanup/fs-tests.dir").await,
         Err(ErrorCode::NotPermitted)
     );
     assert_eq!(stat(".").await, dir.stat().await);
@@ -129,7 +136,7 @@ async fn test_stat(dir: &Descriptor) {
             Err(ErrorCode::NotPermitted)
         );
         assert_eq!(
-            set_times_at(follow_flag, "parent", atime, mtime).await,
+            set_times_at(follow_flag, "parent.cleanup", atime, mtime).await,
             Err(ErrorCode::NotPermitted)
         );
         assert_eq!(
@@ -137,7 +144,7 @@ async fn test_stat(dir: &Descriptor) {
             Err(ErrorCode::NotPermitted)
         );
         assert_eq!(
-            set_times_at(no_flags, "parent/foo", atime, mtime).await,
+            set_times_at(no_flags, "parent.cleanup/foo", atime, mtime).await,
             Err(ErrorCode::NotPermitted)
         );
     }
