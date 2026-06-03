@@ -27,6 +27,10 @@ fn is_acceptable_unlink_dir_result(res: Result<(), ErrorCode>) -> bool {
 }
 
 async fn test_unlink_errors(dir: &Descriptor) {
+    dir.symlink_at("..".to_string(), "parent.cleanup".to_string())
+        .await
+        .unwrap();
+
     let rm = |path: &str| dir.unlink_file_at(path.to_string());
     assert_eq!(rm("").await, Err(ErrorCode::NoEntry));
     assert!(is_acceptable_unlink_dir_result(rm(".").await));
@@ -36,7 +40,10 @@ async fn test_unlink_errors(dir: &Descriptor) {
     assert_eq!(rm("/etc/passwd").await, Err(ErrorCode::NotPermitted));
     assert_eq!(rm("/etc/passwd").await, Err(ErrorCode::NotPermitted));
     assert_eq!(rm("z.txt").await, Err(ErrorCode::NoEntry));
-    assert_eq!(rm("parent/z.txt").await, Err(ErrorCode::NotPermitted));
+    assert_eq!(
+        rm("parent.cleanup/z.txt").await,
+        Err(ErrorCode::NotPermitted)
+    );
 }
 
 struct Component;
