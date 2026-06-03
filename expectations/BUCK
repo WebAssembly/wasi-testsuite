@@ -1,5 +1,25 @@
 export_file(
-    name = "wasmtime_skip",
-    src = "wasmtime_skip.json",
+    name = "wasmtime_linux",
+    src = "wasmtime-linux.json",
     visibility = ["PUBLIC"],
+)
+
+export_file(
+    name = "wasmtime_macos",
+    src = "wasmtime-macos.json",
+    visibility = ["PUBLIC"],
+)
+
+export_file(
+    name = "wasmtime_windows",
+    src = "wasmtime-windows.json",
+    visibility = ["PUBLIC"],
+)
+
+filegroup(
+    name = "dist_files",
+    srcs = glob(["*.json"]),
+    out = "expectations",
+    copy = True,
+    visibility = ["//tests/..."],
 )

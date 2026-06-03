@@ -17,7 +17,7 @@ wasi_dist(
     extra_files = {
         "run-tests": "//:run-tests",
         "adapters": "//adapters:dist_files",
-        "expectations/wasmtime_skip.json": "//expectations:wasmtime_skip",
+        "expectations": "//expectations:dist_files",
         "test-runner": "//test-runner:dist_files",
     },
 )

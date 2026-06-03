@@ -41,6 +41,7 @@ _RUST_TARGET_TRIPLE = select({
         "config//cpu:x86_64": "x86_64-apple-darwin",
     }),
     "config//os:windows": select({
+        "config//cpu:arm64": "aarch64-pc-windows-msvc",
         "config//cpu:x86_64": "x86_64-pc-windows-msvc",
     }),
 })
@@ -90,7 +91,11 @@ download_wasmtime_runtime(name = "wasmtime_dist", version = "45.0.0")
 wasi_runtime(
     name = "wasmtime_runtime",
     adapter = "root//adapters:wasmtime.py",
-    exclude_filter = "root//expectations:wasmtime_skip",
+    exclude_filter = select({
+        "config//os:macos": "root//expectations:wasmtime_macos",
+        "config//os:windows": "root//expectations:wasmtime_windows",
+        "DEFAULT": "root//expectations:wasmtime_linux",
+    }),
     runtime = ":wasmtime_dist",
     runtime_env_var = "WASMTIME",
     labels = ["wasmtime"],
