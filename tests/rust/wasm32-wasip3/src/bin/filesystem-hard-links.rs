@@ -20,6 +20,10 @@ use wasi::filesystem::types::Descriptor;
 use wasi::filesystem::types::{ErrorCode, PathFlags};
 
 async fn test_hard_links(dir: &Descriptor) {
+    dir.symlink_at("..".to_string(), "parent.cleanup".to_string())
+        .await
+        .unwrap();
+
     let ln_with_flags = |flags: PathFlags, from: &str, to: &str| -> _ {
         dir.link_at(flags, from.to_string(), dir, to.to_string())
     };
@@ -44,14 +48,14 @@ async fn test_hard_links(dir: &Descriptor) {
     assert_eq!(ln("..", "a.txt").await, Err(ErrorCode::NotPermitted));
     assert_eq!(ln("a.txt", "..").await, Err(ErrorCode::NotPermitted));
     // FIXME: https://github.com/WebAssembly/WASI/issues/710
-    // assert_eq!(ln_follow("parent/foo", "a.txt").await,
+    // assert_eq!(ln_follow("parent.cleanup/foo", "a.txt").await,
     //            Err(ErrorCode::NotPermitted));
     assert_eq!(
-        ln("parent/foo", "a.txt").await,
+        ln("parent.cleanup/foo", "a.txt").await,
         Err(ErrorCode::NotPermitted)
     );
     assert_eq!(
-        ln("a.txt", "parent/foo").await,
+        ln("a.txt", "parent.cleanup/foo").await,
         Err(ErrorCode::NotPermitted)
     );
     ln("a.txt", "c.cleanup").await.unwrap();

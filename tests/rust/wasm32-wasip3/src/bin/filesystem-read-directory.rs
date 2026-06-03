@@ -21,6 +21,10 @@ use wasi::filesystem::types::DescriptorType;
 use wasi::filesystem::types::DirectoryEntry;
 
 async fn test_read_directory(dir: &Descriptor) {
+    dir.symlink_at("..".to_string(), "parent.cleanup".to_string())
+        .await
+        .unwrap();
+
     // read-directory: async func() -> tuple<stream<directory-entry>, future<result<_, error-code>>>;
     let (stream, result) = dir.read_directory();
     let mut entries = stream.collect().await;
@@ -39,7 +43,7 @@ async fn test_read_directory(dir: &Descriptor) {
             },
             DirectoryEntry {
                 type_: DescriptorType::SymbolicLink,
-                name: "parent".to_string()
+                name: "parent.cleanup".to_string()
             }
         ]
     );
