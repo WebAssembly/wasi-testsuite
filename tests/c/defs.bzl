@@ -24,7 +24,7 @@ def _c_artifact(name):
         visibility = ["//tests/..."],
     )
 
-def _c_test_for_runtime(test, name, runtime, manifest):
+def _c_test_for_runtime(test, name, runtime, manifest, target_compatible_with = None):
     test_target = "{}_{}".format(test.name, name)
 
     wasi_test(
@@ -34,6 +34,7 @@ def _c_test_for_runtime(test, name, runtime, manifest):
         manifest = manifest,
         config = test.config,
         fixture_dirs = test.fixture_dirs,
+        target_compatible_with = target_compatible_with,
         visibility = ["//tests/..."],
     )
 
@@ -51,13 +52,14 @@ def c_test(name, conf = None, dirs = None):
         fixture_dirs = fixture_dirs,
     )
 
-def c_tests_for_runtime(tests, name, runtime, manifest):
+def c_tests_for_runtime(tests, name, runtime, manifest, target_compatible_with = None):
     return [
         _c_test_for_runtime(
             test,
             name = name,
             runtime = runtime,
             manifest = manifest,
+            target_compatible_with = target_compatible_with,
         )
         for test in tests
     ]

@@ -16,6 +16,30 @@ export_file(
     visibility = ["PUBLIC"],
 )
 
+export_file(
+    name = "wazero_linux",
+    src = "wazero-linux.json",
+    visibility = ["PUBLIC"],
+)
+
+export_file(
+    name = "wazero_macos",
+    src = "wazero-macos.json",
+    visibility = ["PUBLIC"],
+)
+
+export_file(
+    name = "wazero_windows",
+    src = "wazero-windows.json",
+    visibility = ["PUBLIC"],
+)
+
+export_file(
+    name = "wamr_linux",
+    src = "wamr-linux.json",
+    visibility = ["PUBLIC"],
+)
+
 filegroup(
     name = "dist_files",
     srcs = glob(["*.json"]),

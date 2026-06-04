@@ -15,7 +15,7 @@ def _asc_artifact(name):
         visibility = ["//tests/..."],
     )
 
-def _asc_test_for_runtime(test, name, runtime, manifest):
+def _asc_test_for_runtime(test, name, runtime, manifest, target_compatible_with = None):
     test_target = "{}_{}".format(test.name, name)
 
     wasi_test(
@@ -24,6 +24,7 @@ def _asc_test_for_runtime(test, name, runtime, manifest):
         runtime = runtime,
         manifest = manifest,
         config = test.config,
+        target_compatible_with = target_compatible_with,
         visibility = ["//tests/..."],
     )
 
@@ -39,13 +40,14 @@ def asc_test(name, conf = None):
         name = name,
     )
 
-def asc_tests_for_runtime(tests, name, runtime, manifest):
+def asc_tests_for_runtime(tests, name, runtime, manifest, target_compatible_with = None):
     return [
         _asc_test_for_runtime(
             test,
             name = name,
             runtime = runtime,
             manifest = manifest,
+            target_compatible_with = target_compatible_with,
         )
         for test in tests
     ]

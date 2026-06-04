@@ -7,8 +7,9 @@ from typing import Dict, List, Tuple
 import importlib
 
 
-# shlex.split() splits according to shell quoting rules
-WAZERO = shlex.split(os.getenv("WAZERO", "wazero"))
+# shlex.split() splits according to shell quoting rules.
+# Use posix=False on Windows to preserve backslash path separators.
+WAZERO = shlex.split(os.getenv("WAZERO", "wazero"), posix=(os.name != "nt"))
 
 
 def get_name() -> str:

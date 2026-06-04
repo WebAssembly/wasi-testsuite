@@ -14,7 +14,7 @@ defaults:
 
 jobs:
   buck2:
-    name: Buck2 smoke test (${{ matrix.os }})
+    name: Buck2 tests (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     permissions:
       contents: read
@@ -48,8 +48,12 @@ jobs:
       - name: Run Starlark lint
         run: just lint-starlark
 
-      - name: Run Buck2 tests
-        run: just test-all
+      - name: Run Wasmtime Buck tests
+        run: just test
+
+      - name: Run extra Buck runtime tests
+        if: runner.os == 'Linux'
+        run: just test-extra-runtimes
 
       - name: Build dist archive
         run: just dist
