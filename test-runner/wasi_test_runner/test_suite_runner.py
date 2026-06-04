@@ -320,7 +320,7 @@ def _append_stdout_and_stderr(msg: str, out: str | None, err: str | None) -> str
 
 def _cleanup_test_output(host_dir: Path) -> None:
     for f in host_dir.glob("**/*.cleanup"):
-        if f.is_file():
+        if f.is_symlink() or f.is_file():
             f.unlink()
         elif f.is_dir():
             shutil.rmtree(f)

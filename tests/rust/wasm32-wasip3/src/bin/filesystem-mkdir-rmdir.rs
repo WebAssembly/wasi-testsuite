@@ -19,6 +19,10 @@ wit_bindgen::generate!({
 use wasi::filesystem::types::{Descriptor, DescriptorFlags, ErrorCode, OpenFlags, PathFlags};
 
 async fn test_mkdir_rmdir(dir: &Descriptor) {
+    dir.symlink_at("..".to_string(), "parent.cleanup".to_string())
+        .await
+        .unwrap();
+
     let mkdir = |path: &str| dir.create_directory_at(path.to_string());
     let rmdir = |path: &str| dir.remove_directory_at(path.to_string());
 
@@ -29,14 +33,17 @@ async fn test_mkdir_rmdir(dir: &Descriptor) {
     );
     assert_eq!(mkdir(".").await, Err(ErrorCode::Exist));
     assert_eq!(mkdir("..").await, Err(ErrorCode::NotPermitted));
-    assert_eq!(mkdir("parent/foo").await, Err(ErrorCode::NotPermitted));
+    assert_eq!(
+        mkdir("parent.cleanup/foo").await,
+        Err(ErrorCode::NotPermitted)
+    );
     assert_eq!(mkdir("/").await, Err(ErrorCode::NotPermitted));
     assert_eq!(
         mkdir("../fs-tests.dir/q.cleanup").await,
         Err(ErrorCode::NotPermitted)
     );
     assert_eq!(
-        mkdir("parent/fs-tests.dir/q.cleanup").await,
+        mkdir("parent.cleanup/fs-tests.dir/q.cleanup").await,
         Err(ErrorCode::NotPermitted)
     );
     assert_eq!(mkdir("a.txt").await, Err(ErrorCode::Exist));
@@ -46,7 +53,7 @@ async fn test_mkdir_rmdir(dir: &Descriptor) {
         Err(ErrorCode::NotPermitted)
     );
     assert_eq!(
-        rmdir("parent/fs-tests.dir/q.cleanup").await,
+        rmdir("parent.cleanup/fs-tests.dir/q.cleanup").await,
         Err(ErrorCode::NotPermitted)
     );
     assert_eq!(
@@ -78,9 +85,9 @@ async fn test_mkdir_rmdir(dir: &Descriptor) {
     assert_eq!(rmdir("a.txt").await, Err(ErrorCode::NotDirectory));
     assert_eq!(rmdir("z.txt").await, Err(ErrorCode::NoEntry));
     // FIXME: https://github.com/bytecodealliance/wasmtime/issues/12178
-    // assert_eq!(rmdir("parent").await, Err(ErrorCode::NotDirectory));
+    // assert_eq!(rmdir("parent.cleanup").await, Err(ErrorCode::NotDirectory));
     assert_eq!(
-        rmdir("parent/fs-tests.dir").await,
+        rmdir("parent.cleanup/fs-tests.dir").await,
         Err(ErrorCode::NotPermitted)
     );
 
