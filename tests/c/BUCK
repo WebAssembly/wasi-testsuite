@@ -1,4 +1,5 @@
-load("//tools:conformance.bzl", "wasi_manifest", "wasi_suite", "wasi_test")
+load(":defs.bzl", "c_test", "c_tests_for_runtime")
+load("//tools:conformance.bzl", "wasi_manifest", "wasi_suite")
 
 _WASI_C = wasi_manifest(
     name = "WASI C tests",
@@ -6,45 +7,32 @@ _WASI_C = wasi_manifest(
     labels = ["c-wasip1"],
 )
 
-cxx_binary(
-    name = "clock_getres-monotonic",
-    srcs = ["src/clock_getres-monotonic.c"],
-    _cxx_toolchain = "toolchains//:cxx_wasi_p1",
-    visibility = ["//tests/..."],
-)
+_C_TESTS = [
+    c_test("clock_getres-monotonic"),
+    c_test("clock_getres-realtime"),
+    c_test("clock_gettime-monotonic"),
+    c_test("clock_gettime-realtime"),
+    c_test("fopen-with-no-access"),
+    c_test("sock_shutdown-invalid_fd"),
+    c_test("sock_shutdown-not_sock"),
+    c_test("lseek"),
+    c_test("fdopendir-with-access"),
+    c_test("fopen-with-access"),
+    c_test("pread-with-access"),
+    c_test("pwrite-with-access"),
+    c_test("pwrite-with-append"),
+    c_test("stat-dev-ino"),
+]
 
-wasi_test(
-    name = "clock_getres-monotonic_wasmtime",
-    wasm = ":clock_getres-monotonic",
+_WASMTIME_TESTS = c_tests_for_runtime(
+    tests = _C_TESTS,
+    name = "wasmtime",
     runtime = "toolchains//:wasmtime_runtime",
     manifest = _WASI_C,
-    visibility = ["//tests/..."],
-)
-
-cxx_binary(
-    name = "lseek",
-    srcs = ["src/lseek.c"],
-    _cxx_toolchain = "toolchains//:cxx_wasi_p1",
-    visibility = ["//tests/..."],
-)
-
-wasi_test(
-    name = "lseek_wasmtime",
-    wasm = ":lseek",
-    runtime = "toolchains//:wasmtime_runtime",
-    manifest = _WASI_C,
-    config = "src/lseek.json",
-    fixture_dirs = {
-        "fs-tests.dir": "src/fs-tests.dir",
-    },
-    visibility = ["//tests/..."],
 )
 
 wasi_suite(
     name = "wasmtime",
-    tests = [
-        ":clock_getres-monotonic_wasmtime",
-        ":lseek_wasmtime",
-    ],
+    tests = _WASMTIME_TESTS,
     visibility = ["//tests/..."],
 )

@@ -1,0 +1,10 @@
+{
+  "WASI Rust tests [wasm32-wasip1]": {
+    "remove_directory_trailing_slashes": "Wasmtime returns ERRNO_INVAL for path_remove_directory with a trailing slash"
+  },
+  "WASI Rust tests [wasm32-wasip3]": {
+    "http-service": "Wasmtime returns 404 for GET / in HTTP service validation",
+    "sockets-tcp-connect": "requires a TCP peer managed outside the component under test",
+    "sockets-udp-send": "requires a UDP peer managed outside the component under test"
+  }
+}

@@ -247,6 +247,14 @@ class TestCaseRunner(TestCaseRunnerBase):
                     f"Timeout expired after killing proc {self._proc}")
                 self._proc = None
 
+        for sock in self._sockets.values():
+            sock.close()
+        self._sockets = {}
+
+        for pipe in self._pipes.values():
+            pipe.close()
+        self._pipes = {}
+
         for d in self._cleanup_dirs:
             _cleanup_test_output(d)
         self._cleanup_dirs = []
