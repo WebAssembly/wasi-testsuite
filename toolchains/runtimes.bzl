@@ -3,6 +3,11 @@
 load("@wasmono//:defs.bzl", "host_arch", "host_os")
 load(":releases.bzl", "WAMR_RELEASES", "WASMEDGE_RELEASES", "WASMTIME_RELEASES", "WAZERO_RELEASES")
 
+DEFAULT_WAMR_VERSION = "2.4.4"
+DEFAULT_WASMEDGE_VERSION = "0.17.0"
+DEFAULT_WASMTIME_VERSION = "45.0.0"
+DEFAULT_WAZERO_VERSION = "1.12.0"
+
 def _runtime_platform() -> str:
     return "{}-{}".format(host_arch(), host_os())
 
@@ -86,21 +91,21 @@ def _download_runtime(
         **kwargs
     )
 
-def download_wasmtime_runtime(name: str, version: str = "45.0.0"):
+def download_wasmtime_runtime(name: str, version: str = DEFAULT_WASMTIME_VERSION):
     """Download a prebuilt Wasmtime runtime."""
     _download_runtime(name, WASMTIME_RELEASES, "wasmtime", version)
 
 def download_wamr_runtime(
         name: str,
-        version: str = "2.4.4",
+        version: str = DEFAULT_WAMR_VERSION,
         target_compatible_with: list[str] = []):
     """Download a prebuilt WAMR (iwasm) runtime."""
     _download_runtime(name, WAMR_RELEASES, "wamr", version, target_compatible_with)
 
-def download_wazero_runtime(name: str, version: str = "1.12.0"):
+def download_wazero_runtime(name: str, version: str = DEFAULT_WAZERO_VERSION):
     """Download a prebuilt Wazero runtime."""
     _download_runtime(name, WAZERO_RELEASES, "wazero", version)
 
-def download_wasmedge_runtime(name: str, version: str = "0.17.0"):
+def download_wasmedge_runtime(name: str, version: str = DEFAULT_WASMEDGE_VERSION):
     """Download a prebuilt WasmEdge runtime."""
     _download_runtime(name, WASMEDGE_RELEASES, "wasmedge", version)
