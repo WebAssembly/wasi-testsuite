@@ -7,8 +7,9 @@ from typing import Dict, List, Tuple
 import importlib
 
 
-# shlex.split() splits according to shell quoting rules
-IWASM = shlex.split(os.getenv("IWASM", "iwasm"))
+# shlex.split() splits according to shell quoting rules.
+# Use posix=False on Windows to preserve backslash path separators.
+IWASM = shlex.split(os.getenv("IWASM", "iwasm"), posix=(os.name != "nt"))
 
 
 def get_name() -> str:
@@ -46,7 +47,7 @@ def compute_argv(test_path: str,
         argv += ["--env", f"{k}={v}"]
 
     for host, guest in dirs:
-        argv += ["--map-dir", f"{host}::{guest}"]  # noqa: E231
+        argv += [f"--map-dir={guest}::{host}"]  # noqa: E231
 
     argv += [test_path]
 

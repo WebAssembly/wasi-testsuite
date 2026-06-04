@@ -38,7 +38,7 @@ def _rust_artifact(name, deps):
         visibility = ["//tests/..."],
     )
 
-def _rust_test_for_runtime(test, name, runtime, manifest):
+def _rust_test_for_runtime(test, name, runtime, manifest, target_compatible_with = None):
     test_target = "{}_{}".format(test.name, name)
 
     wasi_test(
@@ -49,6 +49,7 @@ def _rust_test_for_runtime(test, name, runtime, manifest):
         config = test.config,
         fixture_dirs = test.fixture_dirs,
         test_name = test.name,
+        target_compatible_with = target_compatible_with,
         visibility = ["//tests/..."],
     )
 
@@ -66,13 +67,14 @@ def rust_test(name, conf = None, dirs = None, deps = []):
         name = name,
     )
 
-def rust_tests_for_runtime(tests, name, runtime, manifest):
+def rust_tests_for_runtime(tests, name, runtime, manifest, target_compatible_with = None):
     return [
         _rust_test_for_runtime(
             test,
             name = name,
             runtime = runtime,
             manifest = manifest,
+            target_compatible_with = target_compatible_with,
         )
         for test in tests
     ]

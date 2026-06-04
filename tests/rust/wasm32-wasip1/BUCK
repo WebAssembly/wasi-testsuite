@@ -1,5 +1,6 @@
 load(":defs.bzl", "rust_test", "rust_tests_for_runtime")
 load("//tools:conformance.bzl", "wasi_manifest", "wasi_suite")
+load("//tools:runtime.bzl", "WAMR_COMPATIBLE_WITH")
 
 _WASI_RUST = wasi_manifest(
     name = "WASI Rust tests",
@@ -82,15 +83,48 @@ _RUST_TESTS = [
     rust_test("unlink_file_trailing_slashes", deps = _RUST_DEPS),
 ]
 
-_WASMTIME_TESTS = rust_tests_for_runtime(
-    tests = _RUST_TESTS,
+wasi_suite(
     name = "wasmtime",
-    runtime = "toolchains//:wasmtime_runtime",
-    manifest = _WASI_RUST,
+    tests = rust_tests_for_runtime(
+        tests = _RUST_TESTS,
+        name = "wasmtime",
+        runtime = "toolchains//:wasmtime_runtime",
+        manifest = _WASI_RUST,
+    ),
+    visibility = ["//tests/..."],
 )
 
 wasi_suite(
-    name = "wasmtime",
-    tests = _WASMTIME_TESTS,
+    name = "wazero",
+    tests = rust_tests_for_runtime(
+        tests = _RUST_TESTS,
+        name = "wazero",
+        runtime = "toolchains//:wazero_runtime",
+        manifest = _WASI_RUST,
+    ),
+    visibility = ["//tests/..."],
+)
+
+wasi_suite(
+    name = "wasmedge",
+    tests = rust_tests_for_runtime(
+        tests = _RUST_TESTS,
+        name = "wasmedge",
+        runtime = "toolchains//:wasmedge_runtime",
+        manifest = _WASI_RUST,
+    ),
+    visibility = ["//tests/..."],
+)
+
+wasi_suite(
+    name = "wamr",
+    tests = rust_tests_for_runtime(
+        tests = _RUST_TESTS,
+        name = "wamr",
+        runtime = "toolchains//:wamr_runtime",
+        manifest = _WASI_RUST,
+        target_compatible_with = WAMR_COMPATIBLE_WITH,
+    ),
+    target_compatible_with = WAMR_COMPATIBLE_WITH,
     visibility = ["//tests/..."],
 )

@@ -1,5 +1,6 @@
 load(":defs.bzl", "asc_test", "asc_tests_for_runtime")
 load("//tools:conformance.bzl", "wasi_manifest", "wasi_suite")
+load("//tools:runtime.bzl", "WAMR_COMPATIBLE_WITH")
 
 _WASI_ASSEMBLYSCRIPT = wasi_manifest(
     name = "WASI AssemblyScript tests",
@@ -22,15 +23,48 @@ _ASSEMBLYSCRIPT_TESTS = [
     asc_test("proc_exit-failure"),
 ]
 
-_WASMTIME_TESTS = asc_tests_for_runtime(
-    tests = _ASSEMBLYSCRIPT_TESTS,
+wasi_suite(
     name = "wasmtime",
-    runtime = "toolchains//:wasmtime_runtime",
-    manifest = _WASI_ASSEMBLYSCRIPT,
+    tests = asc_tests_for_runtime(
+        tests = _ASSEMBLYSCRIPT_TESTS,
+        name = "wasmtime",
+        runtime = "toolchains//:wasmtime_runtime",
+        manifest = _WASI_ASSEMBLYSCRIPT,
+    ),
+    visibility = ["//tests/..."],
 )
 
 wasi_suite(
-    name = "wasmtime",
-    tests = _WASMTIME_TESTS,
+    name = "wazero",
+    tests = asc_tests_for_runtime(
+        tests = _ASSEMBLYSCRIPT_TESTS,
+        name = "wazero",
+        runtime = "toolchains//:wazero_runtime",
+        manifest = _WASI_ASSEMBLYSCRIPT,
+    ),
+    visibility = ["//tests/..."],
+)
+
+wasi_suite(
+    name = "wasmedge",
+    tests = asc_tests_for_runtime(
+        tests = _ASSEMBLYSCRIPT_TESTS,
+        name = "wasmedge",
+        runtime = "toolchains//:wasmedge_runtime",
+        manifest = _WASI_ASSEMBLYSCRIPT,
+    ),
+    visibility = ["//tests/..."],
+)
+
+wasi_suite(
+    name = "wamr",
+    tests = asc_tests_for_runtime(
+        tests = _ASSEMBLYSCRIPT_TESTS,
+        name = "wamr",
+        runtime = "toolchains//:wamr_runtime",
+        manifest = _WASI_ASSEMBLYSCRIPT,
+        target_compatible_with = WAMR_COMPATIBLE_WITH,
+    ),
+    target_compatible_with = WAMR_COMPATIBLE_WITH,
     visibility = ["//tests/..."],
 )
