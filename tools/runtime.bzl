@@ -22,6 +22,11 @@ WasiRuntimeInfo = provider(
     },
 )
 
+WAMR_COMPATIBLE_WITH = [
+    "config//os/constraints:linux",
+    "config//cpu/constraints:x86_64",
+]
+
 def _wasi_runtime_impl(ctx: AnalysisContext) -> list[Provider]:
     return [
         DefaultInfo(),

@@ -1,5 +1,6 @@
 load("//tools:conformance.bzl", "wasi_suite")
 load("//tools:dist.bzl", "wasi_dist")
+load("//tools:runtime.bzl", "WAMR_COMPATIBLE_WITH")
 
 wasi_suite(
     name = "wasmtime",
@@ -9,6 +10,34 @@ wasi_suite(
         "//tests/rust/wasm32-wasip3:wasmtime",
         "//tests/assemblyscript/wasm32-wasip1:wasmtime",
     ],
+)
+
+wasi_suite(
+    name = "wazero",
+    tests = [
+        "//tests/c:wazero",
+        "//tests/rust/wasm32-wasip1:wazero",
+        "//tests/assemblyscript/wasm32-wasip1:wazero",
+    ],
+)
+
+wasi_suite(
+    name = "wasmedge",
+    tests = [
+        "//tests/c:wasmedge",
+        "//tests/rust/wasm32-wasip1:wasmedge",
+        "//tests/assemblyscript/wasm32-wasip1:wasmedge",
+    ],
+)
+
+wasi_suite(
+    name = "wamr",
+    tests = [
+        "//tests/c:wamr",
+        "//tests/rust/wasm32-wasip1:wamr",
+        "//tests/assemblyscript/wasm32-wasip1:wamr",
+    ],
+    target_compatible_with = WAMR_COMPATIBLE_WITH,
 )
 
 wasi_dist(

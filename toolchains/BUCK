@@ -4,8 +4,8 @@ load("@prelude//toolchains:genrule.bzl", "system_genrule_toolchain")
 load("@prelude//toolchains:python.bzl", "remote_python_toolchain")
 load("@prelude//toolchains:remote_test_execution.bzl", "remote_test_execution_toolchain")
 load("@prelude//toolchains:rust.bzl", "system_rust_toolchain")
-load("@root//tools:runtime.bzl", "wasi_runtime")
-load(":runtimes.bzl", "download_wasmtime_runtime")
+load("@root//tools:runtime.bzl", "WAMR_COMPATIBLE_WITH", "wasi_runtime")
+load(":runtimes.bzl", "download_wamr_runtime", "download_wasmedge_runtime", "download_wasmtime_runtime", "download_wazero_runtime")
 load(
     "@wasmono//:defs.bzl",
     "asc_toolchain",
@@ -87,6 +87,13 @@ wasm_tools_toolchain(name = "wasm_tools", distribution = ":wasm_tools_dist", vis
 # Runtime distributions and descriptors. The descriptor is what `wasi_test`
 # consumes, so adding a runtime means adding another descriptor target here.
 download_wasmtime_runtime(name = "wasmtime_dist", version = "45.0.0")
+download_wasmedge_runtime(name = "wasmedge_dist", version = "0.17.0")
+download_wazero_runtime(name = "wazero_dist", version = "1.12.0")
+download_wamr_runtime(
+    name = "wamr_dist",
+    version = "2.4.4",
+    target_compatible_with = WAMR_COMPATIBLE_WITH,
+)
 
 wasi_runtime(
     name = "wasmtime_runtime",
@@ -99,6 +106,40 @@ wasi_runtime(
     runtime = ":wasmtime_dist",
     runtime_env_var = "WASMTIME",
     labels = ["wasmtime"],
+    visibility = ["PUBLIC"],
+)
+
+wasi_runtime(
+    name = "wazero_runtime",
+    adapter = "root//adapters:wazero.py",
+    exclude_filter = select({
+        "config//os:macos": "root//expectations:wazero_macos",
+        "config//os:windows": "root//expectations:wazero_windows",
+        "DEFAULT": "root//expectations:wazero_linux",
+    }),
+    runtime = ":wazero_dist",
+    runtime_env_var = "WAZERO",
+    labels = ["wazero"],
+    visibility = ["PUBLIC"],
+)
+
+wasi_runtime(
+    name = "wasmedge_runtime",
+    adapter = "root//adapters:wasmedge.py",
+    runtime = ":wasmedge_dist",
+    runtime_env_var = "WASMEDGE",
+    labels = ["wasmedge"],
+    visibility = ["PUBLIC"],
+)
+
+wasi_runtime(
+    name = "wamr_runtime",
+    adapter = "root//adapters:wasm-micro-runtime.py",
+    exclude_filter = "root//expectations:wamr_linux",
+    runtime = ":wamr_dist",
+    runtime_env_var = "IWASM",
+    labels = ["wamr"],
+    target_compatible_with = WAMR_COMPATIBLE_WITH,
     visibility = ["PUBLIC"],
 )
 
