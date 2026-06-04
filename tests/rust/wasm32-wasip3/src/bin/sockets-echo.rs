@@ -52,9 +52,9 @@ async fn echo(family: IpAddressFamily, addr: IpSocketAddress) {
     let listener = TcpSocket::create(family).unwrap();
     listener.bind(addr).unwrap();
     let addr = listener.get_local_address().unwrap();
+    let mut accept = listener.listen().unwrap();
     println!("{}", addr);
 
-    let mut accept = listener.listen().unwrap();
     let sock = accept.next().await.unwrap();
     let (mut recv_stream, recv_fut) = sock.receive();
 

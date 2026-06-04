@@ -17,13 +17,37 @@ targets:
 build:
     {{buck}} build //...
 
+# Build one C runtime suite.
+build-c runtime="wasmtime":
+    {{buck}} build //tests/c:{{runtime}}
+
+# Build one AssemblyScript runtime suite.
+build-asc runtime="wasmtime":
+    {{buck}} build //tests/assemblyscript/wasm32-wasip1:{{runtime}}
+
+# Build one Rust runtime suite. Use `p1` or `p3`.
+build-rust wasi="p1" runtime="wasmtime":
+    {{buck}} build //tests/rust/wasm32-wasi{{wasi}}:{{runtime}}
+
 # Build the distribution archive.
 dist:
     {{buck}} build --show-output //tests:dist
 
-# Run the Buck2 first-slice Wasmtime tests.
+# Run the Wasmtime Buck tests.
 test:
     {{buck}} test //tests:wasmtime
+
+# Run one C runtime suite.
+test-c runtime="wasmtime":
+    {{buck}} test //tests/c:{{runtime}}
+
+# Run one AssemblyScript runtime suite.
+test-asc runtime="wasmtime":
+    {{buck}} test //tests/assemblyscript/wasm32-wasip1:{{runtime}}
+
+# Run one Rust runtime suite. Use `p1` or `p3`.
+test-rust wasi="p1" runtime="wasmtime":
+    {{buck}} test //tests/rust/wasm32-wasi{{wasi}}:{{runtime}}
 
 # Run all Buck tests under //tests.
 test-all:

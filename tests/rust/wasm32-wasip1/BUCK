@@ -1,4 +1,5 @@
-load("//tools:conformance.bzl", "wasi_manifest", "wasi_suite", "wasi_test")
+load(":defs.bzl", "rust_test", "rust_tests_for_runtime")
+load("//tools:conformance.bzl", "wasi_manifest", "wasi_suite")
 
 _WASI_RUST = wasi_manifest(
     name = "WASI Rust tests",
@@ -6,51 +7,90 @@ _WASI_RUST = wasi_manifest(
     labels = ["rust-wasip1"],
 )
 
-rust_binary(
-    name = "clock_time_get",
-    crate = "clock_time_get",
-    crate_root = "src/bin/clock_time_get.rs",
-    srcs = ["src/bin/clock_time_get.rs"],
+_RUST_DEPS = [
+    ":wasi_tests",
+    "//third-party/rust:libc",
+    "//third-party/rust:wasi",
+]
+
+rust_library(
+    name = "wasi_tests",
+    crate = "wasi_tests",
+    crate_root = "src/lib.rs",
+    srcs = [
+        "src/config.rs",
+        "src/lib.rs",
+    ],
     edition = "2021",
-    deps = ["//third-party:wasi"],
+    default_target_platform = "//platforms:wasm32_wasip1",
+    deps = [
+        "//third-party/rust:libc",
+        "//third-party/rust:once_cell",
+        "//third-party/rust:wasi",
+    ],
     _cxx_toolchain = "toolchains//:rust_linker",
     _rust_toolchain = "toolchains//:rust_wasi_p1",
     visibility = ["//tests/..."],
 )
 
-wasi_test(
-    name = "clock_time_get_wasmtime",
-    wasm = ":clock_time_get",
+_RUST_TESTS = [
+    rust_test("big_random_buf", deps = _RUST_DEPS),
+    rust_test("clock_time_get", deps = _RUST_DEPS),
+    rust_test("poll_oneoff_stdio", deps = _RUST_DEPS),
+    rust_test("sched_yield", deps = _RUST_DEPS),
+    rust_test("close_preopen", deps = _RUST_DEPS),
+    rust_test("dangling_fd", deps = _RUST_DEPS),
+    rust_test("dangling_symlink", deps = _RUST_DEPS),
+    rust_test("dir_fd_op_failures", deps = _RUST_DEPS),
+    rust_test("directory_seek", deps = _RUST_DEPS),
+    rust_test("fd_advise", deps = _RUST_DEPS),
+    rust_test("fd_fdstat_set_rights", deps = _RUST_DEPS),
+    rust_test("fd_filestat_set", deps = _RUST_DEPS),
+    rust_test("fd_flags_set", deps = _RUST_DEPS),
+    rust_test("fd_readdir", deps = _RUST_DEPS),
+    rust_test("file_allocate", deps = _RUST_DEPS),
+    rust_test("file_pread_pwrite", deps = _RUST_DEPS),
+    rust_test("file_seek_tell", deps = _RUST_DEPS),
+    rust_test("file_truncation", deps = _RUST_DEPS),
+    rust_test("file_unbuffered_write", deps = _RUST_DEPS),
+    rust_test("fstflags_validate", deps = _RUST_DEPS),
+    rust_test("interesting_paths", deps = _RUST_DEPS),
+    rust_test("isatty", deps = _RUST_DEPS),
+    rust_test("nofollow_errors", deps = _RUST_DEPS),
+    rust_test("overwrite_preopen", deps = _RUST_DEPS),
+    rust_test("path_exists", deps = _RUST_DEPS),
+    rust_test("path_filestat", deps = _RUST_DEPS),
+    rust_test("path_link", deps = _RUST_DEPS),
+    rust_test("path_open_create_existing", deps = _RUST_DEPS),
+    rust_test("path_open_dirfd_not_dir", deps = _RUST_DEPS),
+    rust_test("path_open_missing", deps = _RUST_DEPS),
+    rust_test("path_open_nonblock", deps = _RUST_DEPS),
+    rust_test("path_open_preopen", deps = _RUST_DEPS),
+    rust_test("path_open_read_write", deps = _RUST_DEPS),
+    rust_test("path_rename", deps = _RUST_DEPS),
+    rust_test("path_rename_dir_trailing_slashes", deps = _RUST_DEPS),
+    rust_test("path_symlink_trailing_slashes", deps = _RUST_DEPS),
+    rust_test("readlink", deps = _RUST_DEPS),
+    rust_test("remove_directory_trailing_slashes", deps = _RUST_DEPS),
+    rust_test("remove_nonempty_directory", deps = _RUST_DEPS),
+    rust_test("renumber", deps = _RUST_DEPS),
+    rust_test("stdio", deps = _RUST_DEPS),
+    rust_test("symlink_create", deps = _RUST_DEPS),
+    rust_test("symlink_filestat", deps = _RUST_DEPS),
+    rust_test("symlink_loop", deps = _RUST_DEPS),
+    rust_test("truncation_rights", deps = _RUST_DEPS),
+    rust_test("unlink_file_trailing_slashes", deps = _RUST_DEPS),
+]
+
+_WASMTIME_TESTS = rust_tests_for_runtime(
+    tests = _RUST_TESTS,
+    name = "wasmtime",
     runtime = "toolchains//:wasmtime_runtime",
     manifest = _WASI_RUST,
-    visibility = ["//tests/..."],
-)
-
-rust_binary(
-    name = "sched_yield",
-    crate = "sched_yield",
-    crate_root = "src/bin/sched_yield.rs",
-    srcs = ["src/bin/sched_yield.rs"],
-    edition = "2021",
-    deps = ["//third-party:wasi"],
-    _cxx_toolchain = "toolchains//:rust_linker",
-    _rust_toolchain = "toolchains//:rust_wasi_p1",
-    visibility = ["//tests/..."],
-)
-
-wasi_test(
-    name = "sched_yield_wasmtime",
-    wasm = ":sched_yield",
-    runtime = "toolchains//:wasmtime_runtime",
-    manifest = _WASI_RUST,
-    visibility = ["//tests/..."],
 )
 
 wasi_suite(
     name = "wasmtime",
-    tests = [
-        ":clock_time_get_wasmtime",
-        ":sched_yield_wasmtime",
-    ],
+    tests = _WASMTIME_TESTS,
     visibility = ["//tests/..."],
 )
