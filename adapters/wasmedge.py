@@ -7,8 +7,9 @@ from typing import Dict, List, Tuple
 import importlib
 
 
-# shlex.split() splits according to shell quoting rules
-WASMEDGE = shlex.split(os.getenv("WASMEDGE", "wasmedge"))
+# shlex.split() splits according to shell quoting rules.
+# Use posix=False on Windows to preserve backslash path separators.
+WASMEDGE = shlex.split(os.getenv("WASMEDGE", "wasmedge"), posix=(os.name != "nt"))
 
 
 def get_name() -> str:

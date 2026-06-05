@@ -1,0 +1,83 @@
+remote_file(
+    name = "certifi-download",
+    url = "https://files.pythonhosted.org/packages/59/8c/57e832b7af6d7c5abe66eb3fbe3a3a32f4d11ea23a1aa7131371035be991/certifi-2026.5.20-py3-none-any.whl",
+    sha1 = "c631e50bc97d02174affca648302eb62ef131a72",
+    out = "certifi-2026.5.20-py3-none-any.whl",
+)
+
+prebuilt_python_library(
+    name = "certifi",
+    binary_src = ":certifi-download",
+    visibility = ["PUBLIC"],
+)
+
+remote_file(
+    name = "charset-normalizer-download",
+    url = "https://files.pythonhosted.org/packages/db/8f/61959034484a4a7c527811f4721e75d02d653a35afb0b6054474d8185d4c/charset_normalizer-3.4.7-py3-none-any.whl",
+    sha1 = "2bdc1e6674f519c76bb4026ede4412490360c8b3",
+    out = "charset_normalizer-3.4.7-py3-none-any.whl",
+)
+
+prebuilt_python_library(
+    name = "charset-normalizer",
+    binary_src = ":charset-normalizer-download",
+    visibility = ["PUBLIC"],
+)
+
+remote_file(
+    name = "colorama-download",
+    url = "https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl",
+    sha1 = "d6ab1608850fecfc0e1cf50bf93d743695c04027",
+    out = "colorama-0.4.6-py2.py3-none-any.whl",
+)
+
+prebuilt_python_library(
+    name = "colorama",
+    binary_src = ":colorama-download",
+    visibility = ["PUBLIC"],
+)
+
+remote_file(
+    name = "idna-download",
+    url = "https://files.pythonhosted.org/packages/1e/5e/d4e9f1a599fb8e573b7b87160658329fbf28d19eac2718f51fc3def3aa5a/idna-3.18-py3-none-any.whl",
+    sha1 = "c48e9b125788fae437ff895d72e6c376a8a9f1e4",
+    out = "idna-3.18-py3-none-any.whl",
+)
+
+prebuilt_python_library(
+    name = "idna",
+    binary_src = ":idna-download",
+    visibility = ["PUBLIC"],
+)
+
+remote_file(
+    name = "urllib3-download",
+    url = "https://files.pythonhosted.org/packages/7f/3e/5db95bcf282c52709639744ca2a8b149baccf648e39c8cc87553df9eae0c/urllib3-2.7.0-py3-none-any.whl",
+    sha1 = "bd774de92f860e8e0cc6e24eb91e1bc3a6f228c6",
+    out = "urllib3-2.7.0-py3-none-any.whl",
+)
+
+prebuilt_python_library(
+    name = "urllib3",
+    binary_src = ":urllib3-download",
+    visibility = ["PUBLIC"],
+)
+
+remote_file(
+    name = "requests-download",
+    url = "https://files.pythonhosted.org/packages/a0/f4/c67b0b3f1b9245e8d266f0f112c500d50e5b4e83cb6f3b71b6528104182a/requests-2.34.2-py3-none-any.whl",
+    sha1 = "0d0a12b6ff772b35c4446abb03719f93cb07b0cc",
+    out = "requests-2.34.2-py3-none-any.whl",
+)
+
+prebuilt_python_library(
+    name = "requests",
+    binary_src = ":requests-download",
+    deps = [
+        ":certifi",
+        ":charset-normalizer",
+        ":idna",
+        ":urllib3",
+    ],
+    visibility = ["PUBLIC"],
+)

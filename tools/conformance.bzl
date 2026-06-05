@@ -151,6 +151,7 @@ def wasi_test(
         exclude_filter = None,
         test_name = None,
         labels = [],
+        target_compatible_with = None,
         visibility = None):
     """Run one Buck-built wasm artifact against one WASI runtime.
 
@@ -165,9 +166,12 @@ def wasi_test(
         exclude_filter: Optional runner exclude filter overriding the runtime default.
         test_name: Optional runner/dist test name; inferred from `wasm` labels.
         labels: Extra Buck test labels appended to manifest labels.
+        target_compatible_with: Optional Buck constraints required for this test target.
         visibility: Optional Buck visibility.
     """
     kwargs = {}
+    if target_compatible_with != None:
+        kwargs["target_compatible_with"] = target_compatible_with
     if visibility != None:
         kwargs["visibility"] = visibility
 
@@ -221,9 +225,15 @@ _wasi_test_suite_rule = rule(
     },
 )
 
-def wasi_suite(name: str, tests: list[str], visibility = None):
+def wasi_suite(
+        name: str,
+        tests: list[str],
+        target_compatible_with = None,
+        visibility = None):
     """Group WASI tests for `buck2 test` and aggregate metadata for `wasi_dist`."""
     kwargs = {}
+    if target_compatible_with != None:
+        kwargs["target_compatible_with"] = target_compatible_with
     if visibility != None:
         kwargs["visibility"] = visibility
 

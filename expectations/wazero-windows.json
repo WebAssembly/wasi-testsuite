@@ -1,0 +1,20 @@
+{
+  "WASI C tests [wasm32-wasip1]": {
+    "pwrite-with-append": "Wazero differs for this Preview 1 C test",
+    "sock_shutdown-not_sock": "Wazero differs for this Preview 1 C test"
+  },
+  "WASI Rust tests [wasm32-wasip1]": {
+    "dir_fd_op_failures": "Wazero differs for this Preview 1 Rust test",
+    "fd_fdstat_set_rights": "Wazero differs for this Preview 1 Rust test",
+    "overwrite_preopen": "Wazero differs for this Preview 1 Rust test",
+    "path_filestat": "Wazero differs for this Preview 1 Rust test",
+    "path_link": "Wazero differs for this Preview 1 Rust test",
+    "path_open_read_write": "Wazero differs for this Preview 1 Rust test",
+    "poll_oneoff_stdio": "Wazero differs for this Preview 1 Rust test",
+    "readlink": "Wazero differs for this Preview 1 Rust test",
+    "renumber": "Wazero differs for this Preview 1 Rust test",
+    "stdio": "Wazero differs for this Preview 1 Rust test",
+    "symlink_filestat": "Wazero differs for this Preview 1 Rust test",
+    "truncation_rights": "Wazero differs for this Preview 1 Rust test"
+  }
+}

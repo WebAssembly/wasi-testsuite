@@ -7,6 +7,33 @@ export_file(
     ],
 )
 
+export_file(
+    name = "wazero.py",
+    src = "wazero.py",
+    visibility = [
+        "toolchains//...",
+        "//tests/...",
+    ],
+)
+
+export_file(
+    name = "wasmedge.py",
+    src = "wasmedge.py",
+    visibility = [
+        "toolchains//...",
+        "//tests/...",
+    ],
+)
+
+export_file(
+    name = "wasm-micro-runtime.py",
+    src = "wasm-micro-runtime.py",
+    visibility = [
+        "toolchains//...",
+        "//tests/...",
+    ],
+)
+
 filegroup(
     name = "dist_files",
     srcs = glob(["*.py"]),

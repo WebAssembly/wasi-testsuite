@@ -1,5 +1,6 @@
-load("@wasmono//:defs.bzl", "assemblyscript_binary")
-load("//tools:conformance.bzl", "wasi_manifest", "wasi_suite", "wasi_test")
+load(":defs.bzl", "asc_test", "asc_tests_for_runtime")
+load("//tools:conformance.bzl", "wasi_manifest", "wasi_suite")
+load("//tools:runtime.bzl", "WAMR_COMPATIBLE_WITH")
 
 _WASI_ASSEMBLYSCRIPT = wasi_manifest(
     name = "WASI AssemblyScript tests",
@@ -7,41 +8,63 @@ _WASI_ASSEMBLYSCRIPT = wasi_manifest(
     labels = ["assemblyscript-wasip1"],
 )
 
-assemblyscript_binary(
-    name = "args_get-multiple-arguments",
-    src = "src/args_get-multiple-arguments.ts",
-    visibility = ["//tests/..."],
-)
+_ASSEMBLYSCRIPT_TESTS = [
+    asc_test("args_sizes_get-no-arguments"),
+    asc_test("environ_sizes_get-no-variables"),
+    asc_test("fd_write-to-invalid-fd"),
+    asc_test("proc_exit-success"),
+    asc_test("random_get-non-zero-length"),
+    asc_test("random_get-zero-length"),
+    asc_test("args_get-multiple-arguments"),
+    asc_test("args_sizes_get-multiple-arguments"),
+    asc_test("environ_get-multiple-variables"),
+    asc_test("environ_sizes_get-multiple-variables"),
+    asc_test("fd_write-to-stdout"),
+    asc_test("proc_exit-failure"),
+]
 
-wasi_test(
-    name = "args_get-multiple-arguments_wasmtime",
-    wasm = ":args_get-multiple-arguments",
-    runtime = "toolchains//:wasmtime_runtime",
-    manifest = _WASI_ASSEMBLYSCRIPT,
-    config = "src/args_get-multiple-arguments.json",
-    visibility = ["//tests/..."],
-)
-
-assemblyscript_binary(
-    name = "fd_write-to-stdout",
-    src = "src/fd_write-to-stdout.ts",
-    visibility = ["//tests/..."],
-)
-
-wasi_test(
-    name = "fd_write-to-stdout_wasmtime",
-    wasm = ":fd_write-to-stdout",
-    runtime = "toolchains//:wasmtime_runtime",
-    manifest = _WASI_ASSEMBLYSCRIPT,
-    config = "src/fd_write-to-stdout.json",
+wasi_suite(
+    name = "wasmtime",
+    tests = asc_tests_for_runtime(
+        tests = _ASSEMBLYSCRIPT_TESTS,
+        name = "wasmtime",
+        runtime = "toolchains//:wasmtime_runtime",
+        manifest = _WASI_ASSEMBLYSCRIPT,
+    ),
     visibility = ["//tests/..."],
 )
 
 wasi_suite(
-    name = "wasmtime",
-    tests = [
-        ":args_get-multiple-arguments_wasmtime",
-        ":fd_write-to-stdout_wasmtime",
-    ],
+    name = "wazero",
+    tests = asc_tests_for_runtime(
+        tests = _ASSEMBLYSCRIPT_TESTS,
+        name = "wazero",
+        runtime = "toolchains//:wazero_runtime",
+        manifest = _WASI_ASSEMBLYSCRIPT,
+    ),
+    visibility = ["//tests/..."],
+)
+
+wasi_suite(
+    name = "wasmedge",
+    tests = asc_tests_for_runtime(
+        tests = _ASSEMBLYSCRIPT_TESTS,
+        name = "wasmedge",
+        runtime = "toolchains//:wasmedge_runtime",
+        manifest = _WASI_ASSEMBLYSCRIPT,
+    ),
+    visibility = ["//tests/..."],
+)
+
+wasi_suite(
+    name = "wamr",
+    tests = asc_tests_for_runtime(
+        tests = _ASSEMBLYSCRIPT_TESTS,
+        name = "wamr",
+        runtime = "toolchains//:wamr_runtime",
+        manifest = _WASI_ASSEMBLYSCRIPT,
+        target_compatible_with = WAMR_COMPATIBLE_WITH,
+    ),
+    target_compatible_with = WAMR_COMPATIBLE_WITH,
     visibility = ["//tests/..."],
 )
