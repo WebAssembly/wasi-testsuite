@@ -29,6 +29,15 @@ def get_mock_open() -> Mock:
     return MagicMock(side_effect=open_mock)
 
 
+def test_join_http_url_preserves_single_root_slash() -> None:
+    assert tsr.join_http_url("http://127.0.0.1:1234/", "/") == "http://127.0.0.1:1234/"
+
+
+def test_join_http_url_joins_paths() -> None:
+    assert tsr.join_http_url("http://127.0.0.1:1234/", "/foo") == "http://127.0.0.1:1234/foo"
+    assert tsr.join_http_url("http://127.0.0.1:1234", "foo") == "http://127.0.0.1:1234/foo"
+
+
 # pylint: disable-msg=too-many-locals
 @patch("builtins.open", get_mock_open())
 @patch("os.path.exists", Mock(return_value=True))
