@@ -39,6 +39,7 @@ class TestCaseRunner(TestCaseRunnerBase):
     _sockets: Dict[str, socket.socket]
     _last_argv: List[str]
     _http_server: str | None
+    _windows_terminated_by_runner: bool
 
     def __init__(self, config: Config, test_path: str, wasi_version: WasiVersion,
                  runtime: RuntimeAdapter) -> None:
@@ -52,6 +53,7 @@ class TestCaseRunner(TestCaseRunnerBase):
         self._sockets = {}
         self._last_argv = []
         self._http_server = None
+        self._windows_terminated_by_runner = False
 
     def _add_cleanup_dir(self, d: Path) -> None:
         _cleanup_test_output(d)
@@ -111,13 +113,17 @@ class TestCaseRunner(TestCaseRunnerBase):
             self.config.world, self._wasi_version)
         self._last_argv = argv
         try:
+            creationflags = 0
+            if os.name == "nt":
+                creationflags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP")
             # pylint: disable-msg=consider-using-with
             self._proc = subprocess.Popen(
                 argv,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True
+                text=True,
+                creationflags=creationflags,
             )
             stdin, stdout, stderr = \
                 self._proc.stdin, self._proc.stdout, self._proc.stderr
@@ -145,6 +151,13 @@ class TestCaseRunner(TestCaseRunnerBase):
     def do_wait(self, wait: Wait) -> None:
         try:
             exit_code, out, err = self._wait(5)
+            if (
+                os.name == "nt"
+                and self._windows_terminated_by_runner
+                and wait.exit_code == 0
+                and exit_code == 1
+            ):
+                return
             if wait.exit_code != exit_code:
                 msg = f"{wait} failed: expected {wait.exit_code}, got {exit_code}"
                 msg = _append_stdout_and_stderr(msg, out, err)
@@ -200,7 +213,7 @@ class TestCaseRunner(TestCaseRunnerBase):
         http_server = self.get_http_server()
         if http_server is None:
             return
-        url = http_server + req.path
+        url = join_http_url(http_server, req.path)
         try:
             response = requests.request(req.method, url, timeout=5)
         except requests.exceptions.Timeout:
@@ -231,8 +244,12 @@ class TestCaseRunner(TestCaseRunnerBase):
         try:
             proc = self._proc
             assert proc is not None
-            proc.send_signal(kill.signal)
-        except OSError as e:
+            if os.name == "nt":
+                self._windows_terminated_by_runner = True
+                proc.terminate()
+            else:
+                proc.send_signal(kill.signal)
+        except (OSError, ValueError) as e:
             self.fail_unexpected(f"{kill}: Failed to send {kill.signal}: {e}")
 
     def do_cleanup(self, successful: bool) -> None:
@@ -324,6 +341,12 @@ def _append_stdout_and_stderr(msg: str, out: str | None, err: str | None) -> str
         msg += f"\n\n==STDERR==\n{err}"
 
     return msg
+
+
+def join_http_url(http_server: str, path: str) -> str:
+    if path.startswith("/"):
+        return http_server.rstrip("/") + path
+    return http_server.rstrip("/") + "/" + path
 
 
 def _cleanup_test_output(host_dir: Path) -> None:

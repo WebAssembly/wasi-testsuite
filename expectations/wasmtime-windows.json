@@ -46,7 +46,6 @@
     "filesystem-set-size": "Wasmtime Windows filesystem semantics differ for this Preview 3 test",
     "filesystem-stat": "Wasmtime Windows filesystem semantics differ for this Preview 3 test",
     "filesystem-unlink-errors": "Wasmtime Windows filesystem semantics differ for this Preview 3 test",
-    "http-service": "Wasmtime returns 404 for GET / in HTTP service validation",
     "sockets-udp-send": "requires a UDP peer managed outside the component under test"
   }
 }
