@@ -4,7 +4,6 @@
   },
   "WASI Rust tests [wasm32-wasip3]": {
     "filesystem-advise": "Wasmtime filesystem advise is not supported on macOS",
-    "http-service": "Wasmtime returns 404 for GET / in HTTP service validation",
     "sockets-udp-send": "requires a UDP peer managed outside the component under test"
   }
 }
