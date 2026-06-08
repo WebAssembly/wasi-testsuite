@@ -4,85 +4,61 @@ on:
   schedule:
     - cron: 0 0 * * *
 
+permissions: {}
+
 jobs:
-  run_tests:
+  wasmtime:
+    runs-on: ${{ matrix.platform }}
+    permissions:
+      contents: read
     strategy:
-      max-parallel: 1
       matrix:
-        runtime: [wasmtime, wasm-micro-runtime, wazero, wasmedge, pywasm]
-    runs-on: ubuntu-latest
+        platform:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          persist-credentials: false
           fetch-depth: 0
-          ref: prod/testsuite-base
 
-      - name: Initialize Python environment
-        uses: actions/setup-python@v4
+      - name: install just
+        uses: taiki-e/cache-cargo-install-action@417450f3c33ee20393705369577571770643d4c7 # v3.0.7
         with:
-          python-version: '3.12'
-          cache: pip
+          tool: just
 
-      - name: Install dependencies
-        working-directory: test-runner
-        run: pip install -r requirements.txt
+      - uses: facebook/install-dotslash@5f505c7478ed90c86b492133b43dca875a3c885a
 
-      - name: Install wasmtime
-        if: matrix.runtime == 'wasmtime'
-        uses: bytecodealliance/actions/wasmtime/setup@v1
+      - name: Install Rust WASI targets
+        run: rustup target add wasm32-wasip1 wasm32-wasip2
+
+      - name: Run all tests
+        env:
+          MSYS_NO_PATHCONV: "1"
+          MSYS2_ARG_CONV_EXCL: "*"
+        run: just test
+
+  other-runtimes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          version: dev
+          persist-credentials: false
+          fetch-depth: 0
 
-      - name: Install WASM Micro Runtime
-        if: matrix.runtime == 'wasm-micro-runtime'
-        run: |
-          git clone https://github.com/bytecodealliance/wasm-micro-runtime.git
-          cd wasm-micro-runtime/product-mini/platforms/linux/
-          mkdir build && cd build
-          cmake .. -DWAMR_BUILD_BULK_MEMORY=1 -DWAMR_BUILD_SHARED_MEMORY=1
-          make
-          echo "$GITHUB_WORKSPACE/wasm-micro-runtime/product-mini/platforms/linux/build" >> $GITHUB_PATH
+      - name: install just
+        uses: taiki-e/cache-cargo-install-action@417450f3c33ee20393705369577571770643d4c7 # v3.0.7
+        with:
+          tool: just
+      - uses: facebook/install-dotslash@5f505c7478ed90c86b492133b43dca875a3c885a
 
-      - name: Install WasmEdge
-        if: matrix.runtime == 'wasmedge'
-        run: |
-          curl -sSf https://raw.githubusercontent.com/WasmEdge/WasmEdge/master/utils/install.sh | bash  -s -- -p ./wasmedge-install
-          echo "$GITHUB_WORKSPACE/wasmedge-install/bin/" >> $GITHUB_PATH
+      - name: Install Rust WASI targets
+        run: rustup target add wasm32-wasip1 wasm32-wasip2
 
-      - name: Install wazero
-        if: matrix.runtime == 'wazero'
-        run: |
-          git clone https://github.com/tetratelabs/wazero.git
-          cd wazero
-          go install ./cmd/wazero
-          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
-
-      - name: Install pywasm
-        if: matrix.runtime == 'pywasm'
-        run: |
-          pip install pywasm
-
-      - name: Get current timestamp
-        run: echo "date=$(date +'%Y-%m-%d_%H_%M')" >> $GITHUB_ENV
-
-      - name: Run tests on ${{ matrix.runtime }}
-        continue-on-error: true
-        run: |
-          ./run-tests \
-            -r ./adapters/${{ matrix.runtime }}.py \
-            --verbose \
-            --json-output-location results.json
-
-      - name: Configure git
-        uses: ./.github/actions/git-config
-
-      - name: Upload test results
-        run: |
-          git checkout prod/daily-test-results
-          mkdir -p results/${{ matrix.runtime }}
-          cp results.json results/${{ matrix.runtime }}/${{ env.date }}.json
-          cp results.json results/${{ matrix.runtime }}/latest.json
-          git add results
-          git commit -m 'Update daily test results for ${{ matrix.runtime }}'
-          git push
+      - name: Run extra Buck runtime tests
+        run: just test-extra-runtimes
