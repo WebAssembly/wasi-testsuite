@@ -14,56 +14,56 @@ fn test_properties(family: IpAddressFamily) {
         sock.set_listen_backlog_size(0),
         Err(ErrorCode::InvalidArgument)
     ));
-    assert!(matches!(sock.set_listen_backlog_size(1), Ok(_)));
-    assert!(matches!(sock.set_listen_backlog_size(u64::MAX), Ok(_)));
+    sock.set_listen_backlog_size(1).unwrap();
+    sock.set_listen_backlog_size(u64::MAX).unwrap();
 
-    assert!(matches!(sock.set_keep_alive_enabled(true), Ok(_)));
-    assert!(matches!(sock.set_keep_alive_enabled(false), Ok(_)));
+    sock.set_keep_alive_enabled(true).unwrap();
+    sock.set_keep_alive_enabled(false).unwrap();
 
     assert!(matches!(
         sock.set_keep_alive_idle_time(0),
         Err(ErrorCode::InvalidArgument)
     ));
-    assert!(matches!(sock.set_keep_alive_idle_time(1), Ok(_)));
+    sock.set_keep_alive_idle_time(1).unwrap();
     let idle_time = sock.get_keep_alive_idle_time().unwrap();
     assert!(idle_time > 0 && idle_time <= 1 * SECOND);
-    assert!(matches!(sock.set_keep_alive_idle_time(u64::MAX), Ok(_)));
+    sock.set_keep_alive_idle_time(u64::MAX).unwrap();
 
     assert!(matches!(
         sock.set_keep_alive_interval(0),
         Err(ErrorCode::InvalidArgument)
     ));
-    assert!(matches!(sock.set_keep_alive_interval(1), Ok(_)));
+    sock.set_keep_alive_interval(1).unwrap();
     let idle_time = sock.get_keep_alive_interval().unwrap();
     assert!(idle_time > 0 && idle_time <= 1 * SECOND);
-    assert!(matches!(sock.set_keep_alive_interval(u64::MAX), Ok(_)));
+    sock.set_keep_alive_interval(u64::MAX).unwrap();
 
     assert!(matches!(
         sock.set_keep_alive_count(0),
         Err(ErrorCode::InvalidArgument)
     ));
-    assert!(matches!(sock.set_keep_alive_count(1), Ok(_)));
-    assert!(matches!(sock.set_keep_alive_count(u32::MAX), Ok(_)));
+    sock.set_keep_alive_count(1).unwrap();
+    sock.set_keep_alive_count(u32::MAX).unwrap();
 
     assert!(matches!(
         sock.set_hop_limit(0),
         Err(ErrorCode::InvalidArgument)
     ));
-    assert!(matches!(sock.set_hop_limit(1), Ok(_)));
-    assert!(matches!(sock.set_hop_limit(u8::MAX), Ok(_)));
+    sock.set_hop_limit(1).unwrap();
+    sock.set_hop_limit(u8::MAX).unwrap();
 
     assert!(matches!(
         sock.set_receive_buffer_size(0),
         Err(ErrorCode::InvalidArgument)
     ));
-    assert!(matches!(sock.set_receive_buffer_size(1), Ok(_)));
-    assert!(matches!(sock.set_receive_buffer_size(u64::MAX), Ok(_)));
+    sock.set_receive_buffer_size(1).unwrap();
+    sock.set_receive_buffer_size(u64::MAX).unwrap();
     assert!(matches!(
         sock.set_send_buffer_size(0),
         Err(ErrorCode::InvalidArgument)
     ));
-    assert!(matches!(sock.set_send_buffer_size(1), Ok(_)));
-    assert!(matches!(sock.set_send_buffer_size(u64::MAX), Ok(_)));
+    sock.set_send_buffer_size(1).unwrap();
+    sock.set_send_buffer_size(u64::MAX).unwrap();
 
     sock.set_keep_alive_enabled(true).unwrap();
     assert_eq!(sock.get_keep_alive_enabled().unwrap(), true);

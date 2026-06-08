@@ -59,7 +59,10 @@ fn test_listening(fam: IpAddressFamily) {
     sock.bind(addr).unwrap();
     sock.listen().unwrap();
     let result = sock.listen();
-    assert!(matches!(result, Err(ErrorCode::InvalidState)));
+    assert!(
+        matches!(result, Err(ErrorCode::InvalidState)),
+        "bad error: {result:?}"
+    );
 }
 
 impl Guest for Component {
