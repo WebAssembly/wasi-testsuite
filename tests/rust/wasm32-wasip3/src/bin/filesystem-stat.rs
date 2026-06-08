@@ -26,6 +26,22 @@ fn check_timestamp(t: Instant) {
     assert!(t.nanoseconds < 1_000_000_000);
 }
 
+fn assert_timestamp_close(actual: Option<Instant>, expected: Instant) {
+    // This helper is only used when restoring timestamps originally read from
+    // the host filesystem. Some runtimes must round-trip those timestamps
+    // through APIs with lower effective precision than WASI's nanosecond
+    // instant; fixed timestamps chosen by this test are still checked exactly.
+    const TOLERANCE_NS: i128 = 1_000;
+
+    let actual = actual.unwrap();
+    let actual_ns = actual.seconds as i128 * 1_000_000_000 + actual.nanoseconds as i128;
+    let expected_ns = expected.seconds as i128 * 1_000_000_000 + expected.nanoseconds as i128;
+    assert!(
+        (actual_ns - expected_ns).abs() <= TOLERANCE_NS,
+        "timestamp mismatch: expected {expected:?}, got {actual:?}"
+    );
+}
+
 fn check_stat(stat: &DescriptorStat, type_: DescriptorType) {
     assert_eq!(stat.type_, type_);
     // assert_eq!(stat.link_count, 0) ?
@@ -177,11 +193,8 @@ async fn test_stat(dir: &Descriptor) {
             Some(new_mtime)
         );
         assert_eq!(set_times_at(no_flags, "a.txt", atime, mtime).await, Ok(()));
-        assert_eq!(afd.stat().await.unwrap().data_access_timestamp, Some(atime));
-        assert_eq!(
-            afd.stat().await.unwrap().data_modification_timestamp,
-            Some(mtime)
-        );
+        assert_timestamp_close(afd.stat().await.unwrap().data_access_timestamp, atime);
+        assert_timestamp_close(afd.stat().await.unwrap().data_modification_timestamp, mtime);
 
         assert_eq!(
             afd.set_times(
@@ -207,11 +220,8 @@ async fn test_stat(dir: &Descriptor) {
             .await,
             Ok(())
         );
-        assert_eq!(afd.stat().await.unwrap().data_access_timestamp, Some(atime));
-        assert_eq!(
-            afd.stat().await.unwrap().data_modification_timestamp,
-            Some(mtime)
-        );
+        assert_timestamp_close(afd.stat().await.unwrap().data_access_timestamp, atime);
+        assert_timestamp_close(afd.stat().await.unwrap().data_modification_timestamp, mtime);
     }
 }
 

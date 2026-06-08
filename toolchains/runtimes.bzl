@@ -1,8 +1,11 @@
 """Download rules for WASI runtime binaries used by the test suite."""
 
+load("@wasmono//toolchains/wasm:node.bzl", "NodeInfo")
 load("@wasmono//:defs.bzl", "host_arch", "host_os")
 load(":releases.bzl", "WAMR_RELEASES", "WASMEDGE_RELEASES", "WASMTIME_RELEASES", "WAZERO_RELEASES")
 
+DEFAULT_JCO_VERSION = "1.21.0"
+DEFAULT_NODE_VERSION = "24.16.0"
 DEFAULT_WAMR_VERSION = "2.4.4"
 DEFAULT_WASMEDGE_VERSION = "0.17.0"
 DEFAULT_WASMTIME_VERSION = "45.0.0"
@@ -63,6 +66,57 @@ _runtime_distribution = rule(
         "prefix": attrs.string(default = ""),
     },
 )
+
+def _jco_runtime_command_impl(ctx: AnalysisContext) -> list[Provider]:
+    node_info = ctx.attrs.node[NodeInfo]
+    jco_workspace = ctx.attrs.jco[DefaultInfo].default_outputs[0]
+    jco_js = cmd_args(
+        jco_workspace,
+        format = "{}/node_modules/@bytecodealliance/jco/src/jco.js",
+    )
+
+    run = cmd_args(
+        node_info.node,
+        "--experimental-wasm-jspi",
+        ctx.attrs.runner,
+        "--jco",
+        jco_js,
+        "--jco-workspace",
+        jco_workspace,
+    )
+
+    return [
+        DefaultInfo(default_output = ctx.attrs.runner),
+        RunInfo(args = run),
+    ]
+
+_jco_runtime_command = rule(
+    impl = _jco_runtime_command_impl,
+    attrs = {
+        "jco": attrs.dep(providers = [DefaultInfo]),
+        "node": attrs.dep(providers = [NodeInfo]),
+        "runner": attrs.source(),
+    },
+)
+
+def jco_runtime_command(
+        name: str,
+        jco: str,
+        node: str,
+        runner: str,
+        visibility = None):
+    """Create a command for running WASI P3 command components through jco."""
+    kwargs = {}
+    if visibility != None:
+        kwargs["visibility"] = visibility
+
+    _jco_runtime_command(
+        name = name,
+        jco = jco,
+        node = node,
+        runner = runner,
+        **kwargs
+    )
 
 def _download_runtime(
         name: str,

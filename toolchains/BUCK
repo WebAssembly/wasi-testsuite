@@ -7,6 +7,8 @@ load("@prelude//toolchains:rust.bzl", "system_rust_toolchain")
 load("@root//tools:runtime.bzl", "WAMR_COMPATIBLE_WITH", "wasi_runtime")
 load(
     ":runtimes.bzl",
+    "DEFAULT_JCO_VERSION",
+    "DEFAULT_NODE_VERSION",
     "DEFAULT_WAMR_VERSION",
     "DEFAULT_WASMEDGE_VERSION",
     "DEFAULT_WASMTIME_VERSION",
@@ -15,6 +17,7 @@ load(
     "download_wasmedge_runtime",
     "download_wasmtime_runtime",
     "download_wazero_runtime",
+    "jco_runtime_command",
 )
 load(
     "@wasmono//:defs.bzl",
@@ -24,6 +27,7 @@ load(
     "download_wasm_tools",
     "download_wasi_sdk",
     "install_asc",
+    "install_jco",
     "node_toolchain",
     "wasm_tools_toolchain",
 )
@@ -153,12 +157,42 @@ wasi_runtime(
     visibility = ["PUBLIC"],
 )
 
+wasi_runtime(
+    name = "jco_runtime",
+    adapter = "root//adapters:jco.py",
+    exclude_filter = select({
+        "config//os:windows": "root//expectations:jco_windows",
+        "DEFAULT": "root//expectations:jco",
+    }),
+    runtime = ":jco_command",
+    runtime_env_var = "JCO",
+    labels = ["jco"],
+    visibility = ["PUBLIC"],
+)
+
 # AssemblyScript compiler toolchain.
-download_node(name = "node_dist", version = "20.18.0")
+download_node(name = "node_dist", version = DEFAULT_NODE_VERSION)
 node_toolchain(name = "node", distribution = ":node_dist", visibility = ["PUBLIC"])
 
 install_asc(name = "asc_dist", version = "0.27.31", node = ":node_dist")
 asc_toolchain(name = "asc", distribution = ":asc_dist", visibility = ["PUBLIC"])
+
+# JCO distribution and toolchain.
+install_jco(
+    name = "jco_dist",
+    version = DEFAULT_JCO_VERSION,
+    node = ":node_dist",
+    package_json = "root//third-party/js:jco_package_json",
+    package_lock = "root//third-party/js:jco_package_lock",
+)
+
+jco_runtime_command(
+    name = "jco_command",
+    jco = ":jco_dist",
+    node = ":node_dist",
+    runner = "root//tools:jco_runner.mjs",
+    visibility = ["PUBLIC"],
+)
 
 # Test execution toolchains required by Buck's test command.
 noop_test_toolchain(name = "test", visibility = ["PUBLIC"])

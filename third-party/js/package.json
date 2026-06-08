@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "dependencies": {
+    "@bytecodealliance/jco": "1.21.0"
+  }
+}

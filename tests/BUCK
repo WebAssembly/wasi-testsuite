@@ -40,6 +40,13 @@ wasi_suite(
     target_compatible_with = WAMR_COMPATIBLE_WITH,
 )
 
+wasi_suite(
+    name = "jco",
+    tests = [
+        "//tests/rust/wasm32-wasip3:jco",
+    ],
+)
+
 wasi_dist(
     name = "dist",
     suites = [":wasmtime"],
