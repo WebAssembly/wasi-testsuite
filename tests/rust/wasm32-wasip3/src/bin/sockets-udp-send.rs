@@ -18,7 +18,7 @@ async fn test_wrong_address_family(family: IpAddressFamily) {
     };
 
     let result = sock.send(vec![0; 1], Some(addr)).await;
-    assert!(matches!(result, Err(ErrorCode::InvalidArgument)));
+    assert!(matches!(result, Err(ErrorCode::InvalidArgument)), "bad error: {result:?}");
 }
 
 async fn test_implicit_bind(family: IpAddressFamily) {
@@ -70,14 +70,14 @@ async fn test_unspecified_remote_addr(family: IpAddressFamily) {
     // FIXME: According to the spec this should return
     //     `invalid-argument`: The IP address in `remote-address` is
     //     set to INADDR_ANY (`0.0.0.0` / `::`).
-    assert!(matches!(result, Err(ErrorCode::InvalidArgument)));
+    assert!(matches!(result, Err(ErrorCode::InvalidArgument)), "bad error: {result:?}");
 }
 
 async fn test_remote_addr_with_port_0(family: IpAddressFamily) {
     let sock = UdpSocket::create(family).unwrap();
     let addr = IpSocketAddress::localhost(family, 0);
     let result = sock.send(vec![0; 1], Some(addr)).await;
-    assert!(matches!(result, Err(ErrorCode::AddressNotBindable)));
+    assert!(matches!(result, Err(ErrorCode::AddressNotBindable)), "bad error: {result:?}");
 }
 
 async fn test_datagram_too_large(family: IpAddressFamily) {
@@ -85,7 +85,7 @@ async fn test_datagram_too_large(family: IpAddressFamily) {
     let addr = IpSocketAddress::localhost(family, PORT);
     let result = sock.send(vec![0u8; 65536], Some(addr)).await;
 
-    assert!(matches!(result, Err(ErrorCode::DatagramTooLarge)));
+    assert!(matches!(result, Err(ErrorCode::DatagramTooLarge)), "bad error: {result:?}");
 }
 
 impl Guest for Component {

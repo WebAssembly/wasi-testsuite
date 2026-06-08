@@ -18,7 +18,7 @@ fn test_invalid_address_family(family: IpAddressFamily) {
     };
 
     let result = sock.connect(addr);
-    assert!(matches!(result, Err(ErrorCode::InvalidArgument)));
+    assert!(matches!(result, Err(ErrorCode::InvalidArgument)), "bad error: {result:?}");
 }
 
 fn test_reject_dual_stack() {
@@ -26,7 +26,7 @@ fn test_reject_dual_stack() {
     let addr = IpSocketAddress::ipv4_mapped_ipv6_localhost(PORT);
     let result = sock.connect(addr);
 
-    assert!(matches!(result, Err(ErrorCode::InvalidArgument)));
+    assert!(matches!(result, Err(ErrorCode::InvalidArgument)), "bad error: {result:?}");
 }
 
 fn test_unspecified_remote_addr(family: IpAddressFamily) {
@@ -34,7 +34,7 @@ fn test_unspecified_remote_addr(family: IpAddressFamily) {
     let addr = IpSocketAddress::unspecified(family, PORT);
     let result = sock.connect(addr);
 
-    assert!(matches!(result, Err(ErrorCode::InvalidArgument)));
+    assert!(matches!(result, Err(ErrorCode::InvalidArgument)), "bad error: {result:?}");
 }
 
 fn test_connect_0_port(family: IpAddressFamily) {
@@ -42,7 +42,7 @@ fn test_connect_0_port(family: IpAddressFamily) {
     let addr = IpSocketAddress::localhost(family, 0);
     let result = sock.connect(addr);
 
-    assert!(matches!(result, Err(ErrorCode::InvalidArgument)));
+    assert!(matches!(result, Err(ErrorCode::InvalidArgument)), "bad error: {result:?}");
 }
 
 fn test_implicit_bind(family: IpAddressFamily) {
@@ -73,7 +73,7 @@ fn test_explicit_bind_addrinuse(family: IpAddressFamily) {
     let sock2 = UdpSocket::create(family).unwrap();
     let result = sock2.bind(sock1_addr);
 
-    assert!(matches!(result, Err(ErrorCode::AddressInUse)));
+    assert!(matches!(result, Err(ErrorCode::AddressInUse)), "bad error: {result:?}");
 }
 
 fn test_reconnect_same_address(family: IpAddressFamily) {
@@ -93,7 +93,8 @@ fn test_reconnect_same_address(family: IpAddressFamily) {
 
 fn test_reconnect_different_address(family: IpAddressFamily) {
     let sock = UdpSocket::create(family).unwrap();
-    assert!(matches!(sock.disconnect(), Err(ErrorCode::InvalidState)));
+    let result = sock.disconnect();
+    assert!(matches!(result, Err(ErrorCode::InvalidState)), "bad error: {result:?}");
 
     let addr1 = IpSocketAddress::localhost(family, PORT);
     sock.connect(addr1).unwrap();
