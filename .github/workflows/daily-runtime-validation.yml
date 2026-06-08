@@ -28,10 +28,8 @@ jobs:
         uses: taiki-e/cache-cargo-install-action@417450f3c33ee20393705369577571770643d4c7 # v3.0.7
         with:
           tool: just
-      - name: install dotslash
-        uses: taiki-e/cache-cargo-install-action@417450f3c33ee20393705369577571770643d4c7 # v3.0.7
-        with:
-          tool: dotslash
+
+      - uses: facebook/install-dotslash@5f505c7478ed90c86b492133b43dca875a3c885a
 
       - name: Install Rust WASI targets
         run: rustup target add wasm32-wasip1 wasm32-wasip2
@@ -57,10 +55,7 @@ jobs:
         uses: taiki-e/cache-cargo-install-action@417450f3c33ee20393705369577571770643d4c7 # v3.0.7
         with:
           tool: just
-      - name: install dotslash
-        uses: taiki-e/cache-cargo-install-action@417450f3c33ee20393705369577571770643d4c7 # v3.0.7
-        with:
-          tool: dotslash
+      - uses: facebook/install-dotslash@5f505c7478ed90c86b492133b43dca875a3c885a
 
       - name: Install Rust WASI targets
         run: rustup target add wasm32-wasip1 wasm32-wasip2
