@@ -21,7 +21,10 @@ unsafe fn test_fstflags_validate(dir_fd: wasi::Fd) {
         200,
         wasi::FSTFLAGS_MTIM | wasi::FSTFLAGS_MTIM_NOW,
     );
-    assert!(matches!(result, Err(wasi::ERRNO_INVAL)), "bad error: {result:?}");
+    assert!(
+        matches!(result, Err(wasi::ERRNO_INVAL)),
+        "bad error: {result:?}"
+    );
 
     let result = wasi::fd_filestat_set_times(
         file_fd,
@@ -29,7 +32,10 @@ unsafe fn test_fstflags_validate(dir_fd: wasi::Fd) {
         200,
         wasi::FSTFLAGS_ATIM | wasi::FSTFLAGS_ATIM_NOW,
     );
-    assert!(matches!(result, Err(wasi::ERRNO_INVAL)), "bad error: {result:?}");
+    assert!(
+        matches!(result, Err(wasi::ERRNO_INVAL)),
+        "bad error: {result:?}"
+    );
 
     wasi::fd_close(file_fd).expect("failed to close fd");
 }
