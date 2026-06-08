@@ -18,7 +18,10 @@ async fn test_invalid_address_family(family: IpAddressFamily) {
     };
 
     let result = sock.connect(addr).await;
-    assert!(matches!(result, Err(ErrorCode::InvalidArgument)), "bad error: {result:?}");
+    assert!(
+        matches!(result, Err(ErrorCode::InvalidArgument)),
+        "bad error: {result:?}"
+    );
 }
 
 async fn test_non_unicast(family: IpAddressFamily) {
@@ -46,7 +49,10 @@ async fn test_non_unicast(family: IpAddressFamily) {
         let socket_addr = IpSocketAddress::new(addr, PORT);
         let result = sock.connect(socket_addr).await;
 
-        assert!(matches!(result, Err(ErrorCode::InvalidArgument)), "bad error: {result:?}");
+        assert!(
+            matches!(result, Err(ErrorCode::InvalidArgument)),
+            "bad error: {result:?}"
+        );
     }
 }
 
@@ -55,7 +61,10 @@ async fn test_reject_dual_stack() {
     let addr = IpSocketAddress::ipv4_mapped_ipv6_localhost(PORT);
     let result = sock.connect(addr).await;
 
-    assert!(matches!(result, Err(ErrorCode::InvalidArgument)), "bad error: {result:?}");
+    assert!(
+        matches!(result, Err(ErrorCode::InvalidArgument)),
+        "bad error: {result:?}"
+    );
 }
 
 async fn test_unspecified_remote_addr(family: IpAddressFamily) {
@@ -63,7 +72,10 @@ async fn test_unspecified_remote_addr(family: IpAddressFamily) {
     let addr = IpSocketAddress::unspecified(family, PORT);
     let result = sock.connect(addr).await;
 
-    assert!(matches!(result, Err(ErrorCode::InvalidArgument)), "bad error: {result:?}");
+    assert!(
+        matches!(result, Err(ErrorCode::InvalidArgument)),
+        "bad error: {result:?}"
+    );
 }
 
 async fn test_connect_0_port(family: IpAddressFamily) {
@@ -71,7 +83,10 @@ async fn test_connect_0_port(family: IpAddressFamily) {
     let addr = IpSocketAddress::localhost(family, 0);
     let result = sock.connect(addr).await;
 
-    assert!(matches!(result, Err(ErrorCode::InvalidArgument)), "bad error: {result:?}");
+    assert!(
+        matches!(result, Err(ErrorCode::InvalidArgument)),
+        "bad error: {result:?}"
+    );
 }
 
 async fn test_connected_state(family: IpAddressFamily) {
@@ -87,7 +102,10 @@ async fn test_connected_state(family: IpAddressFamily) {
     assert!(result.is_ok());
 
     let result = sock.connect(server_addr).await;
-    assert!(matches!(result, Err(ErrorCode::InvalidState)), "bad error: {result:?}");
+    assert!(
+        matches!(result, Err(ErrorCode::InvalidState)),
+        "bad error: {result:?}"
+    );
 }
 
 async fn test_listening_state(family: IpAddressFamily) {
@@ -100,7 +118,10 @@ async fn test_listening_state(family: IpAddressFamily) {
     let result = listener
         .connect(IpSocketAddress::localhost(family, PORT))
         .await;
-    assert!(matches!(result, Err(ErrorCode::InvalidState)), "bad error: {result:?}");
+    assert!(
+        matches!(result, Err(ErrorCode::InvalidState)),
+        "bad error: {result:?}"
+    );
 }
 
 async fn test_connection_refused(family: IpAddressFamily) {
@@ -112,7 +133,10 @@ async fn test_connection_refused(family: IpAddressFamily) {
     let sock2 = TcpSocket::create(family).unwrap();
     let result = sock2.connect(addr).await;
 
-    assert!(matches!(result, Err(ErrorCode::ConnectionRefused)), "bad error: {result:?}");
+    assert!(
+        matches!(result, Err(ErrorCode::ConnectionRefused)),
+        "bad error: {result:?}"
+    );
 }
 
 async fn test_explicit_bind(family: IpAddressFamily) {
@@ -151,7 +175,10 @@ async fn test_explicit_bind_addrinuse(family: IpAddressFamily) {
     let client = TcpSocket::create(family).unwrap();
 
     let result = client.bind(listener_address);
-    assert!(matches!(result, Err(ErrorCode::AddressInUse)), "bad error: {result:?}");
+    assert!(
+        matches!(result, Err(ErrorCode::AddressInUse)),
+        "bad error: {result:?}"
+    );
 }
 
 impl Guest for Component {

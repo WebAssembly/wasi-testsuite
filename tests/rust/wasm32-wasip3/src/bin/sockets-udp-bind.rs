@@ -16,7 +16,10 @@ fn test_invalid_address_family(family: IpAddressFamily) {
     };
 
     let result = sock.bind(addr);
-    assert!(matches!(result, Err(ErrorCode::InvalidArgument)), "bad error: {result:?}");
+    assert!(
+        matches!(result, Err(ErrorCode::InvalidArgument)),
+        "bad error: {result:?}"
+    );
 }
 
 fn test_already_bound(family: IpAddressFamily) {
@@ -24,7 +27,10 @@ fn test_already_bound(family: IpAddressFamily) {
     let addr = IpSocketAddress::localhost(family, 0);
     assert!(sock.bind(addr).is_ok());
     let result = sock.bind(addr);
-    assert!(matches!(result, Err(ErrorCode::InvalidState)), "bad error: {result:?}");
+    assert!(
+        matches!(result, Err(ErrorCode::InvalidState)),
+        "bad error: {result:?}"
+    );
 }
 
 fn test_not_bindable(family: IpAddressFamily) {
@@ -68,7 +74,10 @@ fn test_reject_dual_stack() {
     let addr = IpSocketAddress::ipv4_mapped_ipv6_localhost(0);
     let result = sock.bind(addr);
 
-    assert!(matches!(result, Err(ErrorCode::InvalidArgument)), "bad error: {result:?}");
+    assert!(
+        matches!(result, Err(ErrorCode::InvalidArgument)),
+        "bad error: {result:?}"
+    );
 }
 
 fn test_unspecified_addr(family: IpAddressFamily) {
