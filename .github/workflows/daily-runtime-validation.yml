@@ -24,10 +24,14 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Install Buck2 helper tools
-        uses: taiki-e/install-action@15413b256f995d819248ea62704771a959284285 # v2.79.13
+      - name: install just
+        uses: taiki-e/cache-cargo-install-action@417450f3c33ee20393705369577571770643d4c7 # v3.0.7
         with:
-          tool: dotslash,just
+          tool: just
+      - name: install dotslash
+        uses: taiki-e/cache-cargo-install-action@417450f3c33ee20393705369577571770643d4c7 # v3.0.7
+        with:
+          tool: dotslash
 
       - name: Install Rust WASI targets
         run: rustup target add wasm32-wasip1 wasm32-wasip2
@@ -49,10 +53,14 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Install Buck2 helper tools
-        uses: taiki-e/install-action@15413b256f995d819248ea62704771a959284285 # v2.79.13
+      - name: install just
+        uses: taiki-e/cache-cargo-install-action@417450f3c33ee20393705369577571770643d4c7 # v3.0.7
         with:
-          tool: dotslash,just
+          tool: just
+      - name: install dotslash
+        uses: taiki-e/cache-cargo-install-action@417450f3c33ee20393705369577571770643d4c7 # v3.0.7
+        with:
+          tool: dotslash
 
       - name: Install Rust WASI targets
         run: rustup target add wasm32-wasip1 wasm32-wasip2
