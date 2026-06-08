@@ -144,6 +144,7 @@ async fn test_explicit_bind_addrinuse(family: IpAddressFamily) {
         let bind_address = IpSocketAddress::localhost(family, 0);
         let listener = TcpSocket::create(family).unwrap();
         listener.bind(bind_address).unwrap();
+        listener.listen().unwrap();
         listener
     };
 
