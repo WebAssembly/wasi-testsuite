@@ -1,0 +1,10 @@
+{
+  "WASI Rust tests [wasm32-wasip3]": {
+    "filesystem-flags-and-type": "jco preview3-shim filesystem behavior differs on Windows for this Preview 3 test",
+    "filesystem-mkdir-rmdir": "jco preview3-shim filesystem behavior differs on Windows for this Preview 3 test",
+    "filesystem-set-size": "jco preview3-shim filesystem behavior differs on Windows for this Preview 3 test",
+    "filesystem-stat": "jco preview3-shim filesystem behavior differs on Windows for this Preview 3 test",
+    "sockets-udp-receive": "jco preview3-shim UDP receive behavior differs for this Preview 3 test",
+    "sockets-udp-send": "jco preview3-shim UDP send behavior differs for this Preview 3 test"
+  }
+}

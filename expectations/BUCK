@@ -40,6 +40,18 @@ export_file(
     visibility = ["PUBLIC"],
 )
 
+export_file(
+    name = "jco",
+    src = "jco.json",
+    visibility = ["PUBLIC"],
+)
+
+export_file(
+    name = "jco_windows",
+    src = "jco-windows.json",
+    visibility = ["PUBLIC"],
+)
+
 filegroup(
     name = "dist_files",
     srcs = glob(["*.json"]),

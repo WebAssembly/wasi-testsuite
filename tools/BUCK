@@ -11,3 +11,9 @@ python_binary(
     main = "package_dist.py",
     visibility = ["//tests/..."],
 )
+
+export_file(
+    name = "jco_runner.mjs",
+    src = "jco_runner.mjs",
+    visibility = ["toolchains//..."],
+)

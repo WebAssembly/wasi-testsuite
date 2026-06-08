@@ -31,10 +31,13 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install Buck2 helper tools
-        uses: taiki-e/install-action@15413b256f995d819248ea62704771a959284285 # v2.79.13
+      - name: Install just
+        uses: taiki-e/cache-cargo-install-action@417450f3c33ee20393705369577571770643d4c7 # v3.0.7
         with:
-          tool: dotslash,just
+          tool: just
+
+      - name: Install DotSlash
+        uses: facebook/install-dotslash@5f505c7478ed90c86b492133b43dca875a3c885a
 
       - name: Install Rust WASI targets
         run: rustup target add wasm32-wasip1 wasm32-wasip2
@@ -50,6 +53,9 @@ jobs:
 
       - name: Run Wasmtime Buck tests
         run: just test
+
+      - name: Run JCO Buck tests
+        run: just test-jco
 
       - name: Run extra Buck runtime tests
         if: runner.os == 'Linux'

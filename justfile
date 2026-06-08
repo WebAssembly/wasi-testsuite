@@ -69,6 +69,11 @@ dist:
 test:
     {{buck}} test //tests:wasmtime
 
+# Run the jco Buck tests.
+[group('test')]
+test-jco:
+    {{buck}} test //tests:jco
+
 # Run one C runtime suite.
 [group('test')]
 test-c runtime="wasmtime":
@@ -89,7 +94,7 @@ test-rust wasi="p1" runtime="wasmtime":
 test-all:
     {{buck}} test //tests/...
 
-# Run non-Wasmtime Buck runtime suites.
+# Run additional Buck runtime suites.
 [group('test')]
 test-extra-runtimes:
     {{buck}} test //tests:wazero //tests:wasmedge //tests:wamr

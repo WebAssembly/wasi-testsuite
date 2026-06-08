@@ -1,0 +1,11 @@
+export_file(
+    name = "jco_package_json",
+    src = "package.json",
+    visibility = ["toolchains//..."],
+)
+
+export_file(
+    name = "jco_package_lock",
+    src = "package-lock.json",
+    visibility = ["toolchains//..."],
+)
