@@ -11,21 +11,21 @@ fn test_properties(family: IpAddressFamily) {
         sock.set_unicast_hop_limit(0),
         Err(ErrorCode::InvalidArgument)
     ));
-    assert!(matches!(sock.set_unicast_hop_limit(1), Ok(_)));
-    assert!(matches!(sock.set_unicast_hop_limit(u8::MAX), Ok(_)));
+    sock.set_unicast_hop_limit(1).unwrap();
+    sock.set_unicast_hop_limit(u8::MAX).unwrap();
 
     assert!(matches!(
         sock.set_receive_buffer_size(0),
         Err(ErrorCode::InvalidArgument)
     ));
-    assert!(matches!(sock.set_receive_buffer_size(1), Ok(_)));
-    assert!(matches!(sock.set_receive_buffer_size(u64::MAX), Ok(_)));
+    sock.set_receive_buffer_size(1).unwrap();
+    sock.set_receive_buffer_size(u64::MAX).unwrap();
     assert!(matches!(
         sock.set_send_buffer_size(0),
         Err(ErrorCode::InvalidArgument)
     ));
-    assert!(matches!(sock.set_send_buffer_size(1), Ok(_)));
-    assert!(matches!(sock.set_send_buffer_size(u64::MAX), Ok(_)));
+    sock.set_send_buffer_size(1).unwrap();
+    sock.set_send_buffer_size(u64::MAX).unwrap();
 
     sock.set_unicast_hop_limit(42).unwrap();
     assert_eq!(sock.get_unicast_hop_limit().unwrap(), 42);

@@ -9,7 +9,11 @@ export!(Component);
 
 async fn test_not_bound(family: IpAddressFamily) {
     let sock = UdpSocket::create(family).unwrap();
-    assert!(matches!(sock.receive().await, Err(ErrorCode::InvalidState)));
+    let result = sock.receive().await;
+    assert!(
+        matches!(result, Err(ErrorCode::InvalidState)),
+        "bad error: {result:?}"
+    );
 }
 
 async fn test_receive_data(family: IpAddressFamily) {

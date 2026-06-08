@@ -12,7 +12,11 @@ async fn test_connected_state(family: IpAddressFamily) {
     let sock = TcpSocket::create(family).unwrap();
 
     let (_, fut) = sock.receive();
-    assert!(matches!(fut.await, Err(ErrorCode::InvalidState)));
+    let result = fut.await;
+    assert!(
+        matches!(result, Err(ErrorCode::InvalidState)),
+        "bad error: {result:?}"
+    );
 }
 
 async fn test_multiple_receive(family: IpAddressFamily) {
@@ -29,7 +33,11 @@ async fn test_multiple_receive(family: IpAddressFamily) {
             let (_, fut1) = sock.receive();
             let (_, fut2) = sock.receive();
             assert!(fut1.await.is_ok());
-            assert!(matches!(fut2.await, Err(ErrorCode::InvalidState)));
+            let result = fut2.await;
+            assert!(
+                matches!(result, Err(ErrorCode::InvalidState)),
+                "bad error: {result:?}"
+            );
         },
         async {
             let local_addr = server.get_local_address().unwrap();
