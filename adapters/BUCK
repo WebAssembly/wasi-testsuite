@@ -34,6 +34,15 @@ export_file(
     ],
 )
 
+export_file(
+    name = "jco.py",
+    src = "jco.py",
+    visibility = [
+        "toolchains//...",
+        "//tests/...",
+    ],
+)
+
 filegroup(
     name = "dist_files",
     srcs = glob(["*.py"]),

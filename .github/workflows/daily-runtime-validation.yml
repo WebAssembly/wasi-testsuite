@@ -34,11 +34,17 @@ jobs:
       - name: Install Rust WASI targets
         run: rustup target add wasm32-wasip1 wasm32-wasip2
 
-      - name: Run all tests
+      - name: Run Wasmtime tests
         env:
           MSYS_NO_PATHCONV: "1"
           MSYS2_ARG_CONV_EXCL: "*"
         run: just test
+
+      - name: Run jco tests
+        env:
+          MSYS_NO_PATHCONV: "1"
+          MSYS2_ARG_CONV_EXCL: "*"
+        run: just test-jco
 
   other-runtimes:
     runs-on: ubuntu-latest

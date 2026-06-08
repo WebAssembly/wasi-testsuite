@@ -150,7 +150,7 @@ class TestCaseRunner(TestCaseRunnerBase):
 
     def do_wait(self, wait: Wait) -> None:
         try:
-            exit_code, out, err = self._wait(5)
+            exit_code, out, err = self._wait(self._runtime.get_timeout_seconds())
             if (
                 os.name == "nt"
                 and self._windows_terminated_by_runner

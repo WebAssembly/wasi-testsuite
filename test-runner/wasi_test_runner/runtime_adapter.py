@@ -74,6 +74,13 @@ def _load_adapter_as_module(adapter_path: str) -> Any:
     return module
 
 
+def _get_timeout_seconds(adapter: Any) -> float:
+    try:
+        return float(adapter.get_timeout_seconds())
+    except AttributeError:
+        return 5.0
+
+
 class RuntimeAdapter:
     def __init__(self, adapter_path: str) -> None:
         _assert_not_legacy_adapter(adapter_path)
@@ -87,6 +94,7 @@ class RuntimeAdapter:
             wasi_worlds = frozenset(
                 WasiWorld(w) for w in self._adapter.get_wasi_worlds()
             )
+            self._timeout_seconds = _get_timeout_seconds(self._adapter)
         except subprocess.CalledProcessError as e:
             raise UnavailableRuntimeAdapterError(adapter_path, e) from e
         except FileNotFoundError as e:
@@ -95,6 +103,9 @@ class RuntimeAdapter:
 
     def get_meta(self) -> RuntimeMeta:
         return self._meta
+
+    def get_timeout_seconds(self) -> float:
+        return self._timeout_seconds
 
     def compute_argv(self, test_path: str,
                      args: List[str],

@@ -85,8 +85,21 @@ _WASMTIME_TESTS = rust_p3_tests_for_runtime(
     manifest = _WASI_RUST_P3,
 )
 
+_JCO_TESTS = rust_p3_tests_for_runtime(
+    tests = _RUST_P3_TESTS,
+    name = "jco",
+    runtime = "toolchains//:jco_runtime",
+    manifest = _WASI_RUST_P3,
+)
+
 wasi_suite(
     name = "wasmtime",
     tests = _WASMTIME_TESTS,
+    visibility = ["//tests/..."],
+)
+
+wasi_suite(
+    name = "jco",
+    tests = _JCO_TESTS,
     visibility = ["//tests/..."],
 )
