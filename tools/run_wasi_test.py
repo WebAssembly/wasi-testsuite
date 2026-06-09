@@ -57,7 +57,7 @@ def main() -> int:
 
         runtime = RuntimeAdapter(Path(args.adapter))
         exclude_filters = [Path(args.exclude_filter)] if args.exclude_filter else None
-        return run_tests([runtime], [suite_dir], exclude_filters)
+        return run_tests([runtime], [suite_dir], exclude_filters, verbose=True)
 
 
 if __name__ == "__main__":
