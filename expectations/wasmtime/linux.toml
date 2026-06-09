@@ -1,0 +1,17 @@
+version = 1
+
+[[suite]]
+name = "WASI Rust tests [wasm32-wasip1]"
+
+# Wasmtime returns ERRNO_INVAL for path_remove_directory with a trailing slash
+[[suite.test]]
+name = "remove_directory_trailing_slashes"
+action = "skip"
+
+[[suite]]
+name = "WASI Rust tests [wasm32-wasip3]"
+
+# requires a UDP peer managed outside the component under test
+[[suite.test]]
+name = "sockets-udp-send"
+action = "skip"
