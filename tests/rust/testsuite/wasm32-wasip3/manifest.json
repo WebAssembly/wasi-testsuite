@@ -1,1 +1,4 @@
-{"name": "WASI Rust tests [wasm32-wasip3]"}
+{
+  "name": "WASI Rust tests [wasm32-wasip3]",
+  "version": "wasm32-wasip3"
+}
