@@ -3,12 +3,7 @@ version = 1
 [[suite]]
 name = "WASI Rust tests [wasm32-wasip3]"
 
-# jco preview3-shim UDP receive behavior differs for this Preview 3 test
+# jco currently times out on this test
 [[suite.test]]
 name = "sockets-udp-receive"
-action = "skip"
-
-# jco preview3-shim UDP send behavior differs for this Preview 3 test
-[[suite.test]]
-name = "sockets-udp-send"
 action = "skip"
