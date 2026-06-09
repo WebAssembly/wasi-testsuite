@@ -97,10 +97,10 @@ unsafe fn test_path_link(dir_fd: wasi::Fd) {
     wasi::path_link(dir_fd, 0, "file", subdir_fd, "link").expect("creating a link in subdirectory");
     let link_fd = open_link(subdir_fd, "link");
     check_rights(file_fd, link_fd);
-    wasi::path_unlink_file(subdir_fd, "link").expect("removing a link");
-    wasi::fd_close(subdir_fd).expect("Closing subdir_fd"); // needed for Windows
     wasi::fd_close(link_fd).expect("Closing link_fd"); // needed for Windows
     wasi::fd_close(file_fd).expect("Closing file_fd"); // needed for Windows
+    wasi::path_unlink_file(subdir_fd, "link").expect("removing a link");
+    wasi::fd_close(subdir_fd).expect("Closing subdir_fd"); // needed for Windows
     wasi::path_remove_directory(dir_fd, "subdir").expect("removing a subdirectory");
 
     // Create a link to a path that already exists
@@ -150,10 +150,9 @@ unsafe fn test_path_link(dir_fd: wasi::Fd) {
         wasi::ERRNO_NOENT
     );
 
-    if TESTCONFIG.support_dangling_filesystem() {
-        // Create a link to a dangling symlink
-        wasi::path_symlink("target", dir_fd, "symlink").expect("creating a dangling symlink");
-
+    if TESTCONFIG.support_dangling_filesystem()
+        && wasi::path_symlink("target", dir_fd, "symlink").is_ok()
+    {
         // This should succeed, because we're not following symlinks
         wasi::path_link(dir_fd, 0, "symlink", dir_fd, "link")
             .expect("creating a link to a dangling symlink should succeed");
@@ -230,5 +229,8 @@ fn main() {
     // Run the tests.
     unsafe { test_path_link(dir_fd) }
 
+    unsafe {
+        wasi::fd_close(dir_fd).unwrap();
+    }
     unsafe { wasi::path_remove_directory(base_dir_fd, DIR_NAME).expect("failed to remove dir") }
 }

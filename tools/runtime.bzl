@@ -6,6 +6,25 @@ filter, and Buck labels. Language packages should depend on this provider
 through `wasi_test`.
 """
 
+WAMR_COMPATIBLE_WITH = [
+    "config//os/constraints:linux",
+    "config//cpu/constraints:x86_64",
+]
+
+WASMEDGE_COMPATIBLE_WITH = select({
+    "config//os:linux": [],
+    "config//os:macos": [],
+    "config//os:windows": ["config//cpu/constraints:x86_64"],
+    "DEFAULT": ["config//:none"],
+})
+
+WAZERO_COMPATIBLE_WITH = select({
+    "config//os:linux": [],
+    "config//os:macos": [],
+    "config//os:windows": ["config//cpu/constraints:x86_64"],
+    "DEFAULT": ["config//:none"],
+})
+
 WasiRuntimeInfo = provider(
     doc = "Provider describing one WASI runtime configuration.",
     fields = {
@@ -21,11 +40,6 @@ WasiRuntimeInfo = provider(
         "labels": provider_field(list[str], default = []),
     },
 )
-
-WAMR_COMPATIBLE_WITH = [
-    "config//os/constraints:linux",
-    "config//cpu/constraints:x86_64",
-]
 
 def _wasi_runtime_impl(ctx: AnalysisContext) -> list[Provider]:
     return [

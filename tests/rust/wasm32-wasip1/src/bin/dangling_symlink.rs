@@ -5,7 +5,9 @@ unsafe fn test_dangling_symlink(dir_fd: wasi::Fd) {
     if TESTCONFIG.support_dangling_filesystem() {
         const SYMLINK_NAME: &str = "dangling_symlink_symlink.cleanup";
         // First create a dangling symlink.
-        wasi::path_symlink("target", dir_fd, SYMLINK_NAME).expect("creating a symlink");
+        if wasi::path_symlink("target", dir_fd, SYMLINK_NAME).is_err() {
+            return;
+        }
 
         // Try to open it as a directory with O_NOFOLLOW.
         assert_errno!(

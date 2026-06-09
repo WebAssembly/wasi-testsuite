@@ -23,6 +23,7 @@ unsafe fn test_overwrite_preopen(dir_fd: wasi::Fd) {
         wasi::fd_fdstat_get(dir_fd).expect_err("failed fd_fdstat_get"),
         wasi::ERRNO_BADF
     );
+    wasi::fd_close(pre_fd).unwrap();
 }
 
 fn main() {

@@ -126,5 +126,8 @@ fn main() {
     // Run the tests.
     unsafe { test_fd_fdstat_set_rights(dir_fd) }
 
+    unsafe {
+        wasi::fd_close(dir_fd).unwrap();
+    }
     unsafe { wasi::path_remove_directory(base_dir_fd, DIR_NAME).expect("failed to remove dir") }
 }

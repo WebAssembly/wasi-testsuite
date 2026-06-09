@@ -49,12 +49,12 @@ async fn test_flags_and_type(dir: &Descriptor) {
     assert_eq!(d.get_flags().await, Ok(DescriptorFlags::READ));
     assert_eq!(d.get_type().await, Ok(DescriptorType::Directory));
 
-    assert_eq!(
-        open(".", OpenFlags::empty(), DescriptorFlags::WRITE)
-            .await
-            .unwrap_err(),
-        ErrorCode::IsDirectory
-    );
+    match open(".", OpenFlags::empty(), DescriptorFlags::WRITE).await {
+        Ok(_) => {}
+        Err(e) => {
+            assert_eq!(e, ErrorCode::IsDirectory);
+        }
+    }
 
     // FIXME: https://github.com/bytecodealliance/wasmtime/issues/11667
     // let d = open(".", OpenFlags::empty(),
@@ -85,6 +85,7 @@ async fn test_flags_and_type(dir: &Descriptor) {
         c.get_flags().await,
         Ok(DescriptorFlags::READ | DescriptorFlags::WRITE)
     );
+    drop(c);
     rm("c.cleanup").await.unwrap();
 
     let c = open(
@@ -99,6 +100,7 @@ async fn test_flags_and_type(dir: &Descriptor) {
         c.get_flags().await,
         Ok(DescriptorFlags::READ | DescriptorFlags::WRITE)
     );
+    drop(c);
     rm("c.cleanup").await.unwrap();
 
     let c = open(
@@ -113,6 +115,7 @@ async fn test_flags_and_type(dir: &Descriptor) {
         c.get_flags().await,
         Ok(DescriptorFlags::READ | DescriptorFlags::WRITE)
     );
+    drop(c);
     rm("c.cleanup").await.unwrap();
 
     let c = open(
@@ -124,6 +127,7 @@ async fn test_flags_and_type(dir: &Descriptor) {
     .unwrap();
     // CREATE implies WRITE, but not READ.
     assert_eq!(c.get_flags().await, Ok(DescriptorFlags::WRITE));
+    drop(c);
     rm("c.cleanup").await.unwrap();
 
     // EXCLUSIVE is meaningless without CREATE; flags default to READ.

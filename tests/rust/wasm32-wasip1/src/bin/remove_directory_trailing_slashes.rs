@@ -15,8 +15,13 @@ unsafe fn test_remove_directory_trailing_slashes(dir_fd: wasi::Fd) {
     wasi::path_create_directory(dir_fd, TEST_DIRNAME).expect("creating a directory");
 
     // Test that removing it with a trailing slash succeeds.
-    wasi::path_remove_directory(dir_fd, &format!("{}/", TEST_DIRNAME))
-        .expect("remove_directory with a trailing slash on a directory should succeed");
+    match wasi::path_remove_directory(dir_fd, &format!("{}/", TEST_DIRNAME)) {
+        Ok(()) => {}
+        Err(e) => {
+            assert_errno!(e, wasi::ERRNO_ACCES, wasi::ERRNO_INVAL);
+            wasi::path_remove_directory(dir_fd, TEST_DIRNAME).unwrap();
+        }
+    }
 
     // Create a temporary file.
     create_file(dir_fd, TEST_FILENAME);

@@ -36,7 +36,9 @@ unsafe fn test_truncation_rights(dir_fd: wasi::Fd) {
         let mut rights_inheriting: wasi::Rights = dir_fdstat.fs_rights_inheriting;
 
         if (rights_inheriting & wasi::RIGHTS_FD_FILESTAT_SET_SIZE) == 0 {
-            eprintln!("implementation doesn't support setting file sizes through file descriptors, skipping");
+            eprintln!(
+                "implementation doesn't support setting file sizes through file descriptors, skipping"
+            );
         } else {
             rights_inheriting &= !wasi::RIGHTS_FD_FILESTAT_SET_SIZE;
             wasi::fd_fdstat_set_rights(dir_fd, rights_base, rights_inheriting)
@@ -103,5 +105,8 @@ fn main() {
     // Run the tests.
     unsafe { test_truncation_rights(dir_fd) }
 
+    unsafe {
+        wasi::fd_close(dir_fd).unwrap();
+    }
     unsafe { wasi::path_remove_directory(base_dir_fd, DIR_NAME).expect("failed to remove dir") }
 }

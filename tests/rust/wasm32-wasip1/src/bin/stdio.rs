@@ -8,6 +8,7 @@ unsafe fn test_stdio(dir_fd: wasi::Fd) {
     for stdio_from_fd in &[STDIN_FD, STDOUT_FD, STDERR_FD] {
         let stdio_to_fd = wasi::path_open(dir_fd, 0, TEST_FILENAME, wasi::OFLAGS_CREAT, 0, 0, 0)
             .expect("open file");
+        eprintln!("{stdio_from_fd} => {stdio_to_fd}");
 
         wasi::fd_renumber(*stdio_from_fd, stdio_to_fd).expect("renumbering stdio");
 
@@ -45,5 +46,8 @@ fn main() {
     // Run the tests.
     unsafe { test_stdio(dir_fd) }
 
+    unsafe {
+        wasi::fd_close(dir_fd).unwrap();
+    }
     unsafe { wasi::path_remove_directory(base_dir_fd, DIR_NAME).expect("failed to remove dir") }
 }

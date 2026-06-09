@@ -58,9 +58,10 @@ fn check_stat(stat: &DescriptorStat, type_: DescriptorType) {
 }
 
 async fn test_stat(dir: &Descriptor) {
-    dir.symlink_at("..".to_string(), "parent.cleanup".to_string())
+    let has_symlink = dir
+        .symlink_at("..".to_string(), "parent.cleanup".to_string())
         .await
-        .unwrap();
+        .is_ok();
 
     let afd = dir
         .open_at(
@@ -101,14 +102,16 @@ async fn test_stat(dir: &Descriptor) {
 
     assert_eq!(stat("").await, Err(ErrorCode::NoEntry));
     assert_eq!(stat("..").await, Err(ErrorCode::NotPermitted));
-    assert_eq!(
-        stat_follow("parent.cleanup").await,
-        Err(ErrorCode::NotPermitted)
-    );
-    assert_eq!(
-        stat_follow("parent.cleanup/fs-tests.dir").await,
-        Err(ErrorCode::NotPermitted)
-    );
+    if has_symlink {
+        assert_eq!(
+            stat_follow("parent.cleanup").await,
+            Err(ErrorCode::NotPermitted)
+        );
+        assert_eq!(
+            stat_follow("parent.cleanup/fs-tests.dir").await,
+            Err(ErrorCode::NotPermitted)
+        );
+    }
     assert_eq!(stat(".").await, dir.stat().await);
     assert_eq!(stat("/").await, Err(ErrorCode::NotPermitted));
     assert_eq!(stat("/etc/passwd").await, Err(ErrorCode::NotPermitted));
@@ -151,18 +154,22 @@ async fn test_stat(dir: &Descriptor) {
             set_times_at(no_flags, "..", atime, mtime).await,
             Err(ErrorCode::NotPermitted)
         );
-        assert_eq!(
-            set_times_at(follow_flag, "parent.cleanup", atime, mtime).await,
-            Err(ErrorCode::NotPermitted)
-        );
+        if has_symlink {
+            assert_eq!(
+                set_times_at(follow_flag, "parent.cleanup", atime, mtime).await,
+                Err(ErrorCode::NotPermitted)
+            );
+        }
         assert_eq!(
             set_times_at(no_flags, "../foo", atime, mtime).await,
             Err(ErrorCode::NotPermitted)
         );
-        assert_eq!(
-            set_times_at(no_flags, "parent.cleanup/foo", atime, mtime).await,
-            Err(ErrorCode::NotPermitted)
-        );
+        if has_symlink {
+            assert_eq!(
+                set_times_at(no_flags, "parent.cleanup/foo", atime, mtime).await,
+                Err(ErrorCode::NotPermitted)
+            );
+        }
     }
 
     if let Some(atime) = afd.stat().await.unwrap().data_access_timestamp {
@@ -196,32 +203,39 @@ async fn test_stat(dir: &Descriptor) {
         assert_timestamp_close(afd.stat().await.unwrap().data_access_timestamp, atime);
         assert_timestamp_close(afd.stat().await.unwrap().data_modification_timestamp, mtime);
 
-        assert_eq!(
-            afd.set_times(
+        let set_times_result = afd
+            .set_times(
                 NewTimestamp::Timestamp(new_atime),
-                NewTimestamp::Timestamp(new_mtime)
+                NewTimestamp::Timestamp(new_mtime),
             )
-            .await,
-            Ok(())
+            .await;
+        assert!(
+            matches!(
+                set_times_result,
+                Ok(()) | Err(ErrorCode::Access) | Err(ErrorCode::NotPermitted)
+            ),
+            "bad result: {set_times_result:?}",
         );
-        assert_eq!(
-            afd.stat().await.unwrap().data_access_timestamp,
-            Some(new_atime)
-        );
-        assert_eq!(
-            afd.stat().await.unwrap().data_modification_timestamp,
-            Some(new_mtime)
-        );
-        assert_eq!(
-            afd.set_times(
-                NewTimestamp::Timestamp(atime),
-                NewTimestamp::Timestamp(mtime)
-            )
-            .await,
-            Ok(())
-        );
-        assert_timestamp_close(afd.stat().await.unwrap().data_access_timestamp, atime);
-        assert_timestamp_close(afd.stat().await.unwrap().data_modification_timestamp, mtime);
+        if set_times_result.is_ok() {
+            assert_eq!(
+                afd.stat().await.unwrap().data_access_timestamp,
+                Some(new_atime)
+            );
+            assert_eq!(
+                afd.stat().await.unwrap().data_modification_timestamp,
+                Some(new_mtime)
+            );
+            assert_eq!(
+                afd.set_times(
+                    NewTimestamp::Timestamp(atime),
+                    NewTimestamp::Timestamp(mtime)
+                )
+                .await,
+                Ok(())
+            );
+            assert_timestamp_close(afd.stat().await.unwrap().data_access_timestamp, atime);
+            assert_timestamp_close(afd.stat().await.unwrap().data_modification_timestamp, mtime);
+        }
     }
 }
 

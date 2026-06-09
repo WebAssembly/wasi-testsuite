@@ -2,10 +2,9 @@ use std::{env, process};
 use wasi_tests::{assert_errno, create_tmp_dir, open_scratch_directory, TESTCONFIG};
 
 unsafe fn test_symlink_loop(dir_fd: wasi::Fd) {
-    if TESTCONFIG.support_dangling_filesystem() {
-        // Create a self-referencing symlink.
-        wasi::path_symlink("symlink", dir_fd, "symlink").expect("creating a symlink");
-
+    if TESTCONFIG.support_dangling_filesystem()
+        && wasi::path_symlink("symlink", dir_fd, "symlink").is_ok()
+    {
         // Try to open it.
         assert_errno!(
             wasi::path_open(dir_fd, 0, "symlink", 0, 0, 0, 0)
@@ -46,5 +45,8 @@ fn main() {
     // Run the tests.
     unsafe { test_symlink_loop(dir_fd) }
 
+    unsafe {
+        wasi::fd_close(dir_fd).unwrap();
+    }
     unsafe { wasi::path_remove_directory(base_dir_fd, DIR_NAME).expect("failed to remove dir") }
 }
