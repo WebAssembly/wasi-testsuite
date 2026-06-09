@@ -66,9 +66,22 @@ WASMTIME="wasmtime --wasm-features all" ./run-tests
 ```
 
 Optionally you can specify test cases to skip with the `--exclude-filter` option.
+Expectation files use TOML.
 
 ```bash
-./run-tests --exclude-filter examples/skip.json
+./run-tests --exclude-filter examples/skip.toml
+```
+
+```toml
+version = 1
+
+[[suite]]
+name = "WASI Rust tests [wasm32-wasip3]"
+
+# Optional human explanation.
+[[suite.test]]
+name = "unsupported-test"
+action = "skip"
 ```
 
 ### Experimental Buck2 workflow

@@ -1,60 +1,66 @@
 export_file(
     name = "wasmtime_linux",
-    src = "wasmtime-linux.json",
+    src = "wasmtime/linux.toml",
     visibility = ["PUBLIC"],
 )
 
 export_file(
     name = "wasmtime_macos",
-    src = "wasmtime-macos.json",
+    src = "wasmtime/macos.toml",
     visibility = ["PUBLIC"],
 )
 
 export_file(
     name = "wasmtime_windows",
-    src = "wasmtime-windows.json",
+    src = "wasmtime/windows.toml",
     visibility = ["PUBLIC"],
 )
 
 export_file(
     name = "wazero_linux",
-    src = "wazero-linux.json",
+    src = "wazero/linux.toml",
     visibility = ["PUBLIC"],
 )
 
 export_file(
     name = "wazero_macos",
-    src = "wazero-macos.json",
+    src = "wazero/macos.toml",
     visibility = ["PUBLIC"],
 )
 
 export_file(
     name = "wazero_windows",
-    src = "wazero-windows.json",
+    src = "wazero/windows.toml",
     visibility = ["PUBLIC"],
 )
 
 export_file(
     name = "wamr_linux",
-    src = "wamr-linux.json",
+    src = "wamr/linux.toml",
     visibility = ["PUBLIC"],
 )
 
 export_file(
-    name = "jco",
-    src = "jco.json",
+    name = "jco_linux",
+    src = "jco/linux.toml",
+    visibility = ["PUBLIC"],
+)
+
+export_file(
+    name = "jco_macos",
+    src = "jco/macos.toml",
     visibility = ["PUBLIC"],
 )
 
 export_file(
     name = "jco_windows",
-    src = "jco-windows.json",
+    src = "jco/windows.toml",
     visibility = ["PUBLIC"],
 )
 
 filegroup(
     name = "dist_files",
-    srcs = glob(["*.json"]),
+    srcs = glob(["*/*.toml"]),
     out = "expectations",
     copy = True,
     visibility = ["//tests/..."],

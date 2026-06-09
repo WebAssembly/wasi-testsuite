@@ -1,0 +1,9 @@
+version = 1
+
+[[suite]]
+name = "WASI C tests"
+
+# d_ino is known broken in this combination of engine and wasi-sdk version.
+[[suite.test]]
+name = "stat-dev-ino"
+action = "skip"

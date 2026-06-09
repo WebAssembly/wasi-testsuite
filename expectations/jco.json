@@ -1,6 +1,0 @@
-{
-  "WASI Rust tests [wasm32-wasip3]": {
-    "sockets-udp-receive": "jco preview3-shim UDP receive behavior differs for this Preview 3 test",
-    "sockets-udp-send": "jco preview3-shim UDP send behavior differs for this Preview 3 test"
-  }
-}
