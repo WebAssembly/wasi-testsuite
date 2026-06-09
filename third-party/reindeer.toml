@@ -1,7 +1,12 @@
+# Reindeer configuration for Rust third-party dependencies.
+#
+# Run from this directory:
+#   ../reindeer buckify
+#
 vendor = false
 precise_srcs = true
 include_top_level = true
-third_party_dir = "third-party/rust"
+third_party_dir = "rust"
 
 [platform.linux-x86_64]
 target = "x86_64-unknown-linux-gnu"
