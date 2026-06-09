@@ -14,7 +14,7 @@ DEFAULT_WAZERO_VERSION = "1.12.0"
 def _runtime_platform() -> str:
     return "{}-{}".format(host_arch(), host_os())
 
-def _runtime_release(releases, runtime_name: str, version: str, target_compatible_with: list[str] = []):
+def _runtime_release(releases, runtime_name: str, version: str, target_compatible_with = []):
     platform = _runtime_platform()
     if version not in releases:
         fail("Unknown {} version '{}'. Available: {}".format(
@@ -123,7 +123,7 @@ def _download_runtime(
         releases,
         runtime_name: str,
         version: str,
-        target_compatible_with: list[str] = []):
+        target_compatible_with = []):
     release = _runtime_release(releases, runtime_name, version, target_compatible_with)
     kwargs = {}
     if target_compatible_with:
@@ -152,14 +152,20 @@ def download_wasmtime_runtime(name: str, version: str = DEFAULT_WASMTIME_VERSION
 def download_wamr_runtime(
         name: str,
         version: str = DEFAULT_WAMR_VERSION,
-        target_compatible_with: list[str] = []):
+        target_compatible_with = []):
     """Download a prebuilt WAMR (iwasm) runtime."""
     _download_runtime(name, WAMR_RELEASES, "wamr", version, target_compatible_with)
 
-def download_wazero_runtime(name: str, version: str = DEFAULT_WAZERO_VERSION):
+def download_wazero_runtime(
+        name: str,
+        version: str = DEFAULT_WAZERO_VERSION,
+        target_compatible_with = []):
     """Download a prebuilt Wazero runtime."""
-    _download_runtime(name, WAZERO_RELEASES, "wazero", version)
+    _download_runtime(name, WAZERO_RELEASES, "wazero", version, target_compatible_with)
 
-def download_wasmedge_runtime(name: str, version: str = DEFAULT_WASMEDGE_VERSION):
+def download_wasmedge_runtime(
+        name: str,
+        version: str = DEFAULT_WASMEDGE_VERSION,
+        target_compatible_with = []):
     """Download a prebuilt WasmEdge runtime."""
-    _download_runtime(name, WASMEDGE_RELEASES, "wasmedge", version)
+    _download_runtime(name, WASMEDGE_RELEASES, "wasmedge", version, target_compatible_with)

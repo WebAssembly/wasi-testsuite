@@ -28,6 +28,10 @@ execution-platform = true
 target = "x86_64-pc-windows-msvc"
 execution-platform = true
 
+[platform.windows-arm64-msvc]
+target = "aarch64-pc-windows-msvc"
+execution-platform = true
+
 [platform.wasi]
 target = "wasm32-wasip1"
 execution-platform = false

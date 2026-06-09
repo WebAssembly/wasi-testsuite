@@ -20,6 +20,15 @@ WASMTIME_RELEASES = {
             "prefix": "wasmtime-v45.0.0-aarch64-macos",
             "binary": "wasmtime",
         },
+        "aarch64-windows": {
+            "url": (
+                "https://github.com/bytecodealliance/wasmtime/releases/" +
+                "download/v45.0.0/wasmtime-v45.0.0-aarch64-windows.zip"
+            ),
+            "shasum": "e080b367ecaba5fd6fb18fa9825af2e6f5c68ce0bc67d1df3941d9472fc31869",
+            "prefix": "wasmtime-v45.0.0-aarch64-windows",
+            "binary": "wasmtime",
+        },
         "x86_64-linux": {
             "url": (
                 "https://github.com/bytecodealliance/wasmtime/releases/" +
