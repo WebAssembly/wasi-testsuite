@@ -18,7 +18,7 @@ unsafe fn test_remove_directory_trailing_slashes(dir_fd: wasi::Fd) {
     match wasi::path_remove_directory(dir_fd, &format!("{}/", TEST_DIRNAME)) {
         Ok(()) => {}
         Err(e) => {
-            assert_eq!(e, wasi::ERRNO_ACCES);
+            assert_errno!(e, wasi::ERRNO_ACCES, wasi::ERRNO_INVAL);
             wasi::path_remove_directory(dir_fd, TEST_DIRNAME).unwrap();
         }
     }

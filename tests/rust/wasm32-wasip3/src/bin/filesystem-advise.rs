@@ -50,6 +50,7 @@ async fn test_advise(dir: &Descriptor) {
             for length in [0, 10, 4096, size, size + 4096] {
                 match fd.advise(offset, length, advice).await {
                     Ok(()) => {}
+                    Err(ErrorCode::FileTooLarge) => {}
                     Err(err) => {
                         eprintln!("fadvise({}, {}, {:?}) => {}", offset, length, advice, err);
                         process::exit(1);

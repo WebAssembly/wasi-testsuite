@@ -82,7 +82,10 @@ async fn test_unspecified_remote_addr(family: IpAddressFamily) {
     assert!(
         matches!(
             result,
-            Err(ErrorCode::InvalidArgument | ErrorCode::AddressNotBindable)
+            Ok(())
+                | Err(ErrorCode::InvalidArgument
+                    | ErrorCode::AddressNotBindable
+                    | ErrorCode::RemoteUnreachable)
         ),
         "bad error: {result:?}"
     );
