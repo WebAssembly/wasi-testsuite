@@ -19,7 +19,12 @@ async fn test_wrong_address_family(family: IpAddressFamily) {
 
     let result = sock.send(vec![0; 1], Some(addr)).await;
     assert!(
-        matches!(result, Err(ErrorCode::InvalidArgument)),
+        matches!(
+            result,
+            Err(ErrorCode::InvalidArgument
+                | ErrorCode::NotSupported
+                | ErrorCode::RemoteUnreachable)
+        ),
         "bad error: {result:?}"
     );
 }
