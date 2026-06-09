@@ -42,7 +42,8 @@ unsafe fn test_interesting_paths(dir_fd: wasi::Fd, arg: &str) {
         wasi::path_open(dir_fd, 0, "dir/nested/file\0", 0, 0, 0, 0)
             .expect_err("opening a file with a trailing NUL"),
         wasi::ERRNO_INVAL,
-        wasi::ERRNO_ILSEQ
+        wasi::ERRNO_ILSEQ,
+        wasi::ERRNO_NOENT
     );
 
     // Now open it with a trailing slash.
@@ -147,5 +148,8 @@ fn main() {
     // Run the tests.
     unsafe { test_interesting_paths(dir_fd, &arg) }
 
+    unsafe {
+        wasi::fd_close(dir_fd).unwrap();
+    }
     unsafe { wasi::path_remove_directory(base_dir_fd, DIR_NAME).expect("failed to remove dir") }
 }

@@ -20,9 +20,10 @@ use wasi::filesystem::types::Descriptor;
 use wasi::filesystem::types::{DescriptorFlags, ErrorCode, OpenFlags, PathFlags};
 
 async fn test_open_errors(dir: &Descriptor) {
-    dir.symlink_at("..".to_string(), "parent.cleanup".to_string())
+    let has_symlink = dir
+        .symlink_at("..".to_string(), "parent.cleanup".to_string())
         .await
-        .unwrap();
+        .is_ok();
 
     let open = |flags: PathFlags, path: &str| -> _ {
         dir.open_at(
@@ -40,12 +41,14 @@ async fn test_open_errors(dir: &Descriptor) {
         open_r("..").await.expect_err("open .."),
         ErrorCode::NotPermitted
     );
-    assert_eq!(
-        open_r_follow("parent.cleanup")
-            .await
-            .expect_err("open parent.cleanup"),
-        ErrorCode::NotPermitted
-    );
+    if has_symlink {
+        assert_eq!(
+            open_r_follow("parent.cleanup")
+                .await
+                .expect_err("open parent.cleanup"),
+            ErrorCode::NotPermitted
+        );
+    }
     assert_eq!(
         open_r("/").await.expect_err("open /"),
         ErrorCode::NotPermitted

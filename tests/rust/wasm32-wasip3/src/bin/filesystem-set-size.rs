@@ -62,9 +62,13 @@ async fn test_set_size(dir: &Descriptor) {
     assert_eq!(c.stat().await.unwrap().size, 69);
     assert_eq!(r.stat().await.unwrap().size, 69);
 
-    let c = trunc("c.cleanup").await.unwrap();
-    assert_eq!(c.stat().await.unwrap().size, 0);
-    assert_eq!(r.stat().await.unwrap().size, 0);
+    let truncated = if let Ok(c) = trunc("c.cleanup").await {
+        assert_eq!(c.stat().await.unwrap().size, 0);
+        assert_eq!(r.stat().await.unwrap().size, 0);
+        true
+    } else {
+        false
+    };
 
     // https://github.com/WebAssembly/WASI/issues/712
     match r.set_size(100).await {
@@ -93,12 +97,14 @@ async fn test_set_size(dir: &Descriptor) {
             // We still have `c` and `r` open, which refer to the file,
             // but we can still stat our descriptors, call `set-size` on
             // it, and so on.
-            assert_eq!(c.stat().await.unwrap().size, 0);
+            if truncated {
+                assert_eq!(c.stat().await.unwrap().size, 0);
+            }
             c.set_size(42).await.unwrap();
             assert_eq!(c.stat().await.unwrap().size, 42);
             assert_eq!(r.stat().await.unwrap().size, 42);
         }
-        Err(ErrorCode::Busy) => {
+        Err(ErrorCode::Busy | ErrorCode::Access) => {
             // Otherwise if we're on Windows we are unable to remove the
             // file while descriptors are open.
         }

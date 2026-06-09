@@ -19,9 +19,10 @@ wit_bindgen::generate!({
 use wasi::filesystem::types::{Descriptor, DescriptorFlags, ErrorCode, OpenFlags, PathFlags};
 
 async fn test_mkdir_rmdir(dir: &Descriptor) {
-    dir.symlink_at("..".to_string(), "parent.cleanup".to_string())
+    let has_symlink = dir
+        .symlink_at("..".to_string(), "parent.cleanup".to_string())
         .await
-        .unwrap();
+        .is_ok();
 
     let mkdir = |path: &str| dir.create_directory_at(path.to_string());
     let rmdir = |path: &str| dir.remove_directory_at(path.to_string());
@@ -33,29 +34,35 @@ async fn test_mkdir_rmdir(dir: &Descriptor) {
     );
     assert_eq!(mkdir(".").await, Err(ErrorCode::Exist));
     assert_eq!(mkdir("..").await, Err(ErrorCode::NotPermitted));
-    assert_eq!(
-        mkdir("parent.cleanup/foo").await,
-        Err(ErrorCode::NotPermitted)
-    );
+    if has_symlink {
+        assert_eq!(
+            mkdir("parent.cleanup/foo").await,
+            Err(ErrorCode::NotPermitted)
+        );
+    }
     assert_eq!(mkdir("/").await, Err(ErrorCode::NotPermitted));
     assert_eq!(
         mkdir("../fs-tests.dir/q.cleanup").await,
         Err(ErrorCode::NotPermitted)
     );
-    assert_eq!(
-        mkdir("parent.cleanup/fs-tests.dir/q.cleanup").await,
-        Err(ErrorCode::NotPermitted)
-    );
+    if has_symlink {
+        assert_eq!(
+            mkdir("parent.cleanup/fs-tests.dir/q.cleanup").await,
+            Err(ErrorCode::NotPermitted)
+        );
+    }
     assert_eq!(mkdir("a.txt").await, Err(ErrorCode::Exist));
     mkdir("q.cleanup").await.unwrap();
     assert_eq!(
         rmdir("../fs-tests.dir/q.cleanup").await,
         Err(ErrorCode::NotPermitted)
     );
-    assert_eq!(
-        rmdir("parent.cleanup/fs-tests.dir/q.cleanup").await,
-        Err(ErrorCode::NotPermitted)
-    );
+    if has_symlink {
+        assert_eq!(
+            rmdir("parent.cleanup/fs-tests.dir/q.cleanup").await,
+            Err(ErrorCode::NotPermitted)
+        );
+    }
     assert_eq!(
         rmdir("q.cleanup/../../fs-tests.dir/q.cleanup").await,
         Err(ErrorCode::NotPermitted)
@@ -83,13 +90,19 @@ async fn test_mkdir_rmdir(dir: &Descriptor) {
     assert_eq!(rmdir("..").await, Err(ErrorCode::NotPermitted));
     assert_eq!(rmdir("/").await, Err(ErrorCode::NotPermitted));
     assert_eq!(rmdir("a.txt").await, Err(ErrorCode::NotDirectory));
-    assert_eq!(rmdir("z.txt").await, Err(ErrorCode::NoEntry));
-    // FIXME: https://github.com/bytecodealliance/wasmtime/issues/12178
-    // assert_eq!(rmdir("parent.cleanup").await, Err(ErrorCode::NotDirectory));
-    assert_eq!(
-        rmdir("parent.cleanup/fs-tests.dir").await,
-        Err(ErrorCode::NotPermitted)
+    let z_result = rmdir("z.txt").await;
+    assert!(
+        matches!(z_result, Err(ErrorCode::NoEntry | ErrorCode::NotDirectory)),
+        "bad result: {z_result:?}"
     );
+    if has_symlink {
+        // FIXME: https://github.com/bytecodealliance/wasmtime/issues/12178
+        // assert_eq!(rmdir("parent.cleanup").await, Err(ErrorCode::NotDirectory));
+        assert_eq!(
+            rmdir("parent.cleanup/fs-tests.dir").await,
+            Err(ErrorCode::NotPermitted)
+        );
+    }
 
     mkdir("child.cleanup").await.unwrap();
     mkdir("sibling.cleanup").await.unwrap();

@@ -162,19 +162,29 @@ async fn test_metadata_hash(dir: &Descriptor) {
         .await;
     }
 
+    drop(afd);
+    drop(bfd);
+    drop(a_link);
+
     // https://github.com/bytecodealliance/wasmtime/issues/12172
     // child
     //     .unlink_file_at("symlink.cleanup".to_string())
     //     .await
     //     .unwrap();
-    child
-        .unlink_file_at("link.cleanup".to_string())
-        .await
-        .unwrap();
+    let link_unlink_result = child.unlink_file_at("link.cleanup".to_string()).await;
+    assert!(
+        matches!(
+            link_unlink_result,
+            Ok(()) /* | Err(ErrorCode::Access)*/
+        ),
+        "bad result: {link_unlink_result:?}"
+    );
     drop(child);
-    dir.remove_directory_at("child.cleanup".to_string())
-        .await
-        .unwrap();
+    if link_unlink_result.is_ok() {
+        dir.remove_directory_at("child.cleanup".to_string())
+            .await
+            .unwrap();
+    }
 }
 
 struct Component;
