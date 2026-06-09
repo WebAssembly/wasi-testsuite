@@ -162,6 +162,10 @@ async fn test_metadata_hash(dir: &Descriptor) {
         .await;
     }
 
+    drop(afd);
+    drop(bfd);
+    drop(a_link);
+
     // https://github.com/bytecodealliance/wasmtime/issues/12172
     // child
     //     .unlink_file_at("symlink.cleanup".to_string())

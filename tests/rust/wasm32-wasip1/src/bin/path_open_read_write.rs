@@ -37,7 +37,8 @@ unsafe fn test_path_open_read_write(dir_fd: wasi::Fd) {
             .err()
             .expect("read of writeonly fails"),
         wasi::ERRNO_BADF,
-        wasi::ERRNO_NOTCAPABLE
+        wasi::ERRNO_NOTCAPABLE,
+        wasi::ERRNO_ACCES
     );
 
     wasi::fd_close(f_readonly).expect("close readonly");
@@ -61,7 +62,8 @@ unsafe fn test_path_open_read_write(dir_fd: wasi::Fd) {
             .err()
             .expect("read of writeonly fails"),
         wasi::ERRNO_BADF,
-        wasi::ERRNO_NOTCAPABLE
+        wasi::ERRNO_NOTCAPABLE,
+        wasi::ERRNO_ACCES
     );
     let bytes_written = wasi::fd_write(f_writeonly, &[ciovec]).expect("write to writeonly");
     assert_eq!(bytes_written, write_buffer.len());

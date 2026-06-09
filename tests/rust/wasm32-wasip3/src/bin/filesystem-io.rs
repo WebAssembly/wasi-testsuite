@@ -160,7 +160,8 @@ async fn test_io(dir: &Descriptor) {
     };
     let rm = |path: &str| dir.unlink_file_at(path.to_string());
 
-    let a = open_r("a.txt").await.unwrap();
+    let a = creat("a.cleanup").await.unwrap();
+    assert_eq!(pwrite(&a, 0, b"test-a\n").await, Ok(7));
 
     pread(&a, 0, 0).await.unwrap();
     pread(&a, 0, 1).await.unwrap();
@@ -201,6 +202,9 @@ async fn test_io(dir: &Descriptor) {
     );
     c.sync().await.unwrap();
 
+    drop(a);
+    drop(c);
+    rm("a.cleanup").await.unwrap();
     rm("c.cleanup").await.unwrap();
 }
 

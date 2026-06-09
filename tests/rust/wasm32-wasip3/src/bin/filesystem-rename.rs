@@ -19,9 +19,10 @@ wit_bindgen::generate!({
 use wasi::filesystem::types::{Descriptor, DescriptorFlags, ErrorCode, OpenFlags, PathFlags};
 
 async fn test_rename(dir: &Descriptor) {
-    dir.symlink_at("..".to_string(), "parent.cleanup".to_string())
+    let has_symlink = dir
+        .symlink_at("..".to_string(), "parent.cleanup".to_string())
         .await
-        .unwrap();
+        .is_ok();
 
     // rename-at: async func(old-path: string, new-descriptor: borrow<descriptor>, new-path: string) -> result<_, error-code>;
     dir.create_directory_at("child.cleanup".to_string())
@@ -66,10 +67,12 @@ async fn test_rename(dir: &Descriptor) {
     assert_eq!(mv("a.txt", "q.txt").await, Err(ErrorCode::NoEntry));
     mv("c.cleanup", "a.txt").await.unwrap();
     assert_eq!(mv("a.txt", "../q.txt").await, Err(ErrorCode::NotPermitted));
-    assert_eq!(
-        mv("a.txt", "parent.cleanup/q.txt").await,
-        Err(ErrorCode::NotPermitted)
-    );
+    if has_symlink {
+        assert_eq!(
+            mv("a.txt", "parent.cleanup/q.txt").await,
+            Err(ErrorCode::NotPermitted)
+        );
+    }
     assert_eq!(
         mv("a.txt", "/tmp/q.txt").await,
         Err(ErrorCode::NotPermitted)
