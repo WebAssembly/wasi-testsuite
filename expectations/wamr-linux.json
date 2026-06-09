@@ -1,6 +1,0 @@
-{
-  "WASI AssemblyScript tests [wasm32-wasip1]": {
-    "environ_get-multiple-variables": "WAMR differs for this Preview 1 AssemblyScript test",
-    "environ_sizes_get-multiple-variables": "WAMR differs for this Preview 1 AssemblyScript test"
-  }
-}

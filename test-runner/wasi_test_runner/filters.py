@@ -1,8 +1,9 @@
-from typing import Tuple, Union, Literal
 from abc import ABC
 from abc import abstractmethod
+from pathlib import Path
+from typing import Any, Tuple, Union, Literal
 
-import json
+import tomllib
 
 from .test_suite import TestSuiteMeta
 from .test_case import Config
@@ -27,10 +28,9 @@ class UnsupportedWasiTestExcludeFilter(TestFilter):
         return False, None
 
 
-class JSONTestExcludeFilter(TestFilter):
+class TestExpectationFilter(TestFilter):
     def __init__(self, filename: str) -> None:
-        with open(filename, encoding="utf-8") as file:
-            self.filter_dict = json.load(file)
+        self.filter_dict = _load_toml_expectations(Path(filename))
 
     def should_skip(
         self, meta: TestSuiteMeta, test_name: str, config: Config
@@ -38,7 +38,46 @@ class JSONTestExcludeFilter(TestFilter):
         test_suite_filter = self.filter_dict.get(meta.name)
         if test_suite_filter is None:
             return False, None
-        why = test_suite_filter.get(test_name)
-        if why is not None:
-            return True, why
+        if test_name in test_suite_filter:
+            return True, "Skipped by expectation file"
         return False, None
+
+
+def _load_toml_expectations(path: Path) -> dict[str, set[str]]:
+    with open(path, "rb") as file:
+        data = tomllib.load(file)
+
+    version = data.get("version", 1)
+    if version != 1:
+        raise ValueError(f"Unsupported expectation file version: {version}")
+
+    expectations: dict[str, set[str]] = {}
+    for suite in _list_of_tables(data.get("suite", []), "suite"):
+        suite_name = _required_string(suite, "name")
+        tests: set[str] = set()
+        for test in _list_of_tables(suite.get("test", []), "suite.test"):
+            test_name = _required_string(test, "name")
+            action = test.get("action")
+            if action != "skip":
+                raise ValueError(f"Expected 'action' to be 'skip', got {action!r}")
+            tests.add(test_name)
+        expectations[suite_name] = tests
+    return expectations
+
+
+def _list_of_tables(value: Any, key: str) -> list[dict[str, Any]]:
+    if not isinstance(value, list):
+        raise ValueError(f"Expected '{key}' to be a list of tables")
+    items: list[dict[str, Any]] = []
+    for item in value:
+        if not isinstance(item, dict):
+            raise ValueError(f"Expected '{key}' to be a list of tables")
+        items.append(item)
+    return items
+
+
+def _required_string(table: dict[str, Any], key: str) -> str:
+    value = table.get(key)
+    if not isinstance(value, str):
+        raise ValueError(f"Expected '{key}' to be a string")
+    return value

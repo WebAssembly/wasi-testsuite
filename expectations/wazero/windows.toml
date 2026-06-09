@@ -1,0 +1,77 @@
+version = 1
+
+[[suite]]
+name = "WASI C tests [wasm32-wasip1]"
+
+# Wazero differs for this Preview 1 C test
+[[suite.test]]
+name = "pwrite-with-append"
+action = "skip"
+
+# Wazero differs for this Preview 1 C test
+[[suite.test]]
+name = "sock_shutdown-not_sock"
+action = "skip"
+
+[[suite]]
+name = "WASI Rust tests [wasm32-wasip1]"
+
+# Wazero differs for this Preview 1 Rust test
+[[suite.test]]
+name = "dir_fd_op_failures"
+action = "skip"
+
+# Wazero differs for this Preview 1 Rust test
+[[suite.test]]
+name = "fd_fdstat_set_rights"
+action = "skip"
+
+# Wazero differs for this Preview 1 Rust test
+[[suite.test]]
+name = "overwrite_preopen"
+action = "skip"
+
+# Wazero differs for this Preview 1 Rust test
+[[suite.test]]
+name = "path_filestat"
+action = "skip"
+
+# Wazero differs for this Preview 1 Rust test
+[[suite.test]]
+name = "path_link"
+action = "skip"
+
+# Wazero differs for this Preview 1 Rust test
+[[suite.test]]
+name = "path_open_read_write"
+action = "skip"
+
+# Wazero differs for this Preview 1 Rust test
+[[suite.test]]
+name = "poll_oneoff_stdio"
+action = "skip"
+
+# Wazero differs for this Preview 1 Rust test
+[[suite.test]]
+name = "readlink"
+action = "skip"
+
+# Wazero differs for this Preview 1 Rust test
+[[suite.test]]
+name = "renumber"
+action = "skip"
+
+# Wazero differs for this Preview 1 Rust test
+[[suite.test]]
+name = "stdio"
+action = "skip"
+
+# Wazero differs for this Preview 1 Rust test
+[[suite.test]]
+name = "symlink_filestat"
+action = "skip"
+
+# Wazero differs for this Preview 1 Rust test
+[[suite.test]]
+name = "truncation_rights"
+action = "skip"

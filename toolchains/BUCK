@@ -161,8 +161,9 @@ wasi_runtime(
     name = "jco_runtime",
     adapter = "root//adapters:jco.py",
     exclude_filter = select({
+        "config//os:macos": "root//expectations:jco_macos",
         "config//os:windows": "root//expectations:jco_windows",
-        "DEFAULT": "root//expectations:jco",
+        "DEFAULT": "root//expectations:jco_linux",
     }),
     runtime = ":jco_command",
     runtime_env_var = "JCO",

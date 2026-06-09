@@ -6,7 +6,7 @@ from typing import List
 from .runtime_adapter import RuntimeAdapter
 from .harness import run_all_tests
 from .filters import TestFilter
-from .filters import JSONTestExcludeFilter, UnsupportedWasiTestExcludeFilter
+from .filters import TestExpectationFilter, UnsupportedWasiTestExcludeFilter
 from .reporters import TestReporter
 from .reporters.console import ConsoleTestReporter
 from .reporters.json import JSONTestReporter
@@ -30,7 +30,7 @@ def main() -> int:
         required=False,
         nargs="+",
         default=[],
-        help="Locations of test exclude filters (JSON files).",
+        help="Locations of test expectation files (TOML).",
     )
     parser.add_argument(
         "-r", "--runtime-adapter", required=True, help="Path to a runtime adapter."
@@ -55,7 +55,7 @@ def main() -> int:
 
     filters: List[TestFilter] = [UnsupportedWasiTestExcludeFilter()]
     for filt in options.exclude_filter:
-        filters.append(JSONTestExcludeFilter(filt))
+        filters.append(TestExpectationFilter(filt))
 
     return run_all_tests(
         [RuntimeAdapter(options.runtime_adapter)],
