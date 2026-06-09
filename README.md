@@ -84,46 +84,66 @@ name = "unsupported-test"
 action = "skip"
 ```
 
-### Experimental Buck2 workflow
+### Building and testing with Buck2
 
-This repository also has an experimental Buck2 setup for building tests from
-source and running them through the existing test runner. The first slice covers
-C, Rust, and AssemblyScript WASI Preview 1 tests with Wasmtime:
+The main development workflow uses Buck2 to build tests from source and run
+them through the existing test runner. CI runs the Buck2 workflow across the
+supported operating systems.
 
 Install [Dotslash](https://dotslash-cli.com/docs/installation/) once before
 using the checked-in `./buck2` launcher, for example with `cargo install dotslash`.
+Install the Rust WASI targets used by the Rust test suites:
 
 ```bash
-./buck2 test //tests/...
+rustup target add wasm32-wasip1 wasm32-wasip2
 ```
 
-Build the Buck produced test data archive with:
+Run the main runtime suites with:
 
 ```bash
-./buck2 build --show-output //tests:dist
+just test
+just test-jco
+```
+
+Additional runtime suites are available with:
+
+```bash
+just test-extra-runtimes
+```
+
+To build all Buck targets, run:
+
+```bash
+just build
+```
+
+Build the Buck-produced test data archive with:
+
+```bash
+just dist
 ```
 
 The archive includes the test runner, adapters, Python requirements, and Buck built
 test data. It can be run like this:
 
 ```bash
-# extract:
+# Extract:
 mkdir -p dist
 tar -xzf buck-out/.../wasi-testsuite.tar.gz -C dist
-# setup Python:
+# Set up Python:
 python3 -m venv dist/venv
 dist/venv/bin/python -m pip install -r dist/wasi-testsuite/test-runner/requirements.txt
-# run:
+# Run:
 cd dist/wasi-testsuite
 WASMTIME=/path/to/wasmtime ../venv/bin/python ./run-tests --runtime-adapter adapters/wasmtime.py
 ```
 
-or if you prefer using `just`
+The same targets can be invoked directly with `./buck2`:
 
 ```bash
-just build
-just test
-just dist
+./buck2 test //tests:wasmtime
+./buck2 test //tests:jco
+./buck2 build --show-output //tests:dist
 ```
 
 The Buck2 lint helpers mirror the CI checks:
@@ -134,8 +154,8 @@ just lint-cxx
 just lint-rust
 ```
 
-Buck2 fetches the WASI SDK, Node/AssemblyScript, and Wasmtime through the Buck
-toolchain graph, then uses a generic `wasi_test` rule to invoke
+Buck2 fetches the WASI SDK, Node/AssemblyScript, wasm-tools, and runtimes
+through the Buck toolchain graph, then uses a generic `wasi_test` rule to invoke
 `wasi_test_runner` for each Buck test target.
 
 ## Contributing
@@ -159,7 +179,7 @@ the test runner itself.
 ### Directory structure
 
 - [`test-runner`](test-runner) - test executor scripts.
-- [`tests`](tests) - source code of WASI tests and build scripts. The folder contains subfolders for all supported languages.
+- [`tests`](tests) - source code, metadata, and Buck targets for WASI tests. The folder contains subfolders for all supported languages.
 - [`.github`](.github) - CI workflow definitions.
 - [`doc`](doc) - additional documentation.
 
