@@ -117,7 +117,7 @@ class TestCaseRunner(TestCaseRunnerBase):
             if os.name == "nt":
                 creationflags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP")
 
-            env = {}
+            env = os.environ.copy()
             if self.config.debug:
                 env["DEBUG"] = "true"
 
