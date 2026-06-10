@@ -39,9 +39,6 @@ jobs:
       - name: Install DotSlash
         uses: facebook/install-dotslash@1e4e7b3e07eaca387acb98f1d4720e0bee8dbb6a # v2
 
-      - name: Install Rust WASI targets
-        run: rustup target add wasm32-wasip1 wasm32-wasip2
-
       - name: Configure Buck2 launcher on Windows
         if: runner.os == 'Windows'
         run: |

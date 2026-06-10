@@ -1,0 +1,70 @@
+# Hermetic Rust toolchains.
+#
+# Downloads a pinned Rust release for the host plus the wasm32-wasip1 and
+# wasm32-wasip2 standard libraries, then exposes two toolchains:
+#   :rust          - default toolchain (host builds + wasm32-wasip2/p3 tests)
+#   :rust_wasi_p1  - fixed to the wasm32-wasip1 target
+# Both share the same downloaded archives and merged sysroot.
+
+load(
+    ":defs.bzl",
+    "download_rust_host",
+    "download_rust_std",
+    "hermetic_rust_toolchain",
+    "host_rust_triple",
+)
+
+_HOST_TRIPLE = host_rust_triple()
+
+# Default rustc target triple. The same toolchain compiles host artifacts
+# (proc macros, build scripts) and the wasm targets; the configured platform
+# selects which triple applies.
+_RUST_TARGET_TRIPLE = select({
+    "config//os:linux": select({
+        "config//cpu:arm64": "aarch64-unknown-linux-gnu",
+        "config//cpu:x86_64": "x86_64-unknown-linux-gnu",
+    }),
+    "config//os:macos": select({
+        "config//cpu:arm64": "aarch64-apple-darwin",
+        "config//cpu:x86_64": "x86_64-apple-darwin",
+    }),
+    "config//os:wasi": select({
+        "config//cpu:wasm32": select({
+            "wasmono//wasm/constraints:wasip1": "wasm32-wasip1",
+            "DEFAULT": "wasm32-wasip2",
+        }),
+    }),
+    "config//os:windows": select({
+        "config//cpu:arm64": "aarch64-pc-windows-msvc",
+        "config//cpu:x86_64": "x86_64-pc-windows-msvc",
+    }),
+})
+
+download_rust_host(name = "host", triple = _HOST_TRIPLE)
+download_rust_std(name = "std_wasip1", target = "wasm32-wasip1")
+download_rust_std(name = "std_wasip2", target = "wasm32-wasip2")
+
+_STD_DISTRIBUTIONS = {
+    "wasm32-wasip1": ":std_wasip1",
+    "wasm32-wasip2": ":std_wasip2",
+}
+
+hermetic_rust_toolchain(
+    name = "rust",
+    default_edition = "2021",
+    host_distribution = ":host",
+    host_triple = _HOST_TRIPLE,
+    rustc_target_triple = _RUST_TARGET_TRIPLE,
+    std_distributions = _STD_DISTRIBUTIONS,
+    visibility = ["PUBLIC"],
+)
+
+hermetic_rust_toolchain(
+    name = "rust_wasi_p1",
+    default_edition = "2021",
+    host_distribution = ":host",
+    host_triple = _HOST_TRIPLE,
+    rustc_target_triple = "wasm32-wasip1",
+    std_distributions = _STD_DISTRIBUTIONS,
+    visibility = ["PUBLIC"],
+)
