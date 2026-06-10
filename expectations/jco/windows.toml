@@ -2,8 +2,3 @@ version = 1
 
 [[suite]]
 name = "WASI Rust tests [wasm32-wasip3]"
-
-# jco currently times out on this test
-[[suite.test]]
-name = "sockets-udp-receive"
-action = "skip"
