@@ -357,7 +357,10 @@ def join_http_url(http_server: str, path: str) -> str:
 
 def _cleanup_test_output(host_dir: Path) -> None:
     for f in host_dir.glob("**/*.cleanup"):
-        if f.is_symlink() or f.is_file():
+        if f.is_symlink():
+            continue
+
+        if f.is_file():
             f.unlink()
         elif f.is_dir():
             shutil.rmtree(f)
