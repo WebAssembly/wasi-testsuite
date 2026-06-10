@@ -8,6 +8,8 @@ import tomllib
 from .test_suite import TestSuiteMeta
 from .test_case import Config
 
+VALID_ACTIONS = ["skip"]
+
 
 class TestFilter(ABC):
     @abstractmethod
@@ -30,15 +32,15 @@ class UnsupportedWasiTestExcludeFilter(TestFilter):
 
 class TestExpectationFilter(TestFilter):
     def __init__(self, filename: str) -> None:
-        self.filter_dict = _load_toml_expectations(Path(filename))
+        self.lookup = _load_toml_expectations(Path(filename))
 
     def should_skip(
         self, meta: TestSuiteMeta, test_name: str, config: Config
     ) -> Union[Tuple[Literal[True], str], Tuple[Literal[False], Literal[None]]]:
-        test_suite_filter = self.filter_dict.get(meta.name)
-        if test_suite_filter is None:
+        skip_filter = self.lookup.get(meta.name)
+        if skip_filter is None:
             return False, None
-        if test_name in test_suite_filter:
+        if test_name in skip_filter:
             return True, "Skipped by expectation file"
         return False, None
 
@@ -54,14 +56,14 @@ def _load_toml_expectations(path: Path) -> dict[str, set[str]]:
     expectations: dict[str, set[str]] = {}
     for suite in _list_of_tables(data.get("suite", []), "suite"):
         suite_name = _required_string(suite, "name")
-        tests: set[str] = set()
+        skipped_tests: set[str] = set()
         for test in _list_of_tables(suite.get("test", []), "suite.test"):
             test_name = _required_string(test, "name")
             action = test.get("action")
-            if action != "skip":
-                raise ValueError(f"Expected 'action' to be 'skip', got {action!r}")
-            tests.add(test_name)
-        expectations[suite_name] = tests
+            if action not in VALID_ACTIONS:
+                raise ValueError(f"Expected 'action' to be one of {VALID_ACTIONS}, got {action!r}")
+            skipped_tests.add(test_name)
+        expectations[suite_name] = skipped_tests
     return expectations
 
 

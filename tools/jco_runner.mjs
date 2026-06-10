@@ -75,7 +75,7 @@ async function main() {
         ));
         const { files } = await transpile(await readFile(component), {
             name: moduleName,
-            minify: true,
+            minify: process.env.DEBUG ? false : true,
             validLiftingOptimization: true,
             tlaCompat: true,
             optimize: false,
@@ -185,6 +185,11 @@ async function main() {
             "wasi:sockets/types": p3sockets.types,
         };
 
+        // Enable JCO debug printing
+        if (process.env.DEBUG) {
+            process.env.JCO_DEBUG = "true";
+        }
+
         const module = await import(pathToFileURL(join(outputDir, `${moduleName}.js`)));
         const instance = typeof module.instantiate === "function"
             ? await module.instantiate(undefined, imports)
@@ -205,7 +210,9 @@ async function main() {
         }
         completed = true;
     } finally {
-        await rm(outputRoot, { recursive: true, force: true });
+        if (!process.env.DEBUG) {
+            await rm(outputRoot, { recursive: true, force: true });
+        }
     }
 
     if (completed) {

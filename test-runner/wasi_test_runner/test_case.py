@@ -259,6 +259,9 @@ class Config(NamedTuple):
     operations: List[Operation] = [Run(), Wait()]
     # WASI proposals needed for the test.
     proposals: List[WasiProposal] = []
+    # whether debug is enabled
+    debug: bool = False
+    # WASI world to target
     world: WasiWorld = WasiWorld.CLI_COMMAND
 
     @classmethod
@@ -282,8 +285,10 @@ class Config(NamedTuple):
             if world not in WasiWorld:
                 raise ValueError(f"Unknown WASI world: {world}")
 
+            debug = bool(dict_config.get("debug"))
+
             return cls(operations=operations, proposals=proposals,
-                       world=WasiWorld(world))
+                       world=WasiWorld(world), debug=debug)
 
         cls._validate_config(dict_config, LEGACY_CONFIG_KEYS)
 
