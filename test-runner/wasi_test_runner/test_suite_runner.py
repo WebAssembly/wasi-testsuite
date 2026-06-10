@@ -116,12 +116,18 @@ class TestCaseRunner(TestCaseRunnerBase):
             creationflags = 0
             if os.name == "nt":
                 creationflags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP")
+
+            env = os.environ.copy()
+            if self.config.debug:
+                env["DEBUG"] = "true"
+
             # pylint: disable-msg=consider-using-with
             self._proc = subprocess.Popen(
                 argv,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
+                env=env,
                 text=True,
                 creationflags=creationflags,
             )
