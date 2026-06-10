@@ -25,3 +25,8 @@ For example, to enable debugging output on a given test, add
   ]
 }
 ```
+
+Adding this configuration will pass through `DEBUG=true` as an
+environment variable to the runner that is being used by the relevant
+tests, which *should* enable more output (stdin, stdout, files, etc)
+which should be helpful wile debugging.
