@@ -158,6 +158,9 @@ Buck2 fetches the WASI SDK, Node/AssemblyScript, wasm-tools, and runtimes
 through the Buck toolchain graph, then uses a generic `wasi_test` rule to invoke
 `wasi_test_runner` for each Buck test target.
 
+> [!NOTE]
+> For more information on debugging tests in this repository, see [`doc/debugging.md`](./doc/debugging.md)
+
 ## Contributing
 
 Want to add a new test?  [There's a doc for that!](doc/writing-tests.md)
