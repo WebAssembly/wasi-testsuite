@@ -86,13 +86,10 @@ runner, run:
 just dist
 ```
 
-Buck2 fetches the WASI SDK, Node/AssemblyScript, wasm-tools, and runtime
-tooling through the Buck toolchain graph.  You only need the Rust WASI targets
-installed locally:
-
-```bash
-rustup target add wasm32-wasip1 wasm32-wasip2
-```
+Buck2 fetches the Rust toolchain (including the `wasm32-wasip1` and
+`wasm32-wasip2` standard libraries), WASI SDK, Node/AssemblyScript, wasm-tools,
+and runtime tooling through the Buck toolchain graph, so no local Rust
+installation or `rustup target add` is required.
 
 ## Final notes
 

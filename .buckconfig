@@ -29,5 +29,9 @@
 [build]
   execution_platforms = prelude//platforms:default
 
+[buck2]
+  # Persist the on-disk materializer state
+  sqlite_materializer_state = true
+
 [project]
   ignore = .git
