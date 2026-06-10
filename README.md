@@ -92,11 +92,10 @@ supported operating systems.
 
 Install [Dotslash](https://dotslash-cli.com/docs/installation/) once before
 using the checked-in `./buck2` launcher, for example with `cargo install dotslash`.
-Install the Rust WASI targets used by the Rust test suites:
 
-```bash
-rustup target add wasm32-wasip1 wasm32-wasip2
-```
+Buck2 downloads a pinned, hermetic Rust toolchain (including the
+`wasm32-wasip1` and `wasm32-wasip2` standard libraries) along with the other
+toolchains, so no local Rust installation or `rustup target add` is required.
 
 Run the main runtime suites with:
 
