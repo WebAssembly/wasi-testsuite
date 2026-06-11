@@ -48,6 +48,14 @@ jobs:
       - name: Run Starlark lint
         run: just lint-starlark
 
+      - name: Lint TypeScript
+        if: runner.os == 'Linux'
+        run: just lint-ts
+
+      - name: Check formatting
+        if: runner.os == 'Linux'
+        run: just fmt-check
+
       - name: Run Wasmtime Buck tests
         run: just test
 

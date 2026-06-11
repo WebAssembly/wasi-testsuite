@@ -126,14 +126,11 @@ The archive includes the test runner, adapters, Python requirements, and Buck bu
 test data. It can be run like this:
 
 ```bash
-# Extract:
-mkdir -p dist
+mkdir -p dist               # extract the archive
 tar -xzf buck-out/.../wasi-testsuite.tar.gz -C dist
-# Set up Python:
-python3 -m venv dist/venv
+python3 -m venv dist/venv   # set up Python
 dist/venv/bin/python -m pip install -r dist/wasi-testsuite/test-runner/requirements.txt
-# Run:
-cd dist/wasi-testsuite
+cd dist/wasi-testsuite      # run the tests
 WASMTIME=/path/to/wasmtime ../venv/bin/python ./run-tests --runtime-adapter adapters/wasmtime.py
 ```
 
@@ -145,12 +142,37 @@ The same targets can be invoked directly with `./buck2`:
 ./buck2 build --show-output //tests:dist
 ```
 
-The Buck2 lint helpers mirror the CI checks:
+The `just` recipes wrap a set of hermetic linters and formatters that mirror the
+CI checks. Lint every language at once, or run a single linter:
 
 ```bash
-just lint-starlark
-just lint-cxx
-just lint-rust
+just lint-all        # run all linters: Starlark, C/C++, Rust, TypeScript/JS
+# ...or run just one:
+just lint-starlark   # Buck/Starlark/BXL files
+just lint-cxx        # C/C++ (clang diagnostics)
+just lint-rust       # Rust (Clippy)
+just lint-ts         # TypeScript/JS (oxlint)
+```
+
+Format every source tree in place, or only verify formatting (what CI does):
+
+```bash
+just fmt             # rewrite Rust, C, and TypeScript/JS sources in place
+just fmt-check       # verify formatting without modifying files
+```
+
+Each formatter and linter is also a plain Buck2 target, so you can run one
+directly against specific files or directories — handy for one-off checks. They
+are fetched lazily, only the first time they are used:
+
+```bash
+# oxlint and oxfmt take files or whole directories (oxfmt rewrites in place):
+./buck2 run toolchains//typescript:oxlint -- tests/assemblyscript
+./buck2 run toolchains//typescript:oxfmt  -- tests/assemblyscript/wasm32-wasip1/src/args_get-multiple-arguments.ts
+
+# rustfmt reads the edition from tests/rust/rustfmt.toml; clang-format uses -i to edit in place:
+./buck2 run toolchains//rust:rustfmt     -- tests/rust/wasm32-wasip1/src/bin/big_random_buf.rs
+./buck2 run toolchains//cxx:clang-format -- -i tests/c/src/clock_getres-monotonic.c
 ```
 
 Buck2 fetches the WASI SDK, Node/AssemblyScript, wasm-tools, and runtimes

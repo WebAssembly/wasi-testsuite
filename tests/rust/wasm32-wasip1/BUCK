@@ -22,7 +22,7 @@ rust_library(
         "src/config.rs",
         "src/lib.rs",
     ],
-    edition = "2021",
+    edition = "2024",
     default_target_platform = "//platforms:wasm32_wasip1",
     deps = [
         "//third-party/rust:libc",

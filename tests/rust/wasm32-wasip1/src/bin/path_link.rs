@@ -1,6 +1,6 @@
 use std::{env, process};
 use wasi_tests::{
-    assert_errno, create_file, create_tmp_dir, open_scratch_directory, supports_rights, TESTCONFIG,
+    TESTCONFIG, assert_errno, create_file, create_tmp_dir, open_scratch_directory, supports_rights,
 };
 
 const TEST_RIGHTS: wasi::Rights = wasi::RIGHTS_FD_READ
