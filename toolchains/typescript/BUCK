@@ -1,0 +1,38 @@
+# Hermetic TypeScript/AssemblyScript tooling: the AssemblyScript compiler (asc)
+# plus oxc's linter (oxlint) and formatter (oxfmt), using the shared Node distribution.
+
+load("@wasmono//:defs.bzl", "asc_toolchain", "install_asc")
+load(":defs.bzl", "install_oxc", "oxc_tool")
+
+install_asc(
+    name = "asc_dist",
+    node = "toolchains//:node_dist_shared",
+    version = "0.27.31",
+)
+
+asc_toolchain(
+    name = "asc",
+    distribution = ":asc_dist",
+    visibility = ["PUBLIC"],
+)
+
+install_oxc(
+    name = "oxc",
+    node = "toolchains//:node_dist_shared",
+)
+
+oxc_tool(
+    name = "oxlint",
+    node = "toolchains//:node_dist_shared",
+    tool = "oxlint",
+    workspace = ":oxc",
+    visibility = ["PUBLIC"],
+)
+
+oxc_tool(
+    name = "oxfmt",
+    node = "toolchains//:node_dist_shared",
+    tool = "oxfmt",
+    workspace = ":oxc",
+    visibility = ["PUBLIC"],
+)

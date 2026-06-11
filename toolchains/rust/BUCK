@@ -12,6 +12,7 @@ load(
     "download_rust_std",
     "hermetic_rust_toolchain",
     "host_rust_triple",
+    "rustfmt",
 )
 
 _HOST_TRIPLE = host_rust_triple()
@@ -51,7 +52,7 @@ _STD_DISTRIBUTIONS = {
 
 hermetic_rust_toolchain(
     name = "rust",
-    default_edition = "2021",
+    default_edition = "2024",
     host_distribution = ":host",
     host_triple = _HOST_TRIPLE,
     rustc_target_triple = _RUST_TARGET_TRIPLE,
@@ -61,10 +62,18 @@ hermetic_rust_toolchain(
 
 hermetic_rust_toolchain(
     name = "rust_wasi_p1",
-    default_edition = "2021",
+    default_edition = "2024",
     host_distribution = ":host",
     host_triple = _HOST_TRIPLE,
     rustc_target_triple = "wasm32-wasip1",
     std_distributions = _STD_DISTRIBUTIONS,
+    visibility = ["PUBLIC"],
+)
+
+# Runnable rustfmt for formatting Rust sources.
+rustfmt(
+    name = "rustfmt",
+    host_distribution = ":host",
+    host_triple = _HOST_TRIPLE,
     visibility = ["PUBLIC"],
 )

@@ -60,6 +60,23 @@ def download_rust_std(name: str, target: str):
         type = "tar.xz",
     )
 
+def _rust_tool_wrapper(ctx: AnalysisContext, name: str, host, host_inputs, component_bin: str, host_triple: str) -> RunInfo:
+    if "windows" in host_triple:
+        ext, script = ".bat", [
+            "@echo off",
+            cmd_args(host.project("rustc/bin"), format = "set PATH={};%PATH%"),
+            cmd_args(host.project(component_bin + ".exe"), format = "{} %*"),
+        ]
+    else:
+        ext, script = ".sh", [
+            "#!/bin/sh",
+            cmd_args(host.project("rustc/lib"), format = "export LD_LIBRARY_PATH=\"{}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}\""),
+            cmd_args(host.project("rustc/lib"), format = "export DYLD_LIBRARY_PATH=\"{}${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}\""),
+            cmd_args(host.project(component_bin), format = "exec {} \"$@\""),
+        ]
+    wrapper, _ = ctx.actions.write(name + ext, script, is_executable = True, allow_args = True)
+    return RunInfo(args = cmd_args(wrapper, hidden = host_inputs))
+
 def _hermetic_rust_toolchain_impl(ctx: AnalysisContext) -> list[Provider]:
     host = ctx.attrs.host_distribution[DefaultInfo].default_outputs[0]
     host_triple = ctx.attrs.host_triple
@@ -76,27 +93,7 @@ def _hermetic_rust_toolchain_impl(ctx: AnalysisContext) -> list[Provider]:
     def tool(binary):
         return RunInfo(args = cmd_args(binary, hidden = host_inputs))
 
-    clippy_wrapper, _ = ctx.actions.write(
-        "clippy_driver.sh",
-        [
-            "#!/bin/sh",
-            cmd_args(
-                host.project("rustc/lib"),
-                format = "export LD_LIBRARY_PATH=\"{}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}\"",
-            ),
-            cmd_args(
-                host.project("rustc/lib"),
-                format = "export DYLD_LIBRARY_PATH=\"{}${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}\"",
-            ),
-            cmd_args(
-                host.project("clippy-preview/bin/clippy-driver" + exe),
-                format = "exec {} \"$@\"",
-            ),
-        ],
-        is_executable = True,
-        allow_args = True,
-    )
-    clippy = RunInfo(args = cmd_args(clippy_wrapper, hidden = host_inputs))
+    clippy = _rust_tool_wrapper(ctx, "clippy_driver", host, host_inputs, "clippy-preview/bin/clippy-driver", host_triple)
 
     # Assemble a sysroot exposing only the lib/rustlib tree
     sysroot_entries = {
@@ -170,4 +167,25 @@ hermetic_rust_toolchain = rule(
         "warn_lints": attrs.list(attrs.string(), default = []),
     },
     is_toolchain_rule = True,
+)
+
+def _rustfmt_impl(ctx: AnalysisContext) -> list[Provider]:
+    host = ctx.attrs.host_distribution[DefaultInfo].default_outputs[0]
+    host_inputs = (
+        ctx.attrs.host_distribution[DefaultInfo].default_outputs +
+        ctx.attrs.host_distribution[DefaultInfo].other_outputs
+    )
+    rustfmt = _rust_tool_wrapper(ctx, "rustfmt", host, host_inputs, "rustfmt-preview/bin/rustfmt", ctx.attrs.host_triple)
+    return [DefaultInfo(), rustfmt]
+
+# Runnable rustfmt from the hermetic Rust distribution, e.g. `buck2 run toolchains//rust:rustfmt -- path/to/file.rs`. The edition is read from a discovered rustfmt.toml.
+rustfmt = rule(
+    impl = _rustfmt_impl,
+    attrs = {
+        "host_distribution": attrs.exec_dep(
+            providers = [DefaultInfo],
+            doc = "Combined Rust distribution for the host (from download_rust_host).",
+        ),
+        "host_triple": attrs.string(doc = "Rust host triple of the build machine."),
+    },
 )

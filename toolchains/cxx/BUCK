@@ -9,6 +9,7 @@ load(
     "cxx_wasi_toolchain",
     "download_wasi_sdk",
 )
+load(":defs.bzl", "clang_format")
 
 download_wasi_sdk(name = "wasi_sdk", version = "27.0")
 
@@ -25,5 +26,12 @@ cxx_wasi_toolchain(
     name = "rust_linker",
     distribution = ":wasi_sdk",
     linker_tool = "wasm-ld",
+    visibility = ["PUBLIC"],
+)
+
+# Runnable clang-format from the same wasi-sdk distribution, for the C tests.
+clang_format(
+    name = "clang-format",
+    distribution = ":wasi_sdk",
     visibility = ["PUBLIC"],
 )
