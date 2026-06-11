@@ -1,6 +1,6 @@
 use std::{env, process};
 
-use wasi_tests::{create_tmp_dir, open_scratch_directory, STDERR_FD, STDIN_FD, STDOUT_FD};
+use wasi_tests::{STDERR_FD, STDIN_FD, STDOUT_FD, create_tmp_dir, open_scratch_directory};
 
 const TEST_FILENAME: &'static str = "file.cleanup";
 

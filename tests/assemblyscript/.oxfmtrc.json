@@ -1,0 +1,4 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oxc-project/oxc/oxfmt_v0.54.0/npm/oxfmt/configuration_schema.json",
+  "ignorePatterns": []
+}

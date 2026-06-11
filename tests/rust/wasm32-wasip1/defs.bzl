@@ -23,7 +23,7 @@ def _rust_artifact(name, deps):
         crate = name.replace("-", "_"),
         crate_root = "src/bin/{}.rs".format(name),
         srcs = ["src/bin/{}.rs".format(name)],
-        edition = "2021",
+        edition = "2024",
         deps = deps,
         default_target_platform = "//platforms:wasm32_wasip1",
         _cxx_toolchain = "toolchains//:rust_linker",

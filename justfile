@@ -22,7 +22,7 @@ clean:
 
 # Run every lint recipe.
 [group('check')]
-lint: lint-starlark lint-cxx lint-rust
+lint-all: lint-starlark lint-cxx lint-rust lint-ts
 
 # Run Starlark lint on Buck/Starlark/BXL files.
 [group('check')]
@@ -38,6 +38,25 @@ lint-cxx:
 [group('check')]
 lint-rust:
     {{buck}} bxl scripts/check.bxl:main -- --kind rust --output clippy.txt --target //... | xargs cat
+
+# Lint TypeScript/JS sources with oxlint.
+[group('check')]
+lint-ts:
+    git ls-files ':(glob)tests/assemblyscript/**/*.ts' ':(glob)tools/**/*.mjs' | xargs {{buck}} run toolchains//typescript:oxlint --
+
+# Format all sources in place (Rust, C, TypeScript/JS).
+[group('format')]
+fmt:
+    git ls-files ':(glob)tests/rust/**/*.rs' | xargs {{buck}} run toolchains//rust:rustfmt --
+    git ls-files ':(glob)tests/c/**/*.c' ':(glob)tests/c/**/*.h' | xargs {{buck}} run toolchains//cxx:clang-format -- -i
+    git ls-files ':(glob)tests/assemblyscript/**/*.ts' ':(glob)tools/**/*.mjs' | xargs {{buck}} run toolchains//typescript:oxfmt --
+
+# Check formatting without modifying files (used by CI).
+[group('format')]
+fmt-check:
+    git ls-files ':(glob)tests/rust/**/*.rs' | xargs {{buck}} run toolchains//rust:rustfmt -- --check
+    git ls-files ':(glob)tests/c/**/*.c' ':(glob)tests/c/**/*.h' | xargs {{buck}} run toolchains//cxx:clang-format -- --dry-run -Werror
+    git ls-files ':(glob)tests/assemblyscript/**/*.ts' ':(glob)tools/**/*.mjs' | xargs {{buck}} run toolchains//typescript:oxfmt -- --check
 
 # Build all Buck targets in the repository.
 [group('build')]
