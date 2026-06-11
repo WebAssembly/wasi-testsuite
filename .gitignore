@@ -5,6 +5,7 @@
 /tests/assemblyscript/testsuite/
 __pycache__
 buck-out/
+target/
 
 *~
 \#*\#
