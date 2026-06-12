@@ -65,11 +65,16 @@ overridden by setting corresponding environment variables (`WASMTIME`,
 WASMTIME="wasmtime --wasm-features all" ./run-tests
 ```
 
-Optionally you can specify test cases to skip with the `--exclude-filter` option.
-Expectation files use TOML.
+Optionally you can pass per-runtime expectation files with the `--expectations`
+option (the Buck test suites wire these up automatically). Expectation files use
+TOML and support two independent per-test directives:
+
+- `action = "skip"` - don't run the test at all.
+- `expected = "pass"` - run it, and expcet to pass (default can be omitted)
+- `expected = "fail"` - run it, but expect it to fail.
 
 ```bash
-./run-tests --exclude-filter examples/skip.toml
+./run-tests --expectations examples/skip.toml
 ```
 
 ```toml
@@ -78,10 +83,15 @@ version = 1
 [[suite]]
 name = "WASI Rust tests [wasm32-wasip3]"
 
-# Optional human explanation.
+# Don't run this test at all.
 [[suite.test]]
 name = "unsupported-test"
 action = "skip"
+
+# Known failure: expected to fail until the runtime implements it.
+[[suite.test]]
+name = "not-yet-implemented"
+expected = "fail"
 ```
 
 ### Building and testing with Buck2

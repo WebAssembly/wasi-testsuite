@@ -71,7 +71,7 @@ def _wasi_test_impl(ctx: AnalysisContext) -> list[Provider]:
     wasm = _single_output(ctx.attrs.wasm, "wasm")
     runtime_info = ctx.attrs.runtime[WasiRuntimeInfo]
     runtime = runtime_info.runtime
-    exclude_filter = ctx.attrs.exclude_filter or runtime_info.exclude_filter
+    expectations = ctx.attrs.expectations or runtime_info.expectations
 
     cmd = cmd_args(ctx.attrs._runner[RunInfo])
     cmd.add("--wasm", wasm)
@@ -86,8 +86,8 @@ def _wasi_test_impl(ctx: AnalysisContext) -> list[Provider]:
     for guest_name, host_dir in ctx.attrs.fixture_dirs.items():
         cmd.add("--fixture-dir", guest_name, host_dir)
 
-    if exclude_filter:
-        cmd.add("--exclude-filter", exclude_filter)
+    if expectations:
+        cmd.add("--expectations", expectations)
 
     test_env = {
         runtime_info.runtime_env_var: runtime[RunInfo].args,
@@ -131,7 +131,7 @@ _wasi_test_rule = rule(
             value = attrs.source(allow_directory = True),
             default = {},
         ),
-        "exclude_filter": attrs.option(attrs.source(), default = None),
+        "expectations": attrs.option(attrs.source(), default = None),
         "suite_dist_dir": attrs.option(attrs.string(), default = None),
         "_runner": attrs.exec_dep(
             default = "//tools:run_wasi_test",
@@ -148,7 +148,7 @@ def wasi_test(
         config = None,
         dist_dir: str | None = None,
         fixture_dirs = {},
-        exclude_filter = None,
+        expectations = None,
         test_name = None,
         labels = [],
         target_compatible_with = None,
@@ -163,7 +163,7 @@ def wasi_test(
         config: Optional runner JSON config for this test.
         dist_dir: Optional archive relative dist directory; derived from package and version by default.
         fixture_dirs: Mutable preopened directories staged for the runner.
-        exclude_filter: Optional runner exclude filter overriding the runtime default.
+        expectations: Optional expectation file overriding the runtime default.
         test_name: Optional runner/dist test name; inferred from `wasm` labels.
         labels: Extra Buck test labels appended to manifest labels.
         target_compatible_with: Optional Buck constraints required for this test target.
@@ -185,7 +185,7 @@ def wasi_test(
         test_name = test_name or _infer_test_name(wasm),
         config = config,
         fixture_dirs = fixture_dirs,
-        exclude_filter = exclude_filter,
+        expectations = expectations,
         labels = manifest.labels + labels,
         **kwargs
     )

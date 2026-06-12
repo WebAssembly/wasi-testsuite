@@ -51,6 +51,32 @@ class Result(NamedTuple):
         return len(self.failures) > 0
 
 
+class Outcome(StrEnum):
+    # Test ran and matched the expectation (expected to pass, passed).
+    PASS = "pass"
+    # Test ran and failed while expected to pass (a regression).
+    FAIL = "fail"
+    # Test was not executed (skipped by a filter / expectation).
+    SKIP = "skip"
+    # Test failed exactly as the expectation file predicted.
+    XFAIL = "xfail"
+    # Test was expected to fail but passed (the expectation is now stale).
+    XPASS = "xpass"
+
+    @property
+    def is_failure(self) -> bool:
+        # Outcomes that turn the suite (and CI) red.
+        return self in (Outcome.FAIL, Outcome.XPASS)
+
+    @classmethod
+    def evaluate(cls, expected_to_fail: bool, result: "Result") -> "Outcome":
+        if not result.is_executed:
+            return cls.SKIP
+        if expected_to_fail:
+            return cls.XFAIL if result.failed else cls.XPASS
+        return cls.FAIL if result.failed else cls.PASS
+
+
 class ProtocolType(StrEnum):
     TCP = 'tcp'
     UDP = 'udp'
@@ -383,6 +409,7 @@ class TestCase(NamedTuple):
     config: Config
     result: Result
     duration_s: float
+    outcome: Outcome
 
 
 class TestCaseRunnerBase:

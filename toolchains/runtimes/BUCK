@@ -32,7 +32,7 @@ download_wasmtime_runtime(name = "wasmtime_dist", version = DEFAULT_WASMTIME_VER
 wasi_runtime(
     name = "wasmtime_runtime",
     adapter = "root//adapters:wasmtime.py",
-    exclude_filter = select({
+    expectations = select({
         "config//os:macos": "root//expectations:wasmtime_macos",
         "config//os:windows": "root//expectations:wasmtime_windows",
         "DEFAULT": "root//expectations:wasmtime_linux",
@@ -70,7 +70,7 @@ download_wazero_runtime(
 wasi_runtime(
     name = "wazero_runtime",
     adapter = "root//adapters:wazero.py",
-    exclude_filter = select({
+    expectations = select({
         "config//os:macos": "root//expectations:wazero_macos",
         "config//os:windows": "root//expectations:wazero_windows",
         "DEFAULT": "root//expectations:wazero_linux",
@@ -92,7 +92,7 @@ download_wamr_runtime(
 wasi_runtime(
     name = "wamr_runtime",
     adapter = "root//adapters:wasm-micro-runtime.py",
-    exclude_filter = "root//expectations:wamr_linux",
+    expectations = "root//expectations:wamr_linux",
     labels = ["wamr"],
     runtime = ":wamr_dist",
     runtime_env_var = "IWASM",
@@ -120,7 +120,7 @@ jco_runtime_command(
 wasi_runtime(
     name = "jco_runtime",
     adapter = "root//adapters:jco.py",
-    exclude_filter = select({
+    expectations = select({
         "config//os:macos": "root//expectations:jco_macos",
         "config//os:windows": "root//expectations:jco_windows",
         "DEFAULT": "root//expectations:jco_linux",

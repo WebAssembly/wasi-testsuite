@@ -16,11 +16,11 @@ parser = argparse.ArgumentParser(
 )
 
 parser.add_argument(
-    "-f",
-    "--exclude-filter",
+    "-e",
+    "--expectations",
     action="append",
     default=[],
-    help="Path to JSON file indicating tests to exclude.",
+    help="Path to a TOML expectation file (skips and expected failures).",
 )
 parser.add_argument(
     "-r", "--runtime-adapter", help="Path to a runtime adapter."
@@ -89,4 +89,4 @@ sys.exit(run_tests(runtime_adapters, test_suite,
                    color=not options.disable_colors,
                    json_log_file=options.json_output_location,
                    verbose=options.verbose,
-                   exclude_filters=options.exclude_filter))
+                   expectations=options.expectations))

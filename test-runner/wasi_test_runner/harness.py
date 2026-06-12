@@ -17,7 +17,7 @@ from .runtime_adapter import RuntimeAdapter
 # pylint: disable-msg=too-many-positional-arguments
 def run_tests(runtimes: List[RuntimeAdapter],
               test_suite_paths: List[Path],
-              exclude_filters: List[Path] | None = None,
+              expectations: List[Path] | None = None,
               color: bool = True,
               verbose: bool = False,
               json_log_file: str | None = None) -> int:
@@ -25,8 +25,8 @@ def run_tests(runtimes: List[RuntimeAdapter],
     if json_log_file:
         reporters.append(JSONTestReporter(json_log_file))
     filters: List[TestFilter] = [UnsupportedWasiTestExcludeFilter()]
-    if exclude_filters is not None:
-        filters += [TestExpectationFilter(str(filt)) for filt in exclude_filters]
+    if expectations is not None:
+        filters += [TestExpectationFilter(str(filt)) for filt in expectations]
 
     return run_all_tests(runtimes, [str(p) for p in test_suite_paths], reporters, filters)
 
