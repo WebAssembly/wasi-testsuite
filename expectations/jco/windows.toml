@@ -2,3 +2,129 @@ version = 1
 
 [[suite]]
 name = "WASI Rust tests [wasm32-wasip3]"
+
+# TODO(wasi-0.3.0): temporary skip during the WASI 0.3.0 chicken/egg period.
+# The wasip3 suite was bumped to the WASI 0.3.0 release, but no published
+# jco release supports 0.3.0 yet (only the rc). Re-enable by deleting the
+# skips below once a jco release ships WASI 0.3.0 support.
+
+[[suite.test]]
+name = "cli-env"
+action = "skip"
+[[suite.test]]
+name = "cli-exit"
+action = "skip"
+[[suite.test]]
+name = "cli-stdio"
+action = "skip"
+[[suite.test]]
+name = "cli-stdio-roundtrip"
+action = "skip"
+[[suite.test]]
+name = "cli-terminal"
+action = "skip"
+[[suite.test]]
+name = "filesystem-advise"
+action = "skip"
+[[suite.test]]
+name = "filesystem-dotdot"
+action = "skip"
+[[suite.test]]
+name = "filesystem-flags-and-type"
+action = "skip"
+[[suite.test]]
+name = "filesystem-hard-links"
+action = "skip"
+[[suite.test]]
+name = "filesystem-io"
+action = "skip"
+[[suite.test]]
+name = "filesystem-is-same-object"
+action = "skip"
+[[suite.test]]
+name = "filesystem-metadata-hash"
+action = "skip"
+[[suite.test]]
+name = "filesystem-mkdir-rmdir"
+action = "skip"
+[[suite.test]]
+name = "filesystem-open-errors"
+action = "skip"
+[[suite.test]]
+name = "filesystem-read-directory"
+action = "skip"
+[[suite.test]]
+name = "filesystem-rename"
+action = "skip"
+[[suite.test]]
+name = "filesystem-set-size"
+action = "skip"
+[[suite.test]]
+name = "filesystem-stat"
+action = "skip"
+[[suite.test]]
+name = "filesystem-unlink-errors"
+action = "skip"
+[[suite.test]]
+name = "http-fields"
+action = "skip"
+[[suite.test]]
+name = "http-request"
+action = "skip"
+[[suite.test]]
+name = "http-response"
+action = "skip"
+[[suite.test]]
+name = "http-service"
+action = "skip"
+[[suite.test]]
+name = "monotonic-clock"
+action = "skip"
+[[suite.test]]
+name = "multi-clock-wait"
+action = "skip"
+[[suite.test]]
+name = "random"
+action = "skip"
+[[suite.test]]
+name = "run-with-err"
+action = "skip"
+[[suite.test]]
+name = "sockets-echo"
+action = "skip"
+[[suite.test]]
+name = "sockets-tcp-bind"
+action = "skip"
+[[suite.test]]
+name = "sockets-tcp-connect"
+action = "skip"
+[[suite.test]]
+name = "sockets-tcp-listen"
+action = "skip"
+[[suite.test]]
+name = "sockets-tcp-properties"
+action = "skip"
+[[suite.test]]
+name = "sockets-tcp-receive"
+action = "skip"
+[[suite.test]]
+name = "sockets-tcp-send"
+action = "skip"
+[[suite.test]]
+name = "sockets-udp-bind"
+action = "skip"
+[[suite.test]]
+name = "sockets-udp-connect"
+action = "skip"
+[[suite.test]]
+name = "sockets-udp-properties"
+action = "skip"
+[[suite.test]]
+name = "sockets-udp-receive"
+action = "skip"
+[[suite.test]]
+name = "sockets-udp-send"
+action = "skip"
+[[suite.test]]
+name = "wall-clock"
+action = "skip"
