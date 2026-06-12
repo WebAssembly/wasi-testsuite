@@ -25,8 +25,8 @@ def main() -> int:
         help="Locations of suites (directories with *.wasm test files).",
     )
     parser.add_argument(
-        "-f",
-        "--exclude-filter",
+        "-e",
+        "--expectations",
         required=False,
         nargs="+",
         default=[],
@@ -54,7 +54,7 @@ def main() -> int:
         reporters.append(JSONTestReporter(options.json_output_location))
 
     filters: List[TestFilter] = [UnsupportedWasiTestExcludeFilter()]
-    for filt in options.exclude_filter:
+    for filt in options.expectations:
         filters.append(TestExpectationFilter(filt))
 
     return run_all_tests(

@@ -41,7 +41,7 @@ def main() -> int:
     parser.add_argument("--adapter", required=True)
     parser.add_argument("--config")
     parser.add_argument("--fixture-dir", nargs=2, action="append", default=[])
-    parser.add_argument("--exclude-filter")
+    parser.add_argument("--expectations")
     args = parser.parse_args()
 
     with tempfile.TemporaryDirectory(prefix="wasi-buck-test-") as tmp:
@@ -56,8 +56,8 @@ def main() -> int:
             _copy_tree(host_dir, suite_dir / guest_name)
 
         runtime = RuntimeAdapter(Path(args.adapter))
-        exclude_filters = [Path(args.exclude_filter)] if args.exclude_filter else None
-        return run_tests([runtime], [suite_dir], exclude_filters, verbose=True)
+        expectations = [Path(args.expectations)] if args.expectations else None
+        return run_tests([runtime], [suite_dir], expectations, verbose=True)
 
 
 if __name__ == "__main__":
