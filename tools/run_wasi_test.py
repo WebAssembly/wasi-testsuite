@@ -42,6 +42,7 @@ def main() -> int:
     parser.add_argument("--config")
     parser.add_argument("--fixture-dir", nargs=2, action="append", default=[])
     parser.add_argument("--expectations")
+    parser.add_argument("--exclude-filter", dest="expectations", help=argparse.SUPPRESS)
     args = parser.parse_args()
 
     with tempfile.TemporaryDirectory(prefix="wasi-buck-test-") as tmp:

@@ -31,7 +31,7 @@ class TestSuite(NamedTuple):
     @property
     def fail_count(self) -> int:
         # Regressions (fail) and stale expectations (xpass) both fail the suite.
-        return self._count(Outcome.FAIL, Outcome.XPASS)
+        return len([1 for test in self.test_cases if test.outcome.is_failure])
 
     @property
     def skip_count(self) -> int:

@@ -33,6 +33,12 @@ def main() -> int:
         help="Locations of test expectation files (TOML).",
     )
     parser.add_argument(
+        "--exclude-filter",
+        dest="expectations",
+        nargs="+",
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
         "-r", "--runtime-adapter", required=True, help="Path to a runtime adapter."
     )
     parser.add_argument(

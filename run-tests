@@ -22,6 +22,13 @@ parser.add_argument(
     default=[],
     help="Path to a TOML expectation file (skips and expected failures).",
 )
+# Deprecated hidden alias for --expectations
+parser.add_argument(
+    "--exclude-filter",
+    dest="expectations",
+    action="append",
+    help=argparse.SUPPRESS,
+)
 parser.add_argument(
     "-r", "--runtime-adapter", help="Path to a runtime adapter."
 )

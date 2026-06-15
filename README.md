@@ -70,7 +70,7 @@ option (the Buck test suites wire these up automatically). Expectation files use
 TOML and support two independent per-test directives:
 
 - `action = "skip"` - don't run the test at all.
-- `expected = "pass"` - run it, and expcet to pass (default can be omitted)
+- `expected = "pass"` - run it, and expect to pass (default can be omitted)
 - `expected = "fail"` - run it, but expect it to fail.
 
 ```bash
