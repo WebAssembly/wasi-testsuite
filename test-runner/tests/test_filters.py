@@ -56,3 +56,28 @@ def test_toml_expectation_filter_does_not_skip_unlisted_test(tmp_path: Path) -> 
     )
 
     assert ExpectationFilter(str(expectations)).should_skip(_meta(), "test-name", Config()) == (False, None)
+
+
+def test_toml_expectation_filter_marks_expected_fail_as_expected_to_fail(tmp_path: Path) -> None:
+    expectations = tmp_path / "expectations.toml"
+    expectations.write_text(
+        """
+        version = 1
+
+        [[suite]]
+        name = "WASI Rust tests [wasm32-wasip3]"
+
+        [[suite.test]]
+        name = "test-name"
+        expected = "fail"
+        """,
+        encoding="utf-8",
+    )
+
+    filt = ExpectationFilter(str(expectations))
+
+    # An expected failure is still executed (not skipped)...
+    assert filt.should_skip(_meta(), "test-name", Config()) == (False, None)
+    # ...but is reported as expected-to-fail.
+    assert filt.expected_to_fail(_meta(), "test-name") is True
+    assert filt.expected_to_fail(_meta(), "unlisted-test") is False

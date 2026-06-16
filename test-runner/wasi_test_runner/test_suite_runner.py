@@ -14,7 +14,7 @@ from typing import List, NamedTuple, Tuple, Dict, Any, IO
 from .filters import TestFilter
 from .runtime_adapter import RuntimeAdapter
 from .test_case import (
-    Result, Failure, WasiVersion, Config,
+    Result, Failure, WasiVersion, Config, Outcome,
     TestCase, TestCaseRunnerBase, TestCaseValidator,
     # Operation types
     Run, Read, Write, Wait, Send, Recv, Connect, Request, Kill
@@ -26,6 +26,12 @@ from .test_suite import TestSuite, TestSuiteMeta
 class Manifest(NamedTuple):
     name: str
     wasi_version: WasiVersion
+
+
+class _TestSpec(NamedTuple):
+    path: str
+    name: str
+    config: Config
 
 
 class TestCaseRunner(TestCaseRunnerBase):
@@ -298,23 +304,27 @@ def run_tests_from_test_suite(
                          runtime.get_meta())
 
     all_tests = [
-        (test_path,
-         os.path.splitext(os.path.basename(test_path))[0],
-         _read_test_config(test_path))
+        _TestSpec(
+            path=test_path,
+            name=os.path.splitext(os.path.basename(test_path))[0],
+            config=_read_test_config(test_path),
+        )
         for test_path in glob.glob(os.path.join(test_suite_path, "*.wasm"))
     ]
 
-    for test_path, name, config in all_tests:
+    for spec in all_tests:
         for filt in filters:
             # for now, just drop the skip reason string. it might be
             # useful to make reporters report it.
-            skip, _ = filt.should_skip(meta, name, config)
+            skip, _ = filt.should_skip(meta, spec.name, spec.config)
             if skip:
-                test_case = _skip_single_test(name, config)
+                test_case = _skip_single_test(spec)
                 break
         else:
-            test_case = _execute_single_test(
-                runtime, meta, test_path, name, config)
+            expected_to_fail = any(
+                filt.expected_to_fail(meta, spec.name) for filt in filters
+            )
+            test_case = _execute_single_test(runtime, meta, spec, expected_to_fail)
         test_cases.append(test_case)
         for reporter in reporters:
             reporter.report_test(meta, test_case)
@@ -329,13 +339,14 @@ def run_tests_from_test_suite(
     )
 
 
-def _skip_single_test(name: str, config: Config) -> TestCase:
+def _skip_single_test(spec: _TestSpec) -> TestCase:
     return TestCase(
-        name=name,
+        name=spec.name,
         argv=[],
-        config=config,
+        config=spec.config,
         result=Result(is_executed=False, failures=[]),
         duration_s=0,
+        outcome=Outcome.SKIP,
     )
 
 
@@ -367,20 +378,21 @@ def _cleanup_test_output(host_dir: Path) -> None:
 
 
 def _execute_single_test(
-        runtime: RuntimeAdapter, meta: TestSuiteMeta, test_path: str,
-        name: str, config: Config
+        runtime: RuntimeAdapter, meta: TestSuiteMeta,
+        spec: _TestSpec, expected_to_fail: bool
 ) -> TestCase:
-    runner = TestCaseRunner(config, test_path, meta.wasi_version, runtime)
+    runner = TestCaseRunner(spec.config, spec.path, meta.wasi_version, runtime)
     test_start = time.time()
     result = runner.run()
     elapsed = time.time() - test_start
 
     return TestCase(
-        name=name,
+        name=spec.name,
         argv=runner.last_argv(),
-        config=config,
+        config=spec.config,
         result=result,
         duration_s=elapsed,
+        outcome=Outcome.evaluate(expected_to_fail, result),
     )
 
 
