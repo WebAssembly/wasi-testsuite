@@ -96,10 +96,12 @@ def test_runner_end_to_end() -> None:
                                                 the_runtime_wasi_version,
                                                 runtime_meta)
 
+    expected_outcomes = [tc.Outcome.PASS, tc.Outcome.FAIL, tc.Outcome.FAIL, tc.Outcome.FAIL]
     expected_test_cases = [
-        tc.TestCase(test_name, expected_argv, config, result, ANY)
-        for config, test_name, result in zip(
-            expected_config, ["test1", "test2", "test3", "test4"], expected_results
+        tc.TestCase(test_name, expected_argv, config, result, ANY, outcome)
+        for config, test_name, result, outcome in zip(
+            expected_config, ["test1", "test2", "test3", "test4"],
+            expected_results, expected_outcomes
         )
     ]
 
@@ -112,6 +114,7 @@ def test_runner_end_to_end() -> None:
 
     filt = Mock()
     filt.should_skip.return_value = (False, None)
+    filt.expected_to_fail.return_value = False
     filters = [filt]
 
     process = Mock()

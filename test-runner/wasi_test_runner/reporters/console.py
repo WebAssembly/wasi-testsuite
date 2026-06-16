@@ -3,7 +3,7 @@ from typing import List, Optional, Dict
 from colorama import Fore, init
 
 from . import TestReporter
-from ..test_case import TestCase
+from ..test_case import TestCase, Outcome
 from ..test_suite import TestSuite, TestSuiteMeta
 from ..runtime_adapter import RuntimeMeta
 
@@ -33,22 +33,28 @@ class ConsoleTestReporter(TestReporter):
             self._report_test_terse(test)
 
     def _report_test_verbose(self, test: TestCase) -> None:
-        if test.result.failed:
+        if test.outcome == Outcome.PASS:
+            self._print_pass(f"Test {test.name} passed")
+        elif test.outcome == Outcome.XFAIL:
+            self._print_skip(f"Test {test.name} failed as expected (xfail)")
+        elif test.outcome == Outcome.SKIP:
+            self._print_skip(f"Test {test.name} skipped")
+        elif test.outcome == Outcome.XPASS:
+            self._print_fail(f"Test {test.name} passed but was expected to fail (xpass)")
+        else:
             self._print_fail(f"Test {test.name} failed")
             for reason in test.result.failures:
                 self._print_fail(f"  [{reason.type}] {reason.message}")
-        elif test.result.is_executed:
-            self._print_pass(f"Test {test.name} passed")
-        else:
-            self._print_skip(f"Test {test.name} skipped")
 
     def _report_test_terse(self, test: TestCase) -> None:
-        if test.result.failed:
-            print(self._fail_colored("!"), end='')
-        elif test.result.is_executed:
-            print(self._pass_colored("."), end='')
-        else:
-            print(self._skip_colored("_"), end='')
+        symbols = {
+            Outcome.PASS: self._pass_colored("."),
+            Outcome.XFAIL: self._skip_colored("x"),
+            Outcome.SKIP: self._skip_colored("_"),
+            Outcome.FAIL: self._fail_colored("!"),
+            Outcome.XPASS: self._fail_colored("X"),
+        }
+        print(symbols[test.outcome], end='')
 
     def report_test_suite(self, test_suite: TestSuite) -> None:
         self._test_suites.append(test_suite)
@@ -69,12 +75,14 @@ class ConsoleTestReporter(TestReporter):
 
     def _print_result_for_runtime(self, runtime: RuntimeMeta,
                                   suites: List[TestSuite]) -> None:
-        total_skip = total_pass = total_fail = 0
+        total_skip = total_pass = total_fail = total_xfail = total_xpass = 0
 
         for suite in suites:
             total_pass += suite.pass_count
             total_fail += suite.fail_count
             total_skip += suite.skip_count
+            total_xfail += suite.xfail_count
+            total_xpass += suite.xpass_count
         total_tests = total_pass + total_fail
 
         summary = f"{runtime.name} {runtime.version}: "
@@ -87,14 +95,25 @@ class ConsoleTestReporter(TestReporter):
         else:
             summary += self._skip_colored("SKIP")
             summary += ": all tests skipped"
+
+        extras = []
         if total_skip > 0:
-            summary += f" ({total_skip} skipped)"
+            extras.append(f"{total_skip} skipped")
+        if total_xfail > 0:
+            extras.append(f"{total_xfail} xfail")
+        if total_xpass > 0:
+            extras.append(f"{total_xpass} xpass")
+        if extras:
+            summary += f" ({', '.join(extras)})"
         print(summary)
 
         for suite in suites:
             for test_case in suite.test_cases:
-                if test_case.result.is_executed and test_case.result.failed:
+                if test_case.outcome == Outcome.FAIL:
                     print(f"  {shlex.join([str(a) for a in test_case.argv])}")
+                elif test_case.outcome == Outcome.XPASS:
+                    print(f"  {test_case.name}: passed but expected to fail "
+                          "(update the expectation file)")
 
     def _colored_str(self, color: str, text: str) -> str:
         if self._colored:

@@ -32,10 +32,13 @@ class JSONTestReporter(TestReporter):
                     "failed": suite.fail_count,
                     "skipped": suite.skip_count,
                     "passed": suite.pass_count,
+                    "xfailed": suite.xfail_count,
+                    "xpassed": suite.xpass_count,
                     "tests": [
                         {
                             "name": test.name,
                             "executed": test.result.is_executed,
+                            "outcome": test.outcome.value,
                             "duration_s": test.duration_s,
                             "failures": [
                                 failure.message for failure in test.result.failures
