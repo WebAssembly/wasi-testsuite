@@ -141,3 +141,7 @@ action = "skip"
 [[suite.test]]
 name = "wall-clock"
 action = "skip"
+
+[[suite.test]]
+name = "cli-stdout-flush"
+expected = "fail"
