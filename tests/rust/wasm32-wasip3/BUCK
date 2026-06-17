@@ -40,6 +40,7 @@ _RUST_P3_TESTS = [
     rust_p3_test("cli-exit", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
     rust_p3_test("cli-stdio", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
     rust_p3_test("cli-stdio-roundtrip", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("cli-stdout-flush", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
     rust_p3_test("cli-terminal", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
     rust_p3_test("filesystem-advise", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
     rust_p3_test("filesystem-dotdot", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
