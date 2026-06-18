@@ -1,5 +1,5 @@
 use std::{env, process};
-use wasi_tests::open_scratch_directory;
+use wasi_tests::root_directory;
 
 unsafe fn test_fd_advise(dir_fd: wasi::Fd) {
     const FILE_NAME: &str = "fd_advise_file.cleanup";
@@ -55,17 +55,7 @@ unsafe fn test_fd_advise(dir_fd: wasi::Fd) {
     wasi::path_unlink_file(dir_fd, FILE_NAME).expect("failed to unlink");
 }
 fn main() {
-    let mut args = env::args();
-    let prog = args.next().unwrap();
-    let arg = if let Some(arg) = args.next() {
-        arg
-    } else {
-        eprintln!("usage: {} <scratch directory>", prog);
-        process::exit(1);
-    };
-
-    // Open scratch directory
-    let dir_fd = match open_scratch_directory(&arg) {
+    let dir_fd = match root_directory() {
         Ok(dir_fd) => dir_fd,
         Err(err) => {
             eprintln!("{}", err);

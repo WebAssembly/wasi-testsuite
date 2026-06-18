@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 int main() {
-  FILE *file = fopen("fs-tests.dir/file", "r");
+  FILE *file = fopen("file", "r");
 
   assert(file != NULL);
 

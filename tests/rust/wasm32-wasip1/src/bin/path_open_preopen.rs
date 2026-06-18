@@ -1,5 +1,3 @@
-use std::{env, process};
-
 unsafe fn find_first_preopened_fd(path: &str) -> Result<wasi::Fd, String> {
     let max_fd = (1 << 31) - 1;
 
@@ -125,17 +123,7 @@ unsafe fn path_open_preopen(preopened_fd: wasi::Fd) {
 }
 
 fn main() {
-    let mut args = env::args();
-    let prog = args.next().unwrap();
-
-    let arg = if let Some(arg) = args.next() {
-        arg
-    } else {
-        eprintln!("usage: {} <scratch directory>", prog);
-        process::exit(1);
-    };
-
-    let preopened_fd = unsafe { find_first_preopened_fd(arg.as_str()).unwrap() };
+    let preopened_fd = unsafe { find_first_preopened_fd("/").unwrap() };
 
     // Run the tests.
     unsafe { path_open_preopen(preopened_fd) }

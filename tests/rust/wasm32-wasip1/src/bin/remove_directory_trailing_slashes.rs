@@ -1,5 +1,5 @@
 use std::{env, process};
-use wasi_tests::{assert_errno, create_file, open_scratch_directory};
+use wasi_tests::{assert_errno, create_file, root_directory};
 
 const TEST_FILENAME: &'static str = "file.cleanup";
 const TEST_DIRNAME: &'static str = "dir.cleanup";
@@ -45,17 +45,7 @@ unsafe fn test_remove_directory_trailing_slashes(dir_fd: wasi::Fd) {
 }
 
 fn main() {
-    let mut args = env::args();
-    let prog = args.next().unwrap();
-    let arg = if let Some(arg) = args.next() {
-        arg
-    } else {
-        eprintln!("usage: {} <scratch directory>", prog);
-        process::exit(1);
-    };
-
-    // Open scratch directory
-    let dir_fd = match open_scratch_directory(&arg) {
+    let dir_fd = match root_directory() {
         Ok(dir_fd) => dir_fd,
         Err(err) => {
             eprintln!("{}", err);
