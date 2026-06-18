@@ -12,7 +12,7 @@ def get_mock_open() -> Mock:
     def open_mock(filename: str, *_args: Any, **_kwargs: Any) -> Any:
         file_content = {
             "my-path/manifest.json": '{"name": "test-suite"}',
-            "my-path/test1.json": '{"dirs": [".", "deep/dir"]}',
+            "my-path/test1.json": '{"root": "deep/dir"}',
             "my-path/test2.json": '{"exit_code": 1, "args": ["a", "b"]}',
             "my-path/test3.json": '{"stdout": "output", "env": {"x": "1"}}',
             "my-path/test4.json": (
@@ -48,7 +48,7 @@ def test_runner_end_to_end() -> None:
     test_files = ["test1.wasm", "test2.wasm", "test3.wasm", "test4.wasm"]
     test_paths = [Path(test_suite_dir) / f for f in test_files]
 
-    test_dirs = [".", "deep/dir"]
+    test_root = "deep/dir"
     runtime_name = "rt1"
 
     expected_argv = [runtime_name, "<test>"]
@@ -61,7 +61,7 @@ def test_runner_end_to_end() -> None:
     expected_config = [
         tc.Config(
             operations=[
-                tc.Run(dirs=[(Path(test_suite_dir) / d, d) for d in test_dirs]),
+                tc.Run(root=Path(test_suite_dir) / test_root),
                 tc.Wait(exit_code=0)
             ],
             proposals=[],

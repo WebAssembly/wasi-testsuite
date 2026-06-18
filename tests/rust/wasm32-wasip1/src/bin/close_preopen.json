@@ -1,4 +1,4 @@
 {
-    "dirs": ["fs-tests.dir"],
-    "args": ["fs-tests.dir"]
+    "root": "fs-tests.dir",
+    "args": []
 }

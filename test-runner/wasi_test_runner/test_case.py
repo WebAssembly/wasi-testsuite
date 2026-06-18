@@ -3,10 +3,10 @@ import json
 import signal
 from pathlib import Path
 from enum import Enum, StrEnum, auto
-from typing import List, NamedTuple, TypeVar, Type, Dict, Any, Set, Tuple
+from typing import List, NamedTuple, TypeVar, Type, Dict, Any, Set, Optional
 
 # Top level configuration keys
-LEGACY_CONFIG_KEYS = {"args", "dirs", "env", "exit_code", "stderr", "stdout"}
+LEGACY_CONFIG_KEYS = {"args", "root", "env", "exit_code", "stderr", "stdout"}
 CONFIG_KEYS = {"operations", "proposals", "world"}
 
 
@@ -89,17 +89,18 @@ R = TypeVar("R", bound="Run")
 class Run(NamedTuple):
     args: List[str] = []
     env: Dict[str, str] = {}
-    dirs: List[Tuple[Path, str]] = []
+    root: Optional[Path] = None
 
     @classmethod
     def from_config(cls: Type[R], test_config_path: Path, config: Dict[str, Any]) -> R:
         default = cls()
-        dirs = config.get("dirs", default.dirs)
-        dir_pairs = [(test_config_path.parent / d, d) for d in dirs]
+        root = config.get("root", default.root)
+        if root:
+            root = test_config_path.parent / root
         return cls(
             args=config.get("args", default.args),
             env=config.get("env", default.env),
-            dirs=dir_pairs
+            root=root
         )
 
 

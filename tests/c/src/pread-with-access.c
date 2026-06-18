@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
   const int expected_len = strlen(expected);
   char read_buf[16];
 
-  fd = open("fs-tests.dir/pread.txt", O_RDONLY);
+  fd = open("pread.txt", O_RDONLY);
   assert(fd > 0);
 
   do {

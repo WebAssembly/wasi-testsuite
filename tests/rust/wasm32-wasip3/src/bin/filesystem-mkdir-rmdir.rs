@@ -41,30 +41,24 @@ async fn test_mkdir_rmdir(dir: &Descriptor) {
         );
     }
     assert_eq!(mkdir("/").await, Err(ErrorCode::NotPermitted));
-    assert_eq!(
-        mkdir("../fs-tests.dir/q.cleanup").await,
-        Err(ErrorCode::NotPermitted)
-    );
+    assert_eq!(mkdir("../q.cleanup").await, Err(ErrorCode::NotPermitted));
     if has_symlink {
         assert_eq!(
-            mkdir("parent.cleanup/fs-tests.dir/q.cleanup").await,
+            mkdir("parent.cleanup/q.cleanup").await,
             Err(ErrorCode::NotPermitted)
         );
     }
     assert_eq!(mkdir("a.txt").await, Err(ErrorCode::Exist));
     mkdir("q.cleanup").await.unwrap();
-    assert_eq!(
-        rmdir("../fs-tests.dir/q.cleanup").await,
-        Err(ErrorCode::NotPermitted)
-    );
+    assert_eq!(rmdir("../q.cleanup").await, Err(ErrorCode::NotPermitted));
     if has_symlink {
         assert_eq!(
-            rmdir("parent.cleanup/fs-tests.dir/q.cleanup").await,
+            rmdir("parent.cleanup/q.cleanup").await,
             Err(ErrorCode::NotPermitted)
         );
     }
     assert_eq!(
-        rmdir("q.cleanup/../../fs-tests.dir/q.cleanup").await,
+        rmdir("q.cleanup/../../q.cleanup").await,
         Err(ErrorCode::NotPermitted)
     );
     rmdir("q.cleanup").await.unwrap();
@@ -98,10 +92,7 @@ async fn test_mkdir_rmdir(dir: &Descriptor) {
     if has_symlink {
         // FIXME: https://github.com/bytecodealliance/wasmtime/issues/12178
         // assert_eq!(rmdir("parent.cleanup").await, Err(ErrorCode::NotDirectory));
-        assert_eq!(
-            rmdir("parent.cleanup/fs-tests.dir").await,
-            Err(ErrorCode::NotPermitted)
-        );
+        assert_eq!(rmdir("parent.cleanup/").await, Err(ErrorCode::NotPermitted));
     }
 
     mkdir("child.cleanup").await.unwrap();
@@ -154,11 +145,11 @@ export!(Component);
 impl exports::wasi::cli::run::Guest for Component {
     async fn run() -> Result<(), ()> {
         match &wasi::filesystem::preopens::get_directories()[..] {
-            [(dir, dirname)] if dirname == "fs-tests.dir" => {
+            [(dir, _)] => {
                 test_mkdir_rmdir(dir).await;
             }
             [..] => {
-                eprintln!("usage: run with one open dir named 'fs-tests.dir'");
+                eprintln!("usage: run with one open dir");
                 process::exit(1)
             }
         };

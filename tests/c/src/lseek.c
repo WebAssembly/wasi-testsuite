@@ -11,7 +11,7 @@ int main() {
   FILE *file;
   size_t size;
 
-  file = fopen("fs-tests.dir/lseek.txt", "r");
+  file = fopen("lseek.txt", "r");
   assert(file != NULL);
 
   fd = fileno(file);

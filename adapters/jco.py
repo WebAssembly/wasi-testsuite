@@ -3,7 +3,7 @@ import os
 import shlex
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 
 
 # shlex.split() splits according to shell quoting rules.
@@ -37,18 +37,17 @@ def get_timeout_seconds() -> float:
 
 
 def compute_argv(test_path: str,
-                 args_env_dirs: Tuple[List[str], Dict[str, str], List[Tuple[Path, str]]],
+                 args_env_root: Tuple[List[str], Dict[str, str], Optional[str]],
                  proposals: List[str],
                  wasi_world: str,
                  wasi_version: str) -> List[str]:
-    args, env, dirs = args_env_dirs
-    preopens = [
-        {
-            "guest": guest,
-            "host": str(host),
-        }
-        for host, guest in dirs
-    ]
+    args, env, root = args_env_root
+    preopens = []
+    if root:
+        preopens.append({
+            "guest": "/",
+            "host": str(root),
+        })
 
     return JCO + [
         "--component", test_path,

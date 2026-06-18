@@ -21,7 +21,7 @@ def test_test_config_should_load_defaults_for_empty_json(_mock_file: Mock) -> No
     run = config.operations[0]
     assert isinstance(run, Run)
     assert run.args == []
-    assert run.dirs == []
+    assert run.root is None
     assert run.env == {}
 
     wait = config.operations[1]
@@ -41,7 +41,7 @@ def test_test_config_should_load_values_from_json(_mock_file: Mock) -> None:
     run = config.operations[0]
     assert isinstance(run, Run)
     assert run.args == ["a", "b"]
-    assert run.dirs == []
+    assert run.root is None
     assert run.env == {}
 
     wait = config.operations[1]
@@ -89,22 +89,20 @@ def test_run_from_config_with_defaults() -> None:
 
     assert run.args == []
     assert run.env == {}
-    assert run.dirs == []
+    assert run.root is None
 
 
 def test_run_from_config_with_values() -> None:
     config = {
         "args": ["arg1", "arg2"],
         "env": {"KEY": "value"},
-        "dirs": [".", "subdir"]
+        "root": "workdir"
     }
     run = Run.from_config(Path("/test/path"), config)
 
     assert run.args == ["arg1", "arg2"]
     assert run.env == {"KEY": "value"}
-    assert len(run.dirs) == 2
-    assert all(isinstance(d, tuple) and len(d) == 2 for d in run.dirs)
-    assert all(isinstance(d[0], Path) and isinstance(d[1], str) for d in run.dirs)
+    assert run.root == Path("/test/workdir")
 
 
 def test_wait_from_config_with_defaults() -> None:
