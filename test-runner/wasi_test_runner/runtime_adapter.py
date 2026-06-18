@@ -2,7 +2,7 @@ import importlib.util
 import subprocess
 import sys
 from pathlib import Path
-from typing import NamedTuple, List, Tuple, Dict, Any, Optional
+from typing import NamedTuple, List, Dict, Any, Optional
 
 from .test_case import WasiVersion, WasiWorld
 
@@ -110,7 +110,7 @@ class RuntimeAdapter:
     def compute_argv(self, test_path: str,
                      args: List[str],
                      env: Dict[str, str],
-                     root: Optional[str],
+                     root: Optional[Path],
                      proposals: List[str],
                      wasi_world: WasiWorld,
                      wasi_version: WasiVersion) -> List[str]:

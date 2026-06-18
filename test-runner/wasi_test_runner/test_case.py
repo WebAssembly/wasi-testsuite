@@ -3,7 +3,7 @@ import json
 import signal
 from pathlib import Path
 from enum import Enum, StrEnum, auto
-from typing import List, NamedTuple, TypeVar, Type, Dict, Any, Set, Tuple, Optional
+from typing import List, NamedTuple, TypeVar, Type, Dict, Any, Set, Optional
 
 # Top level configuration keys
 LEGACY_CONFIG_KEYS = {"args", "root", "env", "exit_code", "stderr", "stdout"}
@@ -89,7 +89,7 @@ R = TypeVar("R", bound="Run")
 class Run(NamedTuple):
     args: List[str] = []
     env: Dict[str, str] = {}
-    root: Optional[str] = None
+    root: Optional[Path] = None
 
     @classmethod
     def from_config(cls: Type[R], test_config_path: Path, config: Dict[str, Any]) -> R:

@@ -61,7 +61,7 @@ def test_runner_end_to_end() -> None:
     expected_config = [
         tc.Config(
             operations=[
-                tc.Run(root=test_suite_root / test_root),
+                tc.Run(root=Path(test_suite_dir) / test_root),
                 tc.Wait(exit_code=0)
             ],
             proposals=[],
