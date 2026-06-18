@@ -7,10 +7,10 @@
 #include <unistd.h>
 
 int main() {
-  int a = open("fs-tests.dir/file", O_RDONLY);
+  int a = open("file", O_RDONLY);
   assert(a != -1);
 
-  int b = open("fs-tests.dir/lseek.txt", O_RDONLY);
+  int b = open("lseek.txt", O_RDONLY);
   assert(b != -1);
 
   struct stat a_stat;

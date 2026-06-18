@@ -2,7 +2,7 @@ import importlib.util
 import subprocess
 import sys
 from pathlib import Path
-from typing import NamedTuple, List, Tuple, Dict, Any
+from typing import NamedTuple, List, Dict, Any, Optional
 
 from .test_case import WasiVersion, WasiWorld
 
@@ -110,7 +110,7 @@ class RuntimeAdapter:
     def compute_argv(self, test_path: str,
                      args: List[str],
                      env: Dict[str, str],
-                     dirs: List[Tuple[Path, str]],
+                     root: Optional[Path],
                      proposals: List[str],
                      wasi_world: WasiWorld,
                      wasi_version: WasiVersion) -> List[str]:
@@ -118,8 +118,8 @@ class RuntimeAdapter:
         # pylint: disable-msg=unknown-option-value
         # pylint: disable-msg=too-many-arguments
         # pylint: disable-msg=too-many-positional-arguments
-        args_env_dirs = [args, env, dirs]
-        argv = self._adapter.compute_argv(test_path, args_env_dirs,
+        args_env_root = [args, env, root]
+        argv = self._adapter.compute_argv(test_path, args_env_root,
                                           proposals, wasi_world.value,
                                           wasi_version.value)
         assert isinstance(argv, list)

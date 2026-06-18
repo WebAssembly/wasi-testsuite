@@ -1,6 +1,6 @@
 use std::{env, process};
 
-use wasi_tests::{STDERR_FD, STDIN_FD, STDOUT_FD, create_tmp_dir, open_scratch_directory};
+use wasi_tests::{STDERR_FD, STDIN_FD, STDOUT_FD, create_tmp_dir, root_directory};
 
 const TEST_FILENAME: &'static str = "file.cleanup";
 
@@ -21,16 +21,7 @@ unsafe fn test_stdio(dir_fd: wasi::Fd) {
 }
 
 fn main() {
-    let mut args = env::args();
-    let prog = args.next().unwrap();
-    let arg = if let Some(arg) = args.next() {
-        arg
-    } else {
-        eprintln!("usage: {} <scratch directory>", prog);
-        process::exit(1);
-    };
-
-    let base_dir_fd = match open_scratch_directory(&arg) {
+    let base_dir_fd = match root_directory() {
         Ok(dir_fd) => dir_fd,
         Err(err) => {
             eprintln!("{}", err);

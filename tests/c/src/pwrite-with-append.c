@@ -8,8 +8,7 @@ int main() {
   int fd;
   size_t size;
 
-  fd = open("fs-tests.dir/pwrite.cleanup",
-            O_CREAT | O_TRUNC | O_WRONLY | O_APPEND);
+  fd = open("pwrite.cleanup", O_CREAT | O_TRUNC | O_WRONLY | O_APPEND);
   assert(fd != -1);
 
   size = write(fd, buf, 2);

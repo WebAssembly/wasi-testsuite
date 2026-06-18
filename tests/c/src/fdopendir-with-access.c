@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
   int expected[2] = {0};
   ino_t inodes[2];
 
-  dfd = open("fs-tests.dir/fopendir.dir", O_RDONLY | O_DIRECTORY);
+  dfd = open("fopendir.dir", O_RDONLY | O_DIRECTORY);
   assert(dfd != -1);
 
   d = fdopendir((dfd));

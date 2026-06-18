@@ -111,11 +111,11 @@ class TestCaseRunner(TestCaseRunnerBase):
         return self._http_server
 
     def do_run(self, run: Run) -> None:
-        for (host, _guest) in run.dirs:
-            self._add_cleanup_dir(host)
+        if run.root:
+            self._add_cleanup_dir(run.root)
         proposals = self.config.proposals_as_str()
         argv = self._runtime.compute_argv(
-            self._test_path, run.args, run.env, run.dirs, proposals,
+            self._test_path, run.args, run.env, run.root, proposals,
             self.config.world, self._wasi_version)
         self._last_argv = argv
         try:

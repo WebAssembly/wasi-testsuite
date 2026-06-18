@@ -36,7 +36,7 @@ async fn test_unlink_errors(dir: &Descriptor) {
     assert_eq!(rm("").await, Err(ErrorCode::NoEntry));
     assert!(is_acceptable_unlink_dir_result(rm(".").await));
     assert!(is_acceptable_unlink_dir_result(rm("..").await));
-    assert!(is_acceptable_unlink_dir_result(rm("../fs-tests.dir").await));
+    assert!(is_acceptable_unlink_dir_result(rm("../").await));
     assert!(is_acceptable_unlink_dir_result(rm("/").await));
     assert_eq!(rm("/etc/passwd").await, Err(ErrorCode::NotPermitted));
     assert_eq!(rm("/etc/passwd").await, Err(ErrorCode::NotPermitted));
@@ -54,11 +54,11 @@ export!(Component);
 impl exports::wasi::cli::run::Guest for Component {
     async fn run() -> Result<(), ()> {
         match &wasi::filesystem::preopens::get_directories()[..] {
-            [(dir, dirname)] if dirname == "fs-tests.dir" => {
+            [(dir, _)] => {
                 test_unlink_errors(dir).await;
             }
             [..] => {
-                eprintln!("usage: run with one open dir named 'fs-tests.dir'");
+                eprintln!("usage: run with one open dir");
                 process::exit(1)
             }
         };

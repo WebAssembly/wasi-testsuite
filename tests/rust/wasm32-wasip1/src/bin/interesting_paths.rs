@@ -1,8 +1,8 @@
 use std::{env, process};
 use wasi::path_create_directory;
-use wasi_tests::{assert_errno, create_file, open_scratch_directory};
+use wasi_tests::{assert_errno, create_file, root_directory};
 
-unsafe fn test_interesting_paths(dir_fd: wasi::Fd, arg: &str) {
+unsafe fn test_interesting_paths(dir_fd: wasi::Fd) {
     // Create a directory in the scratch directory.
     wasi::path_create_directory(dir_fd, "dir").expect("creating dir");
 
@@ -81,9 +81,9 @@ unsafe fn test_interesting_paths(dir_fd: wasi::Fd, arg: &str) {
     wasi::fd_close(file_fd).expect("closing a file");
 
     // Now open it with a path containing too many ".."s.
-    let bad_path = format!("dir/nested/../../../{}/dir/nested/file", arg);
+    let bad_path = "dir/nested/../../../dir/nested/file";
     assert_errno!(
-        wasi::path_open(dir_fd, 0, &bad_path, 0, 0, 0, 0)
+        wasi::path_open(dir_fd, 0, bad_path, 0, 0, 0, 0)
             .expect_err("opening a file with too many \"..\"s in the path should fail"),
         wasi::ERRNO_PERM,
         wasi::ERRNO_NOTCAPABLE
@@ -121,17 +121,7 @@ unsafe fn create_tmp_dir(dir_fd: wasi::Fd, name: &str) -> wasi::Fd {
 }
 
 fn main() {
-    let mut args = env::args();
-    let prog = args.next().unwrap();
-    let arg = if let Some(arg) = args.next() {
-        arg
-    } else {
-        eprintln!("usage: {} <scratch directory>", prog);
-        process::exit(1);
-    };
-
-    // Open scratch directory
-    let base_dir_fd = match open_scratch_directory(&arg) {
+    let base_dir_fd = match root_directory() {
         Ok(dir_fd) => dir_fd,
         Err(err) => {
             eprintln!("{}", err);
@@ -146,7 +136,7 @@ fn main() {
     }
 
     // Run the tests.
-    unsafe { test_interesting_paths(dir_fd, &arg) }
+    unsafe { test_interesting_paths(dir_fd) }
 
     unsafe {
         wasi::fd_close(dir_fd).unwrap();

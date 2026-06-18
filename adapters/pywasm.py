@@ -3,7 +3,7 @@ import os
 import shlex
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 import importlib
 
 
@@ -33,20 +33,20 @@ def get_wasi_worlds() -> List[str]:
 
 
 def compute_argv(test_path: str,
-                 args_env_dirs: Tuple[List[str], Dict[str, str], List[Tuple[Path, str]]],
+                 args_env_root: Tuple[List[str], Dict[str, str], Optional[str]],
                  proposals: List[str],
                  wasi_world: str,
                  wasi_version: str) -> List[str]:
 
     argv = []
     argv += [str(RUN_PYWASM)]
-    args, env, dirs = args_env_dirs
+    args, env, root = args_env_root
 
     for k, v in env.items():
         argv += ["--env", f"{k}={v}"]
 
-    for host, guest in dirs:
-        argv += ["--dir", f"{host}::{guest}"]  # noqa: E231
+    if root:
+        argv += ["--dir", f"{root}::/"]  # noqa: E231
 
     argv += [test_path]
 

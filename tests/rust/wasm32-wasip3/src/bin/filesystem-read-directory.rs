@@ -55,11 +55,11 @@ export!(Component);
 impl exports::wasi::cli::run::Guest for Component {
     async fn run() -> Result<(), ()> {
         match &wasi::filesystem::preopens::get_directories()[..] {
-            [(dir, dirname)] if dirname == "fs-tests.dir" => {
+            [(dir, _)] => {
                 test_read_directory(dir).await;
             }
             [..] => {
-                eprintln!("usage: run with one open dir named 'fs-tests.dir'");
+                eprintln!("usage: run with one open dir");
                 process::exit(1)
             }
         };

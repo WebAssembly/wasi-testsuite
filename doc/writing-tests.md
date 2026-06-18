@@ -35,8 +35,8 @@ regarding `stat`, for WASIp3, in Rust.  Well then you need to add your
 and it will be automatically built.  (How?  We'll come back to that.)
 
 What does your test need?  If you are testing `stat`, probably you need
-a file, so the WASI module is going to need to start with a preopened
-directory.  Make the directory, say call it `stat-working-dir`, as a
+a file, so the WASI module is going to need to start with a root
+filesystem.  Make the directory, say call it `stat-working-dir`, as a
 subfolder of the directory your test is in.  Then create a
 `filesystem-stat-subtlety.json` in the test directory:
 
@@ -45,19 +45,19 @@ subfolder of the directory your test is in.  Then create a
   "operations": [
     {
 	  "type": "run",
-	  "dirs": ["stat-working-dir"]
+	  "root": "stat-working-dir"
 	}
   ]
 }
 ```
 
-A `dirs` declaration in the `run` operation of a test's JSON file adds
-a dir to the preopens.
+A `root` declaration in the `run` operation of a test's JSON file
+preopens that directory as the WASI guest's root filesystem (`/`).
 
 If you need to create a file, name it something that ends with
 `.cleanup`, if possible, and ideally have the test case remove it at the
-end.  But just in case, the test runner will delete files in a test's
-`dirs` with names like that, both before and after running the test.
+end.  But just in case, the test runner will delete files under a test's
+`root` with names like that, both before and after running the test.
 
 
 ## Building tests
