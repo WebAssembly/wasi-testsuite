@@ -1,0 +1,132 @@
+# WASI runtime distributions and descriptors.
+#
+# Each descriptor is what `wasi_test` consumes, so adding a runtime means adding
+# another descriptor target here. The host-facing names stay stable through
+# aliases in `toolchains//:BUCK`.
+
+load("@wasmono//:defs.bzl", "install_jco")
+load(
+    "@root//tools:runtime.bzl",
+    "WAMR_COMPATIBLE_WITH",
+    "WASMEDGE_COMPATIBLE_WITH",
+    "WAZERO_COMPATIBLE_WITH",
+    "wasi_runtime",
+)
+load(
+    ":runtimes.bzl",
+    "DEFAULT_JCO_VERSION",
+    "DEFAULT_WAMR_VERSION",
+    "DEFAULT_WASMEDGE_VERSION",
+    "DEFAULT_WASMTIME_VERSION",
+    "DEFAULT_WAZERO_VERSION",
+    "download_wamr_runtime",
+    "download_wasmedge_runtime",
+    "download_wasmtime_runtime",
+    "download_wazero_runtime",
+    "jco_runtime_command",
+)
+
+# Wasmtime
+download_wasmtime_runtime(name = "wasmtime_dist", version = DEFAULT_WASMTIME_VERSION)
+
+wasi_runtime(
+    name = "wasmtime_runtime",
+    adapter = "root//adapters:wasmtime.py",
+    expectations = select({
+        "config//os:macos": "root//expectations:wasmtime_macos",
+        "config//os:windows": "root//expectations:wasmtime_windows",
+        "DEFAULT": "root//expectations:wasmtime_linux",
+    }),
+    labels = ["wasmtime"],
+    runtime = ":wasmtime_dist",
+    runtime_env_var = "WASMTIME",
+    visibility = ["PUBLIC"],
+)
+
+# WasmEdge
+download_wasmedge_runtime(
+    name = "wasmedge_dist",
+    version = DEFAULT_WASMEDGE_VERSION,
+    target_compatible_with = WASMEDGE_COMPATIBLE_WITH,
+)
+
+wasi_runtime(
+    name = "wasmedge_runtime",
+    adapter = "root//adapters:wasmedge.py",
+    labels = ["wasmedge"],
+    runtime = ":wasmedge_dist",
+    runtime_env_var = "WASMEDGE",
+    target_compatible_with = WASMEDGE_COMPATIBLE_WITH,
+    visibility = ["PUBLIC"],
+)
+
+# Wazero
+download_wazero_runtime(
+    name = "wazero_dist",
+    version = DEFAULT_WAZERO_VERSION,
+    target_compatible_with = WAZERO_COMPATIBLE_WITH,
+)
+
+wasi_runtime(
+    name = "wazero_runtime",
+    adapter = "root//adapters:wazero.py",
+    expectations = select({
+        "config//os:macos": "root//expectations:wazero_macos",
+        "config//os:windows": "root//expectations:wazero_windows",
+        "DEFAULT": "root//expectations:wazero_linux",
+    }),
+    labels = ["wazero"],
+    runtime = ":wazero_dist",
+    runtime_env_var = "WAZERO",
+    target_compatible_with = WAZERO_COMPATIBLE_WITH,
+    visibility = ["PUBLIC"],
+)
+
+# Wamr
+download_wamr_runtime(
+    name = "wamr_dist",
+    version = DEFAULT_WAMR_VERSION,
+    target_compatible_with = WAMR_COMPATIBLE_WITH,
+)
+
+wasi_runtime(
+    name = "wamr_runtime",
+    adapter = "root//adapters:wasm-micro-runtime.py",
+    expectations = "root//expectations:wamr_linux",
+    labels = ["wamr"],
+    runtime = ":wamr_dist",
+    runtime_env_var = "IWASM",
+    target_compatible_with = WAMR_COMPATIBLE_WITH,
+    visibility = ["PUBLIC"],
+)
+
+# JCO distribution and toolchain. Reuses the shared Node distribution.
+install_jco(
+    name = "jco_dist",
+    node = "toolchains//:node_dist_shared",
+    package_json = "root//third-party/js:jco_package_json",
+    package_lock = "root//third-party/js:jco_package_lock",
+    version = DEFAULT_JCO_VERSION,
+)
+
+jco_runtime_command(
+    name = "jco_command",
+    jco = ":jco_dist",
+    node = "toolchains//:node_dist_shared",
+    runner = "root//tools:jco_runner.mjs",
+    visibility = ["PUBLIC"],
+)
+
+wasi_runtime(
+    name = "jco_runtime",
+    adapter = "root//adapters:jco.py",
+    expectations = select({
+        "config//os:macos": "root//expectations:jco_macos",
+        "config//os:windows": "root//expectations:jco_windows",
+        "DEFAULT": "root//expectations:jco_linux",
+    }),
+    labels = ["jco"],
+    runtime = ":jco_command",
+    runtime_env_var = "JCO",
+    visibility = ["PUBLIC"],
+)

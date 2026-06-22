@@ -1,5 +1,5 @@
 use std::{env, process};
-use wasi_tests::{create_tmp_dir, open_scratch_directory};
+use wasi_tests::{create_tmp_dir, root_directory};
 
 unsafe fn test_file_truncation(dir_fd: wasi::Fd) {
     const FILENAME: &str = "test.txt";
@@ -62,17 +62,7 @@ unsafe fn test_file_truncation(dir_fd: wasi::Fd) {
 }
 
 fn main() {
-    let mut args = env::args();
-    let prog = args.next().unwrap();
-    let arg = if let Some(arg) = args.next() {
-        arg
-    } else {
-        eprintln!("usage: {} <scratch directory>", prog);
-        process::exit(1);
-    };
-
-    // Open scratch directory
-    let base_dir_fd = match open_scratch_directory(&arg) {
+    let base_dir_fd = match root_directory() {
         Ok(dir_fd) => dir_fd,
         Err(err) => {
             eprintln!("{}", err);
@@ -89,5 +79,8 @@ fn main() {
     // Run the tests.
     unsafe { test_file_truncation(dir_fd) }
 
+    unsafe {
+        wasi::fd_close(dir_fd).unwrap();
+    }
     unsafe { wasi::path_remove_directory(base_dir_fd, DIR_NAME).expect("failed to remove dir") }
 }

@@ -1,0 +1,52 @@
+# Top-level toolchain package.
+
+load("@prelude//tests:test_toolchain.bzl", "noop_test_toolchain")
+load("@prelude//toolchains:cxx.bzl", "system_cxx_toolchain")
+load("@prelude//toolchains:genrule.bzl", "system_genrule_toolchain")
+load("@prelude//toolchains:python.bzl", "remote_python_toolchain")
+load("@prelude//toolchains:remote_test_execution.bzl", "remote_test_execution_toolchain")
+load(
+    "@wasmono//:defs.bzl",
+    "download_node",
+    "download_wasm_tools",
+    "node_toolchain",
+    "wasm_tools_toolchain",
+)
+load("//runtimes:runtimes.bzl", "DEFAULT_NODE_VERSION")
+
+# Host execution toolchains used by Buck rules and helper scripts.
+system_genrule_toolchain(name = "genrule", visibility = ["PUBLIC"])
+system_cxx_toolchain(name = "cxx", visibility = ["PUBLIC"])
+remote_python_toolchain(name = "python", visibility = ["PUBLIC"])
+
+# Rust toolchains (hermetic, see //rust). Aliased to `toolchains//:rust`
+toolchain_alias(name = "rust", actual = "//rust:rust", visibility = ["PUBLIC"])
+toolchain_alias(name = "rust_wasi_p1", actual = "//rust:rust_wasi_p1", visibility = ["PUBLIC"])
+
+# WASI SDK C/C++ toolchains (see //cxx). `rust_linker` is the wasm-ld used as the linker for the Rust wasm targets.
+toolchain_alias(name = "cxx_wasi_p1", actual = "//cxx:cxx_wasi_p1", visibility = ["PUBLIC"])
+toolchain_alias(name = "rust_linker", actual = "//cxx:rust_linker", visibility = ["PUBLIC"])
+
+# WASI runtime descriptors (see //runtimes).
+alias(name = "wasmtime_runtime", actual = "//runtimes:wasmtime_runtime", visibility = ["PUBLIC"])
+alias(name = "wasmedge_runtime", actual = "//runtimes:wasmedge_runtime", visibility = ["PUBLIC"])
+alias(name = "wazero_runtime", actual = "//runtimes:wazero_runtime", visibility = ["PUBLIC"])
+alias(name = "wamr_runtime", actual = "//runtimes:wamr_runtime", visibility = ["PUBLIC"])
+alias(name = "jco_runtime", actual = "//runtimes:jco_runtime", visibility = ["PUBLIC"])
+
+# Shared Node distribution, used by both the jco runtime and AssemblyScript.
+download_node(name = "node_dist", version = DEFAULT_NODE_VERSION)
+node_toolchain(name = "node", distribution = ":node_dist", visibility = ["PUBLIC"])
+# `download_node` cannot set visibility on its distribution target so re-export with visibility here.
+alias(name = "node_dist_shared", actual = ":node_dist", visibility = ["toolchains//..."])
+
+# AssemblyScript compiler toolchain (see //typescript), aliased to `toolchains//:asc`.
+toolchain_alias(name = "asc", actual = "//typescript:asc", visibility = ["PUBLIC"])
+
+# Component-model tooling used to lift Rust WASI P3 core modules into components.
+download_wasm_tools(name = "wasm_tools_dist", version = "1.245.1")
+wasm_tools_toolchain(name = "wasm_tools", distribution = ":wasm_tools_dist", visibility = ["PUBLIC"])
+
+# Test execution toolchains required by Buck's test command.
+noop_test_toolchain(name = "test", visibility = ["PUBLIC"])
+remote_test_execution_toolchain(name = "remote_test_execution", visibility = ["PUBLIC"],)

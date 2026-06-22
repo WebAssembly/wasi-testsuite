@@ -3,12 +3,13 @@ import os
 import shlex
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 import importlib
 
 
-# shlex.split() splits according to shell quoting rules
-IWASM = shlex.split(os.getenv("IWASM", "iwasm"))
+# shlex.split() splits according to shell quoting rules.
+# Use posix=False on Windows to preserve backslash path separators.
+IWASM = shlex.split(os.getenv("IWASM", "iwasm"), posix=(os.name != "nt"))
 
 
 def get_name() -> str:
@@ -33,20 +34,20 @@ def get_wasi_worlds() -> List[str]:
 
 
 def compute_argv(test_path: str,
-                 args_env_dirs: Tuple[List[str], Dict[str, str], List[Tuple[Path, str]]],
+                 args_env_root: Tuple[List[str], Dict[str, str], Optional[str]],
                  proposals: List[str],
                  wasi_world: str,
                  wasi_version: str) -> List[str]:
 
     argv = []
     argv += IWASM
-    args, env, dirs = args_env_dirs
+    args, env, root = args_env_root
 
     for k, v in env.items():
         argv += ["--env", f"{k}={v}"]
 
-    for host, guest in dirs:
-        argv += ["--map-dir", f"{host}::{guest}"]  # noqa: E231
+    if root:
+        argv += [f"--map-dir=/::{root}"]  # noqa: E231
 
     argv += [test_path]
 

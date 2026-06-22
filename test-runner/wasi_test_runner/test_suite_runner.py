@@ -11,12 +11,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, NamedTuple, Tuple, Dict, Any, IO
 
-import requests
-
 from .filters import TestFilter
 from .runtime_adapter import RuntimeAdapter
 from .test_case import (
-    Result, Failure, WasiVersion, Config,
+    Result, Failure, WasiVersion, Config, Outcome,
     TestCase, TestCaseRunnerBase, TestCaseValidator,
     # Operation types
     Run, Read, Write, Wait, Send, Recv, Connect, Request, Kill
@@ -30,6 +28,12 @@ class Manifest(NamedTuple):
     wasi_version: WasiVersion
 
 
+class _TestSpec(NamedTuple):
+    path: str
+    name: str
+    config: Config
+
+
 class TestCaseRunner(TestCaseRunnerBase):
     # pylint: disable-msg=too-many-instance-attributes
     _test_path: str
@@ -41,6 +45,7 @@ class TestCaseRunner(TestCaseRunnerBase):
     _sockets: Dict[str, socket.socket]
     _last_argv: List[str]
     _http_server: str | None
+    _windows_terminated_by_runner: bool
 
     def __init__(self, config: Config, test_path: str, wasi_version: WasiVersion,
                  runtime: RuntimeAdapter) -> None:
@@ -54,6 +59,7 @@ class TestCaseRunner(TestCaseRunnerBase):
         self._sockets = {}
         self._last_argv = []
         self._http_server = None
+        self._windows_terminated_by_runner = False
 
     def _add_cleanup_dir(self, d: Path) -> None:
         _cleanup_test_output(d)
@@ -105,21 +111,31 @@ class TestCaseRunner(TestCaseRunnerBase):
         return self._http_server
 
     def do_run(self, run: Run) -> None:
-        for (host, _guest) in run.dirs:
-            self._add_cleanup_dir(host)
+        if run.root:
+            self._add_cleanup_dir(run.root)
         proposals = self.config.proposals_as_str()
         argv = self._runtime.compute_argv(
-            self._test_path, run.args, run.env, run.dirs, proposals,
+            self._test_path, run.args, run.env, run.root, proposals,
             self.config.world, self._wasi_version)
         self._last_argv = argv
         try:
+            creationflags = 0
+            if os.name == "nt":
+                creationflags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP")
+
+            env = os.environ.copy()
+            if self.config.debug:
+                env["DEBUG"] = "true"
+
             # pylint: disable-msg=consider-using-with
             self._proc = subprocess.Popen(
                 argv,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True
+                env=env,
+                text=True,
+                creationflags=creationflags,
             )
             stdin, stdout, stderr = \
                 self._proc.stdin, self._proc.stdout, self._proc.stderr
@@ -146,7 +162,14 @@ class TestCaseRunner(TestCaseRunnerBase):
 
     def do_wait(self, wait: Wait) -> None:
         try:
-            exit_code, out, err = self._wait(5)
+            exit_code, out, err = self._wait(self._runtime.get_timeout_seconds())
+            if (
+                os.name == "nt"
+                and self._windows_terminated_by_runner
+                and wait.exit_code == 0
+                and exit_code == 1
+            ):
+                return
             if wait.exit_code != exit_code:
                 msg = f"{wait} failed: expected {wait.exit_code}, got {exit_code}"
                 msg = _append_stdout_and_stderr(msg, out, err)
@@ -196,10 +219,13 @@ class TestCaseRunner(TestCaseRunnerBase):
 
     def do_request(self, req: Request) -> None:
         # pylint: disable-msg=too-many-return-statements
+        # Only HTTP tests need requests; keep CLI tests runnable without it.
+        import requests  # pylint: disable=import-outside-toplevel
+
         http_server = self.get_http_server()
         if http_server is None:
             return
-        url = http_server + req.path
+        url = join_http_url(http_server, req.path)
         try:
             response = requests.request(req.method, url, timeout=5)
         except requests.exceptions.Timeout:
@@ -230,8 +256,12 @@ class TestCaseRunner(TestCaseRunnerBase):
         try:
             proc = self._proc
             assert proc is not None
-            proc.send_signal(kill.signal)
-        except OSError as e:
+            if os.name == "nt":
+                self._windows_terminated_by_runner = True
+                proc.terminate()
+            else:
+                proc.send_signal(kill.signal)
+        except (OSError, ValueError) as e:
             self.fail_unexpected(f"{kill}: Failed to send {kill.signal}: {e}")
 
     def do_cleanup(self, successful: bool) -> None:
@@ -245,6 +275,14 @@ class TestCaseRunner(TestCaseRunnerBase):
                 self.fail_unexpected(
                     f"Timeout expired after killing proc {self._proc}")
                 self._proc = None
+
+        for sock in self._sockets.values():
+            sock.close()
+        self._sockets = {}
+
+        for pipe in self._pipes.values():
+            pipe.close()
+        self._pipes = {}
 
         for d in self._cleanup_dirs:
             _cleanup_test_output(d)
@@ -266,23 +304,27 @@ def run_tests_from_test_suite(
                          runtime.get_meta())
 
     all_tests = [
-        (test_path,
-         os.path.splitext(os.path.basename(test_path))[0],
-         _read_test_config(test_path))
+        _TestSpec(
+            path=test_path,
+            name=os.path.splitext(os.path.basename(test_path))[0],
+            config=_read_test_config(test_path),
+        )
         for test_path in glob.glob(os.path.join(test_suite_path, "*.wasm"))
     ]
 
-    for test_path, name, config in all_tests:
+    for spec in all_tests:
         for filt in filters:
             # for now, just drop the skip reason string. it might be
             # useful to make reporters report it.
-            skip, _ = filt.should_skip(meta, name, config)
+            skip, _ = filt.should_skip(meta, spec.name, spec.config)
             if skip:
-                test_case = _skip_single_test(name, config)
+                test_case = _skip_single_test(spec)
                 break
         else:
-            test_case = _execute_single_test(
-                runtime, meta, test_path, name, config)
+            expected_to_fail = any(
+                filt.expected_to_fail(meta, spec.name) for filt in filters
+            )
+            test_case = _execute_single_test(runtime, meta, spec, expected_to_fail)
         test_cases.append(test_case)
         for reporter in reporters:
             reporter.report_test(meta, test_case)
@@ -297,13 +339,14 @@ def run_tests_from_test_suite(
     )
 
 
-def _skip_single_test(name: str, config: Config) -> TestCase:
+def _skip_single_test(spec: _TestSpec) -> TestCase:
     return TestCase(
-        name=name,
+        name=spec.name,
         argv=[],
-        config=config,
+        config=spec.config,
         result=Result(is_executed=False, failures=[]),
         duration_s=0,
+        outcome=Outcome.SKIP,
     )
 
 
@@ -317,8 +360,17 @@ def _append_stdout_and_stderr(msg: str, out: str | None, err: str | None) -> str
     return msg
 
 
+def join_http_url(http_server: str, path: str) -> str:
+    if path.startswith("/"):
+        return http_server.rstrip("/") + path
+    return http_server.rstrip("/") + "/" + path
+
+
 def _cleanup_test_output(host_dir: Path) -> None:
     for f in host_dir.glob("**/*.cleanup"):
+        if f.is_symlink():
+            continue
+
         if f.is_file():
             f.unlink()
         elif f.is_dir():
@@ -326,20 +378,21 @@ def _cleanup_test_output(host_dir: Path) -> None:
 
 
 def _execute_single_test(
-        runtime: RuntimeAdapter, meta: TestSuiteMeta, test_path: str,
-        name: str, config: Config
+        runtime: RuntimeAdapter, meta: TestSuiteMeta,
+        spec: _TestSpec, expected_to_fail: bool
 ) -> TestCase:
-    runner = TestCaseRunner(config, test_path, meta.wasi_version, runtime)
+    runner = TestCaseRunner(spec.config, spec.path, meta.wasi_version, runtime)
     test_start = time.time()
     result = runner.run()
     elapsed = time.time() - test_start
 
     return TestCase(
-        name=name,
+        name=spec.name,
         argv=runner.last_argv(),
-        config=config,
+        config=spec.config,
         result=result,
         duration_s=elapsed,
+        outcome=Outcome.evaluate(expected_to_fail, result),
     )
 
 
@@ -371,8 +424,7 @@ def _read_manifest(test_suite_path: Path) -> Manifest:
                         assert isinstance(v, str)
                         name = v
                     case "version":
-                        assert v in WasiVersion
-                        wasi_version = WasiVersion[v]
+                        wasi_version = WasiVersion(v)
                     case _:
                         raise RuntimeError(f"unexpected manifest option: {k}={v}")
 

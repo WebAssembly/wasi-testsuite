@@ -12,7 +12,7 @@ def get_mock_open() -> Mock:
     def open_mock(filename: str, *_args: Any, **_kwargs: Any) -> Any:
         file_content = {
             "my-path/manifest.json": '{"name": "test-suite"}',
-            "my-path/test1.json": '{"dirs": [".", "deep/dir"]}',
+            "my-path/test1.json": '{"root": "deep/dir"}',
             "my-path/test2.json": '{"exit_code": 1, "args": ["a", "b"]}',
             "my-path/test3.json": '{"stdout": "output", "env": {"x": "1"}}',
             "my-path/test4.json": (
@@ -29,6 +29,15 @@ def get_mock_open() -> Mock:
     return MagicMock(side_effect=open_mock)
 
 
+def test_join_http_url_preserves_single_root_slash() -> None:
+    assert tsr.join_http_url("http://127.0.0.1:1234/", "/") == "http://127.0.0.1:1234/"
+
+
+def test_join_http_url_joins_paths() -> None:
+    assert tsr.join_http_url("http://127.0.0.1:1234/", "/foo") == "http://127.0.0.1:1234/foo"
+    assert tsr.join_http_url("http://127.0.0.1:1234", "foo") == "http://127.0.0.1:1234/foo"
+
+
 # pylint: disable-msg=too-many-locals
 @patch("builtins.open", get_mock_open())
 @patch("os.path.exists", Mock(return_value=True))
@@ -39,7 +48,7 @@ def test_runner_end_to_end() -> None:
     test_files = ["test1.wasm", "test2.wasm", "test3.wasm", "test4.wasm"]
     test_paths = [Path(test_suite_dir) / f for f in test_files]
 
-    test_dirs = [".", "deep/dir"]
+    test_root = "deep/dir"
     runtime_name = "rt1"
 
     expected_argv = [runtime_name, "<test>"]
@@ -52,7 +61,7 @@ def test_runner_end_to_end() -> None:
     expected_config = [
         tc.Config(
             operations=[
-                tc.Run(dirs=[(Path(test_suite_dir) / d, d) for d in test_dirs]),
+                tc.Run(root=Path(test_suite_dir) / test_root),
                 tc.Wait(exit_code=0)
             ],
             proposals=[],
@@ -87,10 +96,12 @@ def test_runner_end_to_end() -> None:
                                                 the_runtime_wasi_version,
                                                 runtime_meta)
 
+    expected_outcomes = [tc.Outcome.PASS, tc.Outcome.FAIL, tc.Outcome.FAIL, tc.Outcome.FAIL]
     expected_test_cases = [
-        tc.TestCase(test_name, expected_argv, config, result, ANY)
-        for config, test_name, result in zip(
-            expected_config, ["test1", "test2", "test3", "test4"], expected_results
+        tc.TestCase(test_name, expected_argv, config, result, ANY, outcome)
+        for config, test_name, result, outcome in zip(
+            expected_config, ["test1", "test2", "test3", "test4"],
+            expected_results, expected_outcomes
         )
     ]
 
@@ -103,6 +114,7 @@ def test_runner_end_to_end() -> None:
 
     filt = Mock()
     filt.should_skip.return_value = (False, None)
+    filt.expected_to_fail.return_value = False
     filters = [filt]
 
     process = Mock()

@@ -3,10 +3,10 @@ import json
 import signal
 from pathlib import Path
 from enum import Enum, StrEnum, auto
-from typing import List, NamedTuple, TypeVar, Type, Dict, Any, Set, Tuple
+from typing import List, NamedTuple, TypeVar, Type, Dict, Any, Set, Optional
 
 # Top level configuration keys
-LEGACY_CONFIG_KEYS = {"args", "dirs", "env", "exit_code", "stderr", "stdout"}
+LEGACY_CONFIG_KEYS = {"args", "root", "env", "exit_code", "stderr", "stdout"}
 CONFIG_KEYS = {"operations", "proposals", "world"}
 
 
@@ -51,6 +51,32 @@ class Result(NamedTuple):
         return len(self.failures) > 0
 
 
+class Outcome(StrEnum):
+    # Test ran and matched the expectation (expected to pass, passed).
+    PASS = "pass"
+    # Test ran and failed while expected to pass (a regression).
+    FAIL = "fail"
+    # Test was not executed (skipped by a filter / expectation).
+    SKIP = "skip"
+    # Test failed exactly as the expectation file predicted.
+    XFAIL = "xfail"
+    # Test was expected to fail but passed (the expectation is now stale).
+    XPASS = "xpass"
+
+    @property
+    def is_failure(self) -> bool:
+        # Outcomes that turn the suite (and CI) red.
+        return self in (Outcome.FAIL, Outcome.XPASS)
+
+    @classmethod
+    def evaluate(cls, expected_to_fail: bool, result: "Result") -> "Outcome":
+        if not result.is_executed:
+            return cls.SKIP
+        if expected_to_fail:
+            return cls.XFAIL if result.failed else cls.XPASS
+        return cls.FAIL if result.failed else cls.PASS
+
+
 class ProtocolType(StrEnum):
     TCP = 'tcp'
     UDP = 'udp'
@@ -63,17 +89,18 @@ R = TypeVar("R", bound="Run")
 class Run(NamedTuple):
     args: List[str] = []
     env: Dict[str, str] = {}
-    dirs: List[Tuple[Path, str]] = []
+    root: Optional[Path] = None
 
     @classmethod
     def from_config(cls: Type[R], test_config_path: Path, config: Dict[str, Any]) -> R:
         default = cls()
-        dirs = config.get("dirs", default.dirs)
-        dir_pairs = [(test_config_path.parent / d, d) for d in dirs]
+        root = config.get("root", default.root)
+        if root:
+            root = test_config_path.parent / root
         return cls(
             args=config.get("args", default.args),
             env=config.get("env", default.env),
-            dirs=dir_pairs
+            root=root
         )
 
 
@@ -259,6 +286,9 @@ class Config(NamedTuple):
     operations: List[Operation] = [Run(), Wait()]
     # WASI proposals needed for the test.
     proposals: List[WasiProposal] = []
+    # whether debug is enabled
+    debug: bool = False
+    # WASI world to target
     world: WasiWorld = WasiWorld.CLI_COMMAND
 
     @classmethod
@@ -282,8 +312,10 @@ class Config(NamedTuple):
             if world not in WasiWorld:
                 raise ValueError(f"Unknown WASI world: {world}")
 
+            debug = bool(dict_config.get("debug"))
+
             return cls(operations=operations, proposals=proposals,
-                       world=WasiWorld(world))
+                       world=WasiWorld(world), debug=debug)
 
         cls._validate_config(dict_config, LEGACY_CONFIG_KEYS)
 
@@ -378,6 +410,7 @@ class TestCase(NamedTuple):
     config: Config
     result: Result
     duration_s: float
+    outcome: Outcome
 
 
 class TestCaseRunnerBase:

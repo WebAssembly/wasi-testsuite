@@ -6,8 +6,8 @@ wit_bindgen::generate!({
   package test:test;
 
   world test {
-      include wasi:filesystem/imports@0.3.0-rc-2026-03-15;
-      include wasi:cli/command@0.3.0-rc-2026-03-15;
+      include wasi:filesystem/imports@0.3.0;
+      include wasi:cli/command@0.3.0;
   }
 ",
     additional_derives: [PartialEq, Eq, Hash, Clone],
@@ -20,6 +20,11 @@ use wasi::filesystem::types::Descriptor;
 use wasi::filesystem::types::{ErrorCode, PathFlags};
 
 async fn test_hard_links(dir: &Descriptor) {
+    let has_symlink = dir
+        .symlink_at("..".to_string(), "parent.cleanup".to_string())
+        .await
+        .is_ok();
+
     let ln_with_flags = |flags: PathFlags, from: &str, to: &str| -> _ {
         dir.link_at(flags, from.to_string(), dir, to.to_string())
     };
@@ -43,17 +48,19 @@ async fn test_hard_links(dir: &Descriptor) {
     assert_eq!(ln("a.txt", "/a.txt").await, Err(ErrorCode::NotPermitted));
     assert_eq!(ln("..", "a.txt").await, Err(ErrorCode::NotPermitted));
     assert_eq!(ln("a.txt", "..").await, Err(ErrorCode::NotPermitted));
-    // FIXME: https://github.com/WebAssembly/WASI/issues/710
-    // assert_eq!(ln_follow("parent/foo", "a.txt").await,
-    //            Err(ErrorCode::NotPermitted));
-    assert_eq!(
-        ln("parent/foo", "a.txt").await,
-        Err(ErrorCode::NotPermitted)
-    );
-    assert_eq!(
-        ln("a.txt", "parent/foo").await,
-        Err(ErrorCode::NotPermitted)
-    );
+    if has_symlink {
+        // FIXME: https://github.com/WebAssembly/WASI/issues/710
+        // assert_eq!(ln_follow("parent.cleanup/foo", "a.txt").await,
+        //            Err(ErrorCode::NotPermitted));
+        assert_eq!(
+            ln("parent.cleanup/foo", "a.txt").await,
+            Err(ErrorCode::NotPermitted)
+        );
+        assert_eq!(
+            ln("a.txt", "parent.cleanup/foo").await,
+            Err(ErrorCode::NotPermitted)
+        );
+    }
     ln("a.txt", "c.cleanup").await.unwrap();
     rm("c.cleanup").await.unwrap();
     mkdir("d.cleanup").await.unwrap();
@@ -71,11 +78,11 @@ export!(Component);
 impl exports::wasi::cli::run::Guest for Component {
     async fn run() -> Result<(), ()> {
         match &wasi::filesystem::preopens::get_directories()[..] {
-            [(dir, dirname)] if dirname == "fs-tests.dir" => {
+            [(dir, _)] => {
                 test_hard_links(dir).await;
             }
             [..] => {
-                eprintln!("usage: run with one open dir named 'fs-tests.dir'");
+                eprintln!("usage: run with one open dir");
                 process::exit(1)
             }
         };

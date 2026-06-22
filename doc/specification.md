@@ -28,7 +28,7 @@ These are the default values for the legacy configuration specification:
   ```json
   {
     "args": [],
-    "dirs": [],
+    "root": null,
     "env": {},
     "exit_code": 0,
     "stderr": "",
@@ -70,7 +70,8 @@ Defines how to start the execution of the test case.
 **Fields:**
 - `args` (optional): List of command-line arguments to pass to the WASI program
 - `env` (optional): Dictionary of environment variables (key-value pairs)
-- `dirs` (optional): List of directory paths to preopen
+- `root` (optional): Path, relative to the test's directory, of a directory to
+  preopen as the WASI guest's root filesystem (`/`)
 
 **Default values:**
 ```json
@@ -78,7 +79,7 @@ Defines how to start the execution of the test case.
   "type": "run",
   "args": [],
   "env": {},
-  "dirs": []
+  "root": null
 }
 ```
 
@@ -212,8 +213,8 @@ To execute the tests, the test executor is expected to:
   contain these keys and otherwise should be empty (note that this environment is the WASI
   environment, whether the engine inherits the shell environment or explicitly configures it via
   `--env` parameters)
-- `dir`: add each path listed in `dir` as WASI preopen directories (some engines use a `--dir`
-  flag)
+- `root`: if set, preopen this directory as the WASI guest's root filesystem (`/`); some engines
+  use a `--dir host::/` flag for this
 - `args`: pass each argument in order to the WASI program (most CLI engines allow appending these
   after the module path)
 - `proposals`: pass the right flags to enable each WASI proposal.

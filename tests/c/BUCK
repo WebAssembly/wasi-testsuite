@@ -1,0 +1,72 @@
+load(":defs.bzl", "c_test", "c_tests_for_runtime")
+load("//tools:conformance.bzl", "wasi_manifest", "wasi_suite")
+load("//tools:runtime.bzl", "WAMR_COMPATIBLE_WITH")
+
+_WASI_C = wasi_manifest(
+    name = "WASI C tests",
+    version = "wasm32-wasip1",
+    labels = ["c-wasip1"],
+)
+
+_C_TESTS = [
+    c_test("clock_getres-monotonic"),
+    c_test("clock_getres-realtime"),
+    c_test("clock_gettime-monotonic"),
+    c_test("clock_gettime-realtime"),
+    c_test("fopen-with-no-access"),
+    c_test("sock_shutdown-invalid_fd"),
+    c_test("sock_shutdown-not_sock"),
+    c_test("lseek"),
+    c_test("fdopendir-with-access"),
+    c_test("fopen-with-access"),
+    c_test("pread-with-access"),
+    c_test("pwrite-with-access"),
+    c_test("pwrite-with-append"),
+    c_test("stat-dev-ino"),
+]
+
+wasi_suite(
+    name = "wasmtime",
+    tests = c_tests_for_runtime(
+        tests = _C_TESTS,
+        name = "wasmtime",
+        runtime = "toolchains//:wasmtime_runtime",
+        manifest = _WASI_C,
+    ),
+    visibility = ["//tests/..."],
+)
+
+wasi_suite(
+    name = "wazero",
+    tests = c_tests_for_runtime(
+        tests = _C_TESTS,
+        name = "wazero",
+        runtime = "toolchains//:wazero_runtime",
+        manifest = _WASI_C,
+    ),
+    visibility = ["//tests/..."],
+)
+
+wasi_suite(
+    name = "wasmedge",
+    tests = c_tests_for_runtime(
+        tests = _C_TESTS,
+        name = "wasmedge",
+        runtime = "toolchains//:wasmedge_runtime",
+        manifest = _WASI_C,
+    ),
+    visibility = ["//tests/..."],
+)
+
+wasi_suite(
+    name = "wamr",
+    tests = c_tests_for_runtime(
+        tests = _C_TESTS,
+        name = "wamr",
+        runtime = "toolchains//:wamr_runtime",
+        manifest = _WASI_C,
+        target_compatible_with = WAMR_COMPATIBLE_WITH,
+    ),
+    target_compatible_with = WAMR_COMPATIBLE_WITH,
+    visibility = ["//tests/..."],
+)

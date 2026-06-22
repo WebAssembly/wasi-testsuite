@@ -1,0 +1,106 @@
+load(":defs.bzl", "rust_p3_test", "rust_p3_tests_for_runtime")
+load("//tools:conformance.bzl", "wasi_manifest", "wasi_suite")
+
+_WASI_RUST_P3 = wasi_manifest(
+    name = "WASI Rust tests",
+    version = "wasm32-wasip3",
+    labels = ["rust-wasip3"],
+)
+
+_WIT_SRCS = glob(["wit/**/*.wit"])
+
+rust_library(
+    name = "test_wasm32_wasip3",
+    crate = "test_wasm32_wasip3",
+    srcs = [
+        "src/cli.rs",
+        "src/clocks.rs",
+        "src/http.rs",
+        "src/lib.rs",
+        "src/random.rs",
+        "src/sockets.rs",
+    ] + _WIT_SRCS,
+    edition = "2024",
+    env = {"CARGO_MANIFEST_DIR": "."},
+    deps = ["//third-party/rust:wit-bindgen"],
+    default_target_platform = "//platforms:wasm32_wasip2",
+    _cxx_toolchain = "toolchains//:rust_linker",
+    _rust_toolchain = "toolchains//:rust",
+    visibility = ["//tests/..."],
+)
+
+_RUST_P3_DEPS = [
+    ":test_wasm32_wasip3",
+    "//third-party/rust:futures",
+    "//third-party/rust:wit-bindgen",
+]
+
+_RUST_P3_TESTS = [
+    rust_p3_test("cli-env", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("cli-exit", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("cli-stdio", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("cli-stdio-roundtrip", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("cli-stdout-flush", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("cli-terminal", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("filesystem-advise", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("filesystem-dotdot", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("filesystem-flags-and-type", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("filesystem-hard-links", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("filesystem-io", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("filesystem-is-same-object", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("filesystem-metadata-hash", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("filesystem-mkdir-rmdir", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("filesystem-open-errors", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("filesystem-read-directory", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("filesystem-rename", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("filesystem-set-size", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("filesystem-stat", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("filesystem-unlink-errors", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("http-fields", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("http-request", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("http-response", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("http-service", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("monotonic-clock", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("multi-clock-wait", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("random", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("run-with-err", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("sockets-echo", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("sockets-tcp-bind", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("sockets-tcp-connect", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("sockets-tcp-listen", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("sockets-tcp-properties", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("sockets-tcp-receive", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("sockets-tcp-send", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("sockets-udp-bind", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("sockets-udp-connect", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("sockets-udp-properties", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("sockets-udp-receive", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("sockets-udp-send", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("wall-clock", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+]
+
+_WASMTIME_TESTS = rust_p3_tests_for_runtime(
+    tests = _RUST_P3_TESTS,
+    name = "wasmtime",
+    runtime = "toolchains//:wasmtime_runtime",
+    manifest = _WASI_RUST_P3,
+)
+
+_JCO_TESTS = rust_p3_tests_for_runtime(
+    tests = _RUST_P3_TESTS,
+    name = "jco",
+    runtime = "toolchains//:jco_runtime",
+    manifest = _WASI_RUST_P3,
+)
+
+wasi_suite(
+    name = "wasmtime",
+    tests = _WASMTIME_TESTS,
+    visibility = ["//tests/..."],
+)
+
+wasi_suite(
+    name = "jco",
+    tests = _JCO_TESTS,
+    visibility = ["//tests/..."],
+)

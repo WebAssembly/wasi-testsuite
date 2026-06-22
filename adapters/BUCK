@@ -1,0 +1,52 @@
+export_file(
+    name = "wasmtime.py",
+    src = "wasmtime.py",
+    visibility = [
+        "toolchains//...",
+        "//tests/...",
+    ],
+)
+
+export_file(
+    name = "wazero.py",
+    src = "wazero.py",
+    visibility = [
+        "toolchains//...",
+        "//tests/...",
+    ],
+)
+
+export_file(
+    name = "wasmedge.py",
+    src = "wasmedge.py",
+    visibility = [
+        "toolchains//...",
+        "//tests/...",
+    ],
+)
+
+export_file(
+    name = "wasm-micro-runtime.py",
+    src = "wasm-micro-runtime.py",
+    visibility = [
+        "toolchains//...",
+        "//tests/...",
+    ],
+)
+
+export_file(
+    name = "jco.py",
+    src = "jco.py",
+    visibility = [
+        "toolchains//...",
+        "//tests/...",
+    ],
+)
+
+filegroup(
+    name = "dist_files",
+    srcs = glob(["*.py"]),
+    out = "adapters",
+    copy = True,
+    visibility = ["//tests/..."],
+)

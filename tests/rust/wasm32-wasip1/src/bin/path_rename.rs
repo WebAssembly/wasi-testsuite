@@ -1,5 +1,5 @@
 use std::{env, process};
-use wasi_tests::{assert_errno, create_file, create_tmp_dir, open_scratch_directory, TESTCONFIG};
+use wasi_tests::{TESTCONFIG, assert_errno, create_file, create_tmp_dir, root_directory};
 
 unsafe fn test_path_rename(dir_fd: wasi::Fd) {
     // First, try renaming a dir to nonexistent path
@@ -78,21 +78,17 @@ unsafe fn test_path_rename(dir_fd: wasi::Fd) {
     // This is technically a different property, but the root of these divergent behaviors is in
     // the semantics that windows gives us around renaming directories. So, it lives under the same
     // flag.
-    if TESTCONFIG.support_rename_dir_to_empty_dir() {
-        // Try renaming dir to a file
-        assert_errno!(
-            wasi::path_rename(dir_fd, "source", dir_fd, "target/file")
-                .expect_err("renaming a directory to a file"),
-            wasi::ERRNO_NOTDIR
-        );
-        wasi::path_unlink_file(dir_fd, "target/file").expect("removing a file");
-        wasi::path_remove_directory(dir_fd, "source").expect("removing a directory");
-    } else {
-        // Windows will let you erase a file by renaming a directory to it.
-        // WASI users can't depend on this error getting caught to prevent data loss.
-        wasi::path_rename(dir_fd, "source", dir_fd, "target/file")
-            .expect("windows happens to support renaming a directory to a file");
-        wasi::path_remove_directory(dir_fd, "target/file").expect("removing a file");
+    match wasi::path_rename(dir_fd, "source", dir_fd, "target/file") {
+        Ok(()) => {
+            // Windows will let you erase a file by renaming a directory to it.
+            // WASI users can't depend on this error getting caught to prevent data loss.
+            wasi::path_remove_directory(dir_fd, "target/file").expect("removing a file");
+        }
+        Err(e) => {
+            assert_eq!(e, wasi::ERRNO_NOTDIR);
+            wasi::path_unlink_file(dir_fd, "target/file").expect("removing a file");
+            wasi::path_remove_directory(dir_fd, "source").expect("removing a directory");
+        }
     }
     wasi::path_remove_directory(dir_fd, "target").expect("removing a directory");
 
@@ -156,17 +152,7 @@ unsafe fn test_path_rename(dir_fd: wasi::Fd) {
 }
 
 fn main() {
-    let mut args = env::args();
-    let prog = args.next().unwrap();
-    let arg = if let Some(arg) = args.next() {
-        arg
-    } else {
-        eprintln!("usage: {} <scratch directory>", prog);
-        process::exit(1);
-    };
-
-    // Open scratch directory
-    let base_dir_fd = match open_scratch_directory(&arg) {
+    let base_dir_fd = match root_directory() {
         Ok(dir_fd) => dir_fd,
         Err(err) => {
             eprintln!("{}", err);
@@ -183,5 +169,8 @@ fn main() {
     // Run the tests.
     unsafe { test_path_rename(dir_fd) }
 
+    unsafe {
+        wasi::fd_close(dir_fd).unwrap();
+    }
     unsafe { wasi::path_remove_directory(base_dir_fd, DIR_NAME).expect("failed to remove dir") }
 }

@@ -58,7 +58,7 @@ pub unsafe fn create_tmp_dir(dir_fd: wasi::Fd, name: &str) -> wasi::Fd {
 
 /// Opens a fresh file descriptor for `path` where `path` should be a preopened
 /// directory.
-pub fn open_scratch_directory(path: &str) -> Result<wasi::Fd, String> {
+pub fn root_directory() -> Result<wasi::Fd, String> {
     unsafe {
         for i in 3.. {
             let stat = match wasi::fd_prestat_get(i) {
@@ -73,7 +73,7 @@ pub fn open_scratch_directory(path: &str) -> Result<wasi::Fd, String> {
                 continue;
             }
             dst.set_len(stat.u.dir.pr_name_len);
-            if dst == path.as_bytes() {
+            if dst == b"/" {
                 let (base, inherit) = fd_get_rights(i);
                 return Ok(
                     wasi::path_open(i, 0, ".", wasi::OFLAGS_DIRECTORY, base, inherit, 0)

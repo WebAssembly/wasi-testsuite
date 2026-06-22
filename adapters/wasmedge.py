@@ -7,8 +7,9 @@ from typing import Dict, List, Tuple
 import importlib
 
 
-# shlex.split() splits according to shell quoting rules
-WASMEDGE = shlex.split(os.getenv("WASMEDGE", "wasmedge"))
+# shlex.split() splits according to shell quoting rules.
+# Use posix=False on Windows to preserve backslash path separators.
+WASMEDGE = shlex.split(os.getenv("WASMEDGE", "wasmedge"), posix=(os.name != "nt"))
 
 
 def get_name() -> str:
@@ -33,20 +34,20 @@ def get_wasi_worlds() -> List[str]:
 
 
 def compute_argv(test_path: str,
-                 args_env_dirs: Tuple[List[str], Dict[str, str], List[Tuple[Path, str]]],
+                 args_env_root: Tuple[List[str], Dict[str, str], List[Tuple[Path, str]]],
                  proposals: List[str],
                  wasi_world: str,
                  wasi_version: str) -> List[str]:
 
     argv = []
     argv += WASMEDGE
-    args, env, dirs = args_env_dirs
+    args, env, root = args_env_root
 
     for k, v in env.items():
         argv += ["--env", f"{k}={v}"]
 
-    for host, guest in dirs:
-        argv += ["--dir", f"{guest}:{host}"]
+    if root:
+        argv += ["--dir", f"/:{root}"]
 
     argv += [test_path]
 

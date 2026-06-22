@@ -13,7 +13,10 @@ async fn test_connected_state(family: IpAddressFamily) {
     let (_, send_rx) = sockets::wit_stream::new();
 
     let result = sock.send(send_rx).await;
-    assert!(matches!(result, Err(ErrorCode::InvalidState)));
+    assert!(
+        matches!(result, Err(ErrorCode::InvalidState)),
+        "bad error: {result:?}"
+    );
 }
 
 // Dropping the write half shouldn't cause the write to be lost.

@@ -65,11 +65,132 @@ overridden by setting corresponding environment variables (`WASMTIME`,
 WASMTIME="wasmtime --wasm-features all" ./run-tests
 ```
 
-Optionally you can specify test cases to skip with the `--exclude-filter` option.
+Optionally you can pass per-runtime expectation files with the `--expectations`
+option (the Buck test suites wire these up automatically). Expectation files use
+TOML and support two independent per-test directives:
+
+- `action = "skip"` - don't run the test at all.
+- `expected = "pass"` - run it, and expect to pass (default can be omitted)
+- `expected = "fail"` - run it, but expect it to fail.
 
 ```bash
-./run-tests --exclude-filter examples/skip.json
+./run-tests --expectations examples/skip.toml
 ```
+
+```toml
+version = 1
+
+[[suite]]
+name = "WASI Rust tests [wasm32-wasip3]"
+
+# Don't run this test at all.
+[[suite.test]]
+name = "unsupported-test"
+action = "skip"
+
+# Known failure: expected to fail until the runtime implements it.
+[[suite.test]]
+name = "not-yet-implemented"
+expected = "fail"
+```
+
+### Building and testing with Buck2
+
+The main development workflow uses Buck2 to build tests from source and run
+them through the existing test runner. CI runs the Buck2 workflow across the
+supported operating systems.
+
+Install [Dotslash](https://dotslash-cli.com/docs/installation/) once before
+using the checked-in `./buck2` launcher, for example with `cargo install dotslash`.
+
+Buck2 downloads a pinned, hermetic Rust toolchain (including the
+`wasm32-wasip1` and `wasm32-wasip2` standard libraries) along with the other
+toolchains, so no local Rust installation or `rustup target add` is required.
+
+Run the main runtime suites with:
+
+```bash
+just test
+just test-jco
+```
+
+Additional runtime suites are available with:
+
+```bash
+just test-extra-runtimes
+```
+
+To build all Buck targets, run:
+
+```bash
+just build
+```
+
+Build the Buck-produced test data archive with:
+
+```bash
+just dist
+```
+
+The archive includes the test runner, adapters, Python requirements, and Buck built
+test data. It can be run like this:
+
+```bash
+mkdir -p dist               # extract the archive
+tar -xzf buck-out/.../wasi-testsuite.tar.gz -C dist
+python3 -m venv dist/venv   # set up Python
+dist/venv/bin/python -m pip install -r dist/wasi-testsuite/test-runner/requirements.txt
+cd dist/wasi-testsuite      # run the tests
+WASMTIME=/path/to/wasmtime ../venv/bin/python ./run-tests --runtime-adapter adapters/wasmtime.py
+```
+
+The same targets can be invoked directly with `./buck2`:
+
+```bash
+./buck2 test //tests:wasmtime
+./buck2 test //tests:jco
+./buck2 build --show-output //tests:dist
+```
+
+The `just` recipes wrap a set of hermetic linters and formatters that mirror the
+CI checks. Lint every language at once, or run a single linter:
+
+```bash
+just lint-all        # run all linters: Starlark, C/C++, Rust, TypeScript/JS
+# ...or run just one:
+just lint-starlark   # Buck/Starlark/BXL files
+just lint-cxx        # C/C++ (clang diagnostics)
+just lint-rust       # Rust (Clippy)
+just lint-ts         # TypeScript/JS (oxlint)
+```
+
+Format every source tree in place, or only verify formatting (what CI does):
+
+```bash
+just fmt             # rewrite Rust, C, and TypeScript/JS sources in place
+just fmt-check       # verify formatting without modifying files
+```
+
+Each formatter and linter is also a plain Buck2 target, so you can run one
+directly against specific files or directories — handy for one-off checks. They
+are fetched lazily, only the first time they are used:
+
+```bash
+# oxlint and oxfmt take files or whole directories (oxfmt rewrites in place):
+./buck2 run toolchains//typescript:oxlint -- tests/assemblyscript
+./buck2 run toolchains//typescript:oxfmt  -- tests/assemblyscript/wasm32-wasip1/src/args_get-multiple-arguments.ts
+
+# rustfmt reads the edition from tests/rust/rustfmt.toml; clang-format uses -i to edit in place:
+./buck2 run toolchains//rust:rustfmt     -- tests/rust/wasm32-wasip1/src/bin/big_random_buf.rs
+./buck2 run toolchains//cxx:clang-format -- -i tests/c/src/clock_getres-monotonic.c
+```
+
+Buck2 fetches the WASI SDK, Node/AssemblyScript, wasm-tools, and runtimes
+through the Buck toolchain graph, then uses a generic `wasi_test` rule to invoke
+`wasi_test_runner` for each Buck test target.
+
+> [!NOTE]
+> For more information on debugging tests in this repository, see [`doc/debugging.md`](./doc/debugging.md)
 
 ## Contributing
 
@@ -92,7 +213,7 @@ the test runner itself.
 ### Directory structure
 
 - [`test-runner`](test-runner) - test executor scripts.
-- [`tests`](tests) - source code of WASI tests and build scripts. The folder contains subfolders for all supported languages.
+- [`tests`](tests) - source code, metadata, and Buck targets for WASI tests. The folder contains subfolders for all supported languages.
 - [`.github`](.github) - CI workflow definitions.
 - [`doc`](doc) - additional documentation.
 

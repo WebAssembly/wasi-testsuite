@@ -1,0 +1,22 @@
+version = 1
+
+[[suite]]
+name = "WASI AssemblyScript tests [wasm32-wasip1]"
+
+# WAMR differs for this Preview 1 AssemblyScript test
+[[suite.test]]
+name = "environ_get-multiple-variables"
+action = "skip"
+
+# WAMR differs for this Preview 1 AssemblyScript test
+[[suite.test]]
+name = "environ_sizes_get-multiple-variables"
+action = "skip"
+
+[[suite]]
+name = "WASI Rust tests [wasm32-wasip1]"
+
+# WAMR differs for this Preview 1 Rust test
+[[suite.test]]
+name = "symlink_create"
+action = "skip"

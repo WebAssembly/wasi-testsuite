@@ -6,8 +6,8 @@ wit_bindgen::generate!({
   package test:test;
 
   world test {
-      include wasi:filesystem/imports@0.3.0-rc-2026-03-15;
-      include wasi:cli/command@0.3.0-rc-2026-03-15;
+      include wasi:filesystem/imports@0.3.0;
+      include wasi:cli/command@0.3.0;
   }
 ",
     additional_derives: [PartialEq, Eq, Hash, Clone],
@@ -93,11 +93,11 @@ export!(Component);
 impl exports::wasi::cli::run::Guest for Component {
     async fn run() -> Result<(), ()> {
         match &wasi::filesystem::preopens::get_directories()[..] {
-            [(dir, dirname)] if dirname == "fs-tests.dir" => {
+            [(dir, _)] => {
                 test_is_same_object(dir).await;
             }
             [..] => {
-                eprintln!("usage: run with one open dir named 'fs-tests.dir'");
+                eprintln!("usage: run with one open dir");
                 process::exit(1)
             }
         };

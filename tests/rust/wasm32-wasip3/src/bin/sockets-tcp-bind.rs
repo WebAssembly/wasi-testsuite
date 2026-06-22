@@ -3,8 +3,8 @@ wit_bindgen::generate!({
 	package wasi-testsuite:test;
 
 	world test {
-	    include wasi:sockets/imports@0.3.0-rc-2026-03-15;
-	    include wasi:cli/command@0.3.0-rc-2026-03-15;
+	    include wasi:sockets/imports@0.3.0;
+	    include wasi:cli/command@0.3.0;
 	}
     ",
     features:["clocks-timezone"],
@@ -94,7 +94,10 @@ fn test_invalid_address_family(family: IpAddressFamily) {
     };
 
     let result = sock.bind(addr);
-    assert!(matches!(result, Err(ErrorCode::InvalidArgument)));
+    assert!(
+        matches!(result, Err(ErrorCode::InvalidArgument)),
+        "bad error: {result:?}"
+    );
 }
 
 fn test_ephemeral_port_assignment(family: IpAddressFamily) {
@@ -134,7 +137,10 @@ fn test_non_unicast(family: IpAddressFamily) {
         let socket_addr = IpSocketAddress::new(addr, 0);
         let result = sock.bind(socket_addr);
 
-        assert!(matches!(result, Err(ErrorCode::InvalidArgument)));
+        assert!(
+            matches!(result, Err(ErrorCode::InvalidArgument)),
+            "bad error: {result:?}"
+        );
     }
 }
 
@@ -143,7 +149,10 @@ fn test_reject_dual_stack() {
     let addr = IpSocketAddress::ipv6_mapped_localhost(0);
     let result = sock.bind(addr);
 
-    assert!(matches!(result, Err(ErrorCode::InvalidArgument)));
+    assert!(
+        matches!(result, Err(ErrorCode::InvalidArgument)),
+        "bad error: {result:?}"
+    );
 }
 
 fn test_bind_addrinuse(family: IpAddressFamily) {

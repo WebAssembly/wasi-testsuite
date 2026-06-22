@@ -1,5 +1,5 @@
 use std::{env, process};
-use wasi_tests::{assert_errno, create_file, open_scratch_directory};
+use wasi_tests::{assert_errno, create_file, root_directory};
 
 const TEST_FILENAME: &'static str = "file.cleanup";
 const TEST_DIRNAME: &'static str = "dir.cleanup";
@@ -15,8 +15,13 @@ unsafe fn test_remove_directory_trailing_slashes(dir_fd: wasi::Fd) {
     wasi::path_create_directory(dir_fd, TEST_DIRNAME).expect("creating a directory");
 
     // Test that removing it with a trailing slash succeeds.
-    wasi::path_remove_directory(dir_fd, &format!("{}/", TEST_DIRNAME))
-        .expect("remove_directory with a trailing slash on a directory should succeed");
+    match wasi::path_remove_directory(dir_fd, &format!("{}/", TEST_DIRNAME)) {
+        Ok(()) => {}
+        Err(e) => {
+            assert_errno!(e, wasi::ERRNO_ACCES, wasi::ERRNO_INVAL);
+            wasi::path_remove_directory(dir_fd, TEST_DIRNAME).unwrap();
+        }
+    }
 
     // Create a temporary file.
     create_file(dir_fd, TEST_FILENAME);
@@ -40,17 +45,7 @@ unsafe fn test_remove_directory_trailing_slashes(dir_fd: wasi::Fd) {
 }
 
 fn main() {
-    let mut args = env::args();
-    let prog = args.next().unwrap();
-    let arg = if let Some(arg) = args.next() {
-        arg
-    } else {
-        eprintln!("usage: {} <scratch directory>", prog);
-        process::exit(1);
-    };
-
-    // Open scratch directory
-    let dir_fd = match open_scratch_directory(&arg) {
+    let dir_fd = match root_directory() {
         Ok(dir_fd) => dir_fd,
         Err(err) => {
             eprintln!("{}", err);

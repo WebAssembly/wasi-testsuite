@@ -7,8 +7,8 @@ wit_bindgen::generate!({
   package test:test;
 
   world test {
-      include wasi:filesystem/imports@0.3.0-rc-2026-03-15;
-      include wasi:cli/command@0.3.0-rc-2026-03-15;
+      include wasi:filesystem/imports@0.3.0;
+      include wasi:cli/command@0.3.0;
   }
 ",
     additional_derives: [PartialEq, Eq, Hash, Clone],
@@ -160,7 +160,8 @@ async fn test_io(dir: &Descriptor) {
     };
     let rm = |path: &str| dir.unlink_file_at(path.to_string());
 
-    let a = open_r("a.txt").await.unwrap();
+    let a = creat("a.cleanup").await.unwrap();
+    assert_eq!(pwrite(&a, 0, b"test-a\n").await, Ok(7));
 
     pread(&a, 0, 0).await.unwrap();
     pread(&a, 0, 1).await.unwrap();
@@ -201,6 +202,9 @@ async fn test_io(dir: &Descriptor) {
     );
     c.sync().await.unwrap();
 
+    drop(a);
+    drop(c);
+    rm("a.cleanup").await.unwrap();
     rm("c.cleanup").await.unwrap();
 }
 
@@ -209,11 +213,11 @@ export!(Component);
 impl exports::wasi::cli::run::Guest for Component {
     async fn run() -> Result<(), ()> {
         match &wasi::filesystem::preopens::get_directories()[..] {
-            [(dir, dirname)] if dirname == "fs-tests.dir" => {
+            [(dir, _)] => {
                 test_io(dir).await;
             }
             [..] => {
-                eprintln!("usage: run with one open dir named 'fs-tests.dir'");
+                eprintln!("usage: run with one open dir");
                 process::exit(1)
             }
         };

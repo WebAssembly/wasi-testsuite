@@ -1,0 +1,19 @@
+python_binary(
+    name = "run_wasi_test",
+    main = "run_wasi_test.py",
+    base_module = "",
+    deps = ["//test-runner:wasi_test_runner"],
+    visibility = ["//tests/..."],
+)
+
+python_binary(
+    name = "package_dist",
+    main = "package_dist.py",
+    visibility = ["//tests/..."],
+)
+
+export_file(
+    name = "jco_runner.mjs",
+    src = "jco_runner.mjs",
+    visibility = ["toolchains//..."],
+)

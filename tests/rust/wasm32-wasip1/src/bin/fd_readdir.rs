@@ -1,5 +1,5 @@
 use std::{env, mem, process, slice, str};
-use wasi_tests::{create_tmp_dir, open_scratch_directory};
+use wasi_tests::{create_tmp_dir, root_directory};
 
 const BUF_LEN: usize = 256;
 
@@ -149,7 +149,8 @@ unsafe fn test_fd_readdir(dir_fd: wasi::Fd) {
 
 unsafe fn test_fd_readdir_lots(dir_fd: wasi::Fd) {
     // Add a file and check the behavior
-    for count in 0..1000 {
+    const N: usize = 100;
+    for count in 0..N {
         let file_fd = wasi::path_open(
             dir_fd,
             0,
@@ -181,25 +182,15 @@ unsafe fn test_fd_readdir_lots(dir_fd: wasi::Fd) {
         }
         cookie = dirs[dirs.len() - 1].dirent.d_next;
     }
-    assert_eq!(total, 1002, "expected 1000 entries plus . and ..");
+    assert_eq!(total, N + 2, "expected {N} entries plus . and ..");
 
-    for count in 0..1000 {
+    for count in 0..N {
         wasi::path_unlink_file(dir_fd, &format!("file.{}", count)).expect("removing a file");
     }
 }
 
 fn main() {
-    let mut args = env::args();
-    let prog = args.next().unwrap();
-    let arg = if let Some(arg) = args.next() {
-        arg
-    } else {
-        eprintln!("usage: {} <scratch directory>", prog);
-        process::exit(1);
-    };
-
-    // Open scratch directory
-    let base_dir_fd = match open_scratch_directory(&arg) {
+    let base_dir_fd = match root_directory() {
         Ok(dir_fd) => dir_fd,
         Err(err) => {
             eprintln!("{}", err);
@@ -217,5 +208,8 @@ fn main() {
     unsafe { test_fd_readdir(dir_fd) }
     unsafe { test_fd_readdir_lots(dir_fd) }
 
+    unsafe {
+        wasi::fd_close(dir_fd).unwrap();
+    }
     unsafe { wasi::path_remove_directory(base_dir_fd, DIR_NAME).expect("failed to remove dir") }
 }

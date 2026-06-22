@@ -6,8 +6,8 @@ wit_bindgen::generate!({
   package test:test;
 
   world test {
-      include wasi:filesystem/imports@0.3.0-rc-2026-03-15;
-      include wasi:cli/command@0.3.0-rc-2026-03-15;
+      include wasi:filesystem/imports@0.3.0;
+      include wasi:cli/command@0.3.0;
   }
 ",
     additional_derives: [PartialEq, Eq, Hash, Clone],
@@ -20,6 +20,11 @@ use wasi::filesystem::types::Descriptor;
 use wasi::filesystem::types::{DescriptorFlags, ErrorCode, OpenFlags, PathFlags};
 
 async fn test_open_errors(dir: &Descriptor) {
+    let has_symlink = dir
+        .symlink_at("..".to_string(), "parent.cleanup".to_string())
+        .await
+        .is_ok();
+
     let open = |flags: PathFlags, path: &str| -> _ {
         dir.open_at(
             flags,
@@ -36,10 +41,14 @@ async fn test_open_errors(dir: &Descriptor) {
         open_r("..").await.expect_err("open .."),
         ErrorCode::NotPermitted
     );
-    assert_eq!(
-        open_r_follow("parent").await.expect_err("open parent"),
-        ErrorCode::NotPermitted
-    );
+    if has_symlink {
+        assert_eq!(
+            open_r_follow("parent.cleanup")
+                .await
+                .expect_err("open parent.cleanup"),
+            ErrorCode::NotPermitted
+        );
+    }
     assert_eq!(
         open_r("/").await.expect_err("open /"),
         ErrorCode::NotPermitted
@@ -51,11 +60,11 @@ export!(Component);
 impl exports::wasi::cli::run::Guest for Component {
     async fn run() -> Result<(), ()> {
         match &wasi::filesystem::preopens::get_directories()[..] {
-            [(dir, dirname)] if dirname == "fs-tests.dir" => {
+            [(dir, _)] => {
                 test_open_errors(dir).await;
             }
             [..] => {
-                eprintln!("usage: run with one open dir named 'fs-tests.dir'");
+                eprintln!("usage: run with one open dir");
                 process::exit(1)
             }
         };

@@ -6,8 +6,8 @@ wit_bindgen::generate!({
   package test:test;
 
   world test {
-      include wasi:filesystem/imports@0.3.0-rc-2026-03-15;
-      include wasi:cli/command@0.3.0-rc-2026-03-15;
+      include wasi:filesystem/imports@0.3.0;
+      include wasi:cli/command@0.3.0;
   }
 ",
     additional_derives: [PartialEq, Eq, Hash, Clone],
@@ -21,28 +21,33 @@ use wasi::filesystem::types::DescriptorType;
 use wasi::filesystem::types::DirectoryEntry;
 
 async fn test_read_directory(dir: &Descriptor) {
+    let has_symlink = dir
+        .symlink_at("..".to_string(), "parent.cleanup".to_string())
+        .await
+        .is_ok();
+
     // read-directory: async func() -> tuple<stream<directory-entry>, future<result<_, error-code>>>;
     let (stream, result) = dir.read_directory();
     let mut entries = stream.collect().await;
     result.await.unwrap();
     entries.sort_by_key(|e| e.name.clone());
-    assert_eq!(
-        &entries,
-        &[
-            DirectoryEntry {
-                type_: DescriptorType::RegularFile,
-                name: "a.txt".to_string()
-            },
-            DirectoryEntry {
-                type_: DescriptorType::RegularFile,
-                name: "b.txt".to_string()
-            },
-            DirectoryEntry {
-                type_: DescriptorType::SymbolicLink,
-                name: "parent".to_string()
-            }
-        ]
-    );
+    let mut expected = vec![
+        DirectoryEntry {
+            type_: DescriptorType::RegularFile,
+            name: "a.txt".to_string(),
+        },
+        DirectoryEntry {
+            type_: DescriptorType::RegularFile,
+            name: "b.txt".to_string(),
+        },
+    ];
+    if has_symlink {
+        expected.push(DirectoryEntry {
+            type_: DescriptorType::SymbolicLink,
+            name: "parent.cleanup".to_string(),
+        });
+    }
+    assert_eq!(&entries, &expected,);
 }
 
 struct Component;
@@ -50,11 +55,11 @@ export!(Component);
 impl exports::wasi::cli::run::Guest for Component {
     async fn run() -> Result<(), ()> {
         match &wasi::filesystem::preopens::get_directories()[..] {
-            [(dir, dirname)] if dirname == "fs-tests.dir" => {
+            [(dir, _)] => {
                 test_read_directory(dir).await;
             }
             [..] => {
-                eprintln!("usage: run with one open dir named 'fs-tests.dir'");
+                eprintln!("usage: run with one open dir");
                 process::exit(1)
             }
         };

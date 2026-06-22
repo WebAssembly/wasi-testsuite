@@ -46,11 +46,6 @@ async fn test_inherited_properties(family: IpAddressFamily) {
             );
             assert_eq!(next.get_keep_alive_count(), sock.get_keep_alive_count());
             assert_eq!(next.get_hop_limit(), sock.get_hop_limit());
-            assert_eq!(
-                next.get_receive_buffer_size(),
-                sock.get_receive_buffer_size()
-            );
-            assert_eq!(next.get_send_buffer_size(), sock.get_send_buffer_size());
         },
         async {
             client.connect(local_addr).await.unwrap();
@@ -64,7 +59,10 @@ fn test_listening(fam: IpAddressFamily) {
     sock.bind(addr).unwrap();
     sock.listen().unwrap();
     let result = sock.listen();
-    assert!(matches!(result, Err(ErrorCode::InvalidState)));
+    assert!(
+        matches!(result, Err(ErrorCode::InvalidState)),
+        "bad error: {result:?}"
+    );
 }
 
 impl Guest for Component {

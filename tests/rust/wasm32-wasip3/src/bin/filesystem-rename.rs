@@ -6,8 +6,8 @@ wit_bindgen::generate!({
   package test:test;
 
   world test {
-      include wasi:filesystem/imports@0.3.0-rc-2026-03-15;
-      include wasi:cli/command@0.3.0-rc-2026-03-15;
+      include wasi:filesystem/imports@0.3.0;
+      include wasi:cli/command@0.3.0;
   }
 ",
     additional_derives: [PartialEq, Eq, Hash, Clone],
@@ -19,6 +19,11 @@ wit_bindgen::generate!({
 use wasi::filesystem::types::{Descriptor, DescriptorFlags, ErrorCode, OpenFlags, PathFlags};
 
 async fn test_rename(dir: &Descriptor) {
+    let has_symlink = dir
+        .symlink_at("..".to_string(), "parent.cleanup".to_string())
+        .await
+        .is_ok();
+
     // rename-at: async func(old-path: string, new-descriptor: borrow<descriptor>, new-path: string) -> result<_, error-code>;
     dir.create_directory_at("child.cleanup".to_string())
         .await
@@ -62,10 +67,12 @@ async fn test_rename(dir: &Descriptor) {
     assert_eq!(mv("a.txt", "q.txt").await, Err(ErrorCode::NoEntry));
     mv("c.cleanup", "a.txt").await.unwrap();
     assert_eq!(mv("a.txt", "../q.txt").await, Err(ErrorCode::NotPermitted));
-    assert_eq!(
-        mv("a.txt", "parent/q.txt").await,
-        Err(ErrorCode::NotPermitted)
-    );
+    if has_symlink {
+        assert_eq!(
+            mv("a.txt", "parent.cleanup/q.txt").await,
+            Err(ErrorCode::NotPermitted)
+        );
+    }
     assert_eq!(
         mv("a.txt", "/tmp/q.txt").await,
         Err(ErrorCode::NotPermitted)
@@ -95,11 +102,11 @@ export!(Component);
 impl exports::wasi::cli::run::Guest for Component {
     async fn run() -> Result<(), ()> {
         match &wasi::filesystem::preopens::get_directories()[..] {
-            [(dir, dirname)] if dirname == "fs-tests.dir" => {
+            [(dir, _)] => {
                 test_rename(dir).await;
             }
             [..] => {
-                eprintln!("usage: run with one open dir named 'fs-tests.dir'");
+                eprintln!("usage: run with one open dir");
                 process::exit(1)
             }
         };

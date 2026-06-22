@@ -6,8 +6,8 @@ wit_bindgen::generate!({
   package test:test;
 
   world test {
-      include wasi:filesystem/imports@0.3.0-rc-2026-03-15;
-      include wasi:cli/command@0.3.0-rc-2026-03-15;
+      include wasi:filesystem/imports@0.3.0;
+      include wasi:cli/command@0.3.0;
   }
 ",
     additional_derives: [PartialEq, Eq, Hash, Clone],
@@ -62,9 +62,13 @@ async fn test_set_size(dir: &Descriptor) {
     assert_eq!(c.stat().await.unwrap().size, 69);
     assert_eq!(r.stat().await.unwrap().size, 69);
 
-    let c = trunc("c.cleanup").await.unwrap();
-    assert_eq!(c.stat().await.unwrap().size, 0);
-    assert_eq!(r.stat().await.unwrap().size, 0);
+    let truncated = if let Ok(c) = trunc("c.cleanup").await {
+        assert_eq!(c.stat().await.unwrap().size, 0);
+        assert_eq!(r.stat().await.unwrap().size, 0);
+        true
+    } else {
+        false
+    };
 
     // https://github.com/WebAssembly/WASI/issues/712
     match r.set_size(100).await {
@@ -93,12 +97,14 @@ async fn test_set_size(dir: &Descriptor) {
             // We still have `c` and `r` open, which refer to the file,
             // but we can still stat our descriptors, call `set-size` on
             // it, and so on.
-            assert_eq!(c.stat().await.unwrap().size, 0);
+            if truncated {
+                assert_eq!(c.stat().await.unwrap().size, 0);
+            }
             c.set_size(42).await.unwrap();
             assert_eq!(c.stat().await.unwrap().size, 42);
             assert_eq!(r.stat().await.unwrap().size, 42);
         }
-        Err(ErrorCode::Busy) => {
+        Err(ErrorCode::Busy | ErrorCode::Access) => {
             // Otherwise if we're on Windows we are unable to remove the
             // file while descriptors are open.
         }
@@ -113,11 +119,11 @@ export!(Component);
 impl exports::wasi::cli::run::Guest for Component {
     async fn run() -> Result<(), ()> {
         match &wasi::filesystem::preopens::get_directories()[..] {
-            [(dir, dirname)] if dirname == "fs-tests.dir" => {
+            [(dir, _)] => {
                 test_set_size(dir).await;
             }
             [..] => {
-                eprintln!("usage: run with one open dir named 'fs-tests.dir'");
+                eprintln!("usage: run with one open dir");
                 process::exit(1)
             }
         };

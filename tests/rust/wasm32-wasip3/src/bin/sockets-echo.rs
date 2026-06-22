@@ -3,8 +3,8 @@ wit_bindgen::generate!({
 	package wasi-testsuite:test;
 
 	world test {
-	    include wasi:sockets/imports@0.3.0-rc-2026-03-15;
-	    include wasi:cli/command@0.3.0-rc-2026-03-15;
+	    include wasi:sockets/imports@0.3.0;
+	    include wasi:cli/command@0.3.0;
 	}
     ",
     features:["clocks-timezone"],
@@ -52,9 +52,9 @@ async fn echo(family: IpAddressFamily, addr: IpSocketAddress) {
     let listener = TcpSocket::create(family).unwrap();
     listener.bind(addr).unwrap();
     let addr = listener.get_local_address().unwrap();
+    let mut accept = listener.listen().unwrap();
     println!("{}", addr);
 
-    let mut accept = listener.listen().unwrap();
     let sock = accept.next().await.unwrap();
     let (mut recv_stream, recv_fut) = sock.receive();
 

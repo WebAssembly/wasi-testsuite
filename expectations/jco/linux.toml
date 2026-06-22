@@ -1,0 +1,4 @@
+version = 1
+
+[[suite]]
+name = "WASI Rust tests [wasm32-wasip3]"

@@ -1,0 +1,37 @@
+# WASI SDK based C/C++ toolchains.
+#
+# The C/C++ test toolchain emits WASI P1 modules; the wasm-ld variant is used as
+# the linker for the Rust wasm targets. Both come from a single hermetic
+# wasi-sdk distribution.
+
+load(
+    "@wasmono//:defs.bzl",
+    "cxx_wasi_toolchain",
+    "download_wasi_sdk",
+)
+load(":defs.bzl", "clang_format")
+
+download_wasi_sdk(name = "wasi_sdk", version = "27.0")
+
+cxx_wasi_toolchain(
+    name = "cxx_wasi_p1",
+    c_compiler_flags = ["-Wno-unused-command-line-argument"],
+    cxx_compiler_flags = ["-Wno-unused-command-line-argument"],
+    distribution = ":wasi_sdk",
+    target = "wasm32-wasip1",
+    visibility = ["PUBLIC"],
+)
+
+cxx_wasi_toolchain(
+    name = "rust_linker",
+    distribution = ":wasi_sdk",
+    linker_tool = "wasm-ld",
+    visibility = ["PUBLIC"],
+)
+
+# Runnable clang-format from the same wasi-sdk distribution, for the C tests.
+clang_format(
+    name = "clang-format",
+    distribution = ":wasi_sdk",
+    visibility = ["PUBLIC"],
+)
