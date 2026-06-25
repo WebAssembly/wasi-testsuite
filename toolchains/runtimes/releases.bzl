@@ -1,6 +1,62 @@
 """Release metadata for WASI runtime binaries."""
 
 WASMTIME_RELEASES = {
+    "46.0.1": {
+        "aarch64-linux": {
+            "url": (
+                "https://github.com/bytecodealliance/wasmtime/releases/" +
+                "download/v46.0.1/wasmtime-v46.0.1-aarch64-linux.tar.xz"
+            ),
+            "shasum": "071c4def2a08f0ebc95c52dfd4f2886eb697ba495804217cf76e13b09d70a1be",
+            "prefix": "wasmtime-v46.0.1-aarch64-linux",
+            "binary": "wasmtime",
+        },
+        "aarch64-macos": {
+            "url": (
+                "https://github.com/bytecodealliance/wasmtime/releases/" +
+                "download/v46.0.1/wasmtime-v46.0.1-aarch64-macos.tar.xz"
+            ),
+            "shasum": "acee50be70dbe90b0ab2ac7db1321fc44715153a1b1cc58291c97b6d7cffc558",
+            "prefix": "wasmtime-v46.0.1-aarch64-macos",
+            "binary": "wasmtime",
+        },
+        "aarch64-windows": {
+            "url": (
+                "https://github.com/bytecodealliance/wasmtime/releases/" +
+                "download/v46.0.1/wasmtime-v46.0.1-aarch64-windows.zip"
+            ),
+            "shasum": "65631cfcb5a5f34d10a6ff87dda52cb17722847cb9ffed00633bf8313a3231ee",
+            "prefix": "wasmtime-v46.0.1-aarch64-windows",
+            "binary": "wasmtime",
+        },
+        "x86_64-linux": {
+            "url": (
+                "https://github.com/bytecodealliance/wasmtime/releases/" +
+                "download/v46.0.1/wasmtime-v46.0.1-x86_64-linux.tar.xz"
+            ),
+            "shasum": "9ae0b17ea298bcc52277a8208d6ab7fae8e1a89579672f9d82f9d86c116edb62",
+            "prefix": "wasmtime-v46.0.1-x86_64-linux",
+            "binary": "wasmtime",
+        },
+        "x86_64-macos": {
+            "url": (
+                "https://github.com/bytecodealliance/wasmtime/releases/" +
+                "download/v46.0.1/wasmtime-v46.0.1-x86_64-macos.tar.xz"
+            ),
+            "shasum": "0513db67e7089c7e5f743a01427782bc4def83854222f4bc9b1d75f0b925240b",
+            "prefix": "wasmtime-v46.0.1-x86_64-macos",
+            "binary": "wasmtime",
+        },
+        "x86_64-windows": {
+            "url": (
+                "https://github.com/bytecodealliance/wasmtime/releases/" +
+                "download/v46.0.1/wasmtime-v46.0.1-x86_64-windows.zip"
+            ),
+            "shasum": "99f038066b16cb3aaf63c1d282a9d7ba7befafbadf7aa8827cc4c712d96bc31a",
+            "prefix": "wasmtime-v46.0.1-x86_64-windows",
+            "binary": "wasmtime",
+        },
+    },
     "45.0.0": {
         "aarch64-linux": {
             "url": (
