@@ -1,3 +1,5 @@
+use wasip1 as wasi;
+
 unsafe fn test_clock_time_get() {
     // Test that clock_time_get succeeds. Even in environments where it's not
     // desirable to expose high-precision timers, it should still succeed.

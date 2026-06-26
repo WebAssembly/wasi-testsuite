@@ -2,6 +2,7 @@ use std::{env, process};
 use wasi_tests::{
     assert_errno, create_tmp_dir, drop_rights, fd_get_rights, root_directory, supports_rights,
 };
+use wasip1 as wasi;
 
 const TEST_FILENAME: &'static str = "file.cleanup";
 

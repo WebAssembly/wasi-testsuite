@@ -14,5 +14,5 @@ path = "top/main.rs"
 futures = "0.3.32"
 libc = "0.2.186"
 once_cell = "1.21.4"
-wasi = "0.11.1"
-wit-bindgen = { version = "0.57.1", features = ["async-spawn"] }
+wasip1 = "1.0.0"
+wit-bindgen = { version = "0.58.0", features = ["async-spawn"] }

@@ -1,5 +1,6 @@
 use std::{env, process};
 use wasi_tests::root_directory;
+use wasip1 as wasi;
 
 unsafe fn try_path_open(dir_fd: wasi::Fd) {
     let _fd =

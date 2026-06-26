@@ -40,7 +40,7 @@ impl Guest for Component {
                 .append("content-length", &bytes.len().to_string().into_bytes())
                 .unwrap();
             let (mut body_tx, body_rx) = wit_stream::new();
-            wit_bindgen::spawn(async move {
+            wit_bindgen::spawn_local(async move {
                 let remaining = body_tx.write_all(bytes).await;
                 assert!(remaining.is_empty());
                 drop(body_tx);
