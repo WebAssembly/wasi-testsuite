@@ -2,3 +2,7 @@ version = 1
 
 [[suite]]
 name = "WASI Rust tests [wasm32-wasip3]"
+
+[[suite.test]]
+name = "filesystem-mkdir-rmdir"
+expected = "fail"
