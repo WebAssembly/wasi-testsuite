@@ -1,5 +1,6 @@
 use std::{env, process};
 use wasi_tests::{assert_errno, root_directory};
+use wasip1 as wasi;
 
 unsafe fn test_fd_dir_ops(dir_fd: wasi::Fd) {
     let stat = wasi::fd_filestat_get(dir_fd).expect("failed to fdstat");

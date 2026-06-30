@@ -1,3 +1,4 @@
+use wasip1 as wasi;
 unsafe fn find_first_preopened_fd(path: &str) -> Result<wasi::Fd, String> {
     let max_fd = (1 << 31) - 1;
 

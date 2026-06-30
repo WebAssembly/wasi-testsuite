@@ -1,5 +1,6 @@
 use std::{env, process};
 use wasi_tests::{create_tmp_dir, root_directory};
+use wasip1 as wasi;
 
 unsafe fn create_symlink_to_file(dir_fd: wasi::Fd) {
     // Create a directory for the symlink to point to.

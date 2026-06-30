@@ -11,7 +11,7 @@ _WASI_RUST = wasi_manifest(
 _RUST_DEPS = [
     ":wasi_tests",
     "//third-party/rust:libc",
-    "//third-party/rust:wasi",
+    "//third-party/rust:wasip1",
 ]
 
 rust_library(
@@ -27,7 +27,7 @@ rust_library(
     deps = [
         "//third-party/rust:libc",
         "//third-party/rust:once_cell",
-        "//third-party/rust:wasi",
+        "//third-party/rust:wasip1",
     ],
     _cxx_toolchain = "toolchains//:rust_linker",
     _rust_toolchain = "toolchains//:rust_wasi_p1",

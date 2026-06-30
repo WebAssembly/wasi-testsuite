@@ -1,5 +1,6 @@
 use std::{env, mem, process, slice, str};
 use wasi_tests::{create_tmp_dir, root_directory};
+use wasip1 as wasi;
 
 const BUF_LEN: usize = 256;
 

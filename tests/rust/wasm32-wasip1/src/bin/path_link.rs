@@ -2,6 +2,7 @@ use std::{env, process};
 use wasi_tests::{
     TESTCONFIG, assert_errno, create_file, create_tmp_dir, root_directory, supports_rights,
 };
+use wasip1 as wasi;
 
 const TEST_RIGHTS: wasi::Rights = wasi::RIGHTS_FD_READ
     | wasi::RIGHTS_PATH_LINK_SOURCE

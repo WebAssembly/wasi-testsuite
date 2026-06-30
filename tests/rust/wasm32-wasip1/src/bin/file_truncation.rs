@@ -1,5 +1,6 @@
 use std::{env, process};
 use wasi_tests::{create_tmp_dir, root_directory};
+use wasip1 as wasi;
 
 unsafe fn test_file_truncation(dir_fd: wasi::Fd) {
     const FILENAME: &str = "test.txt";

@@ -1,4 +1,5 @@
 use std::{env, process};
+use wasip1 as wasi;
 
 use wasi_tests::{STDERR_FD, STDIN_FD, STDOUT_FD, create_tmp_dir, root_directory};
 

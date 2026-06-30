@@ -1,5 +1,6 @@
 use std::{env, process};
 use wasi_tests::root_directory;
+use wasip1 as wasi;
 
 unsafe fn test_fd_advise(dir_fd: wasi::Fd) {
     const FILE_NAME: &str = "fd_advise_file.cleanup";

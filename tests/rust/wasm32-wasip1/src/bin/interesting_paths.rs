@@ -1,6 +1,7 @@
 use std::{env, process};
 use wasi::path_create_directory;
 use wasi_tests::{assert_errno, create_file, root_directory};
+use wasip1 as wasi;
 
 unsafe fn test_interesting_paths(dir_fd: wasi::Fd) {
     // Create a directory in the scratch directory.
