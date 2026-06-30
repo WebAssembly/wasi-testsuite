@@ -1,5 +1,6 @@
 use std::{env, process};
 use wasi_tests::{create_tmp_dir, root_directory};
+use wasip1 as wasi;
 
 unsafe fn test_path_filestat(dir_fd: wasi::Fd) {
     let fdstat = wasi::fd_fdstat_get(dir_fd).expect("fd_fdstat_get");

@@ -1,5 +1,6 @@
 use std::{env, process};
 use wasi_tests::{assert_errno, create_file, root_directory};
+use wasip1 as wasi;
 
 const TEST_FILENAME: &'static str = "file.cleanup";
 

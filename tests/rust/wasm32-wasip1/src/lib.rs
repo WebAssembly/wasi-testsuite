@@ -1,3 +1,4 @@
+use wasip1 as wasi;
 pub mod config;
 use once_cell::sync::Lazy;
 use wasi::path_create_directory;

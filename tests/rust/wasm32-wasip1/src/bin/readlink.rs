@@ -1,5 +1,6 @@
 use std::{env, process};
 use wasi_tests::{create_file, create_tmp_dir, root_directory};
+use wasip1 as wasi;
 
 unsafe fn test_readlink(dir_fd: wasi::Fd) {
     // Create a file in the scratch directory.

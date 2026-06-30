@@ -4,18 +4,18 @@ load("@prelude//rust:cargo_buildscript.bzl", "buildscript_run")
 load("@prelude//rust:cargo_package.bzl", "cargo")
 
 http_archive(
-    name = "anyhow-1.0.102.crate",
-    sha256 = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c",
-    strip_prefix = "anyhow-1.0.102",
-    urls = ["https://static.crates.io/crates/anyhow/1.0.102/download"],
+    name = "anyhow-1.0.103.crate",
+    sha256 = "2a4385e2e34eb35d6b3efe798b9eb88096925d87726c0798709bf56d9ed84af3",
+    strip_prefix = "anyhow-1.0.103",
+    urls = ["https://static.crates.io/crates/anyhow/1.0.103/download"],
     visibility = [],
 )
 
 cargo.rust_library(
     name = "anyhow-1",
-    srcs = [":anyhow-1.0.102.crate"],
+    srcs = [":anyhow-1.0.103.crate"],
     crate = "anyhow",
-    crate_root = "anyhow-1.0.102.crate/src/lib.rs",
+    crate_root = "anyhow-1.0.103.crate/src/lib.rs",
     edition = "2021",
     features = [
         "default",
@@ -25,18 +25,18 @@ cargo.rust_library(
 )
 
 http_archive(
-    name = "bitflags-2.12.1.crate",
-    sha256 = "84d7ced0ae9557296835c32bf1b1e02b44c746701f898460fb000d7eaa84f00a",
-    strip_prefix = "bitflags-2.12.1",
-    urls = ["https://static.crates.io/crates/bitflags/2.12.1/download"],
+    name = "bitflags-2.13.0.crate",
+    sha256 = "b4388bee8683e3d04af747c73422af53102d2bd24d9eadb6cbc100baef4b43f8",
+    strip_prefix = "bitflags-2.13.0",
+    urls = ["https://static.crates.io/crates/bitflags/2.13.0/download"],
     visibility = [],
 )
 
 cargo.rust_library(
     name = "bitflags-2",
-    srcs = [":bitflags-2.12.1.crate"],
+    srcs = [":bitflags-2.13.0.crate"],
     crate = "bitflags",
-    crate_root = "bitflags-2.12.1.crate/src/lib.rs",
+    crate_root = "bitflags-2.13.0.crate/src/lib.rs",
     edition = "2021",
     visibility = [],
 )
@@ -482,18 +482,18 @@ buildscript_run(
 )
 
 http_archive(
-    name = "log-0.4.31.crate",
-    sha256 = "113b30b4cd05f7c06868fdb2854f66a7b9fece9a48425351cd532e810d74024f",
-    strip_prefix = "log-0.4.31",
-    urls = ["https://static.crates.io/crates/log/0.4.31/download"],
+    name = "log-0.4.33.crate",
+    sha256 = "0ceec5bc11778974d1bcb055b18002eba7f4b3518b6a0081b3af5f21666da9ad",
+    strip_prefix = "log-0.4.33",
+    urls = ["https://static.crates.io/crates/log/0.4.33/download"],
     visibility = [],
 )
 
 cargo.rust_library(
     name = "log-0.4",
-    srcs = [":log-0.4.31.crate"],
+    srcs = [":log-0.4.33.crate"],
     crate = "log",
-    crate_root = "log-0.4.31.crate/src/lib.rs",
+    crate_root = "log-0.4.33.crate/src/lib.rs",
     edition = "2021",
     visibility = [],
 )
@@ -521,18 +521,18 @@ cargo.rust_library(
 )
 
 http_archive(
-    name = "memchr-2.8.1.crate",
-    sha256 = "6b947ae49db0d222b1dbc6b113ce7248a3fc3a6ca21b696717bfc000ba4484d8",
-    strip_prefix = "memchr-2.8.1",
-    urls = ["https://static.crates.io/crates/memchr/2.8.1/download"],
+    name = "memchr-2.8.2.crate",
+    sha256 = "88904434abc2901f197fe8cc55f0445e7ded921dba5911dad2e2b39b48e663c4",
+    strip_prefix = "memchr-2.8.2",
+    urls = ["https://static.crates.io/crates/memchr/2.8.2/download"],
     visibility = [],
 )
 
 cargo.rust_library(
     name = "memchr-2",
-    srcs = [":memchr-2.8.1.crate"],
+    srcs = [":memchr-2.8.2.crate"],
     crate = "memchr",
-    crate_root = "memchr-2.8.1.crate/src/lib.rs",
+    crate_root = "memchr-2.8.2.crate/src/lib.rs",
     edition = "2021",
     features = [
         "alloc",
@@ -704,18 +704,18 @@ buildscript_run(
 )
 
 http_archive(
-    name = "quote-1.0.45.crate",
-    sha256 = "41f2619966050689382d2b44f664f4bc593e129785a36d6ee376ddf37259b924",
-    strip_prefix = "quote-1.0.45",
-    urls = ["https://static.crates.io/crates/quote/1.0.45/download"],
+    name = "quote-1.0.46.crate",
+    sha256 = "dfbc457d0c7a0759a614551b11a6409e5951f6c7537be1f1b7682b9ae9230368",
+    strip_prefix = "quote-1.0.46",
+    urls = ["https://static.crates.io/crates/quote/1.0.46/download"],
     visibility = [],
 )
 
 cargo.rust_library(
     name = "quote-1",
-    srcs = [":quote-1.0.45.crate"],
+    srcs = [":quote-1.0.46.crate"],
     crate = "quote",
-    crate_root = "quote-1.0.45.crate/src/lib.rs",
+    crate_root = "quote-1.0.46.crate/src/lib.rs",
     edition = "2021",
     features = [
         "default",
@@ -1082,18 +1082,18 @@ cargo.rust_library(
 )
 
 http_archive(
-    name = "syn-2.0.117.crate",
-    sha256 = "e665b8803e7b1d2a727f4023456bbbbe74da67099c585258af0ad9c5013b9b99",
-    strip_prefix = "syn-2.0.117",
-    urls = ["https://static.crates.io/crates/syn/2.0.117/download"],
+    name = "syn-2.0.118.crate",
+    sha256 = "1b9ae57f904213ebb649ce6895b8a66c66f0203b9319718f69a5612a065b1422",
+    strip_prefix = "syn-2.0.118",
+    urls = ["https://static.crates.io/crates/syn/2.0.118/download"],
     visibility = [],
 )
 
 cargo.rust_library(
     name = "syn-2",
-    srcs = [":syn-2.0.117.crate"],
+    srcs = [":syn-2.0.118.crate"],
     crate = "syn",
-    crate_root = "syn-2.0.117.crate/src/lib.rs",
+    crate_root = "syn-2.0.118.crate/src/lib.rs",
     edition = "2021",
     features = [
         "clone-impls",
@@ -1148,24 +1148,24 @@ cargo.rust_library(
 )
 
 alias(
-    name = "wasi",
-    actual = ":wasi-0.11",
+    name = "wasip1",
+    actual = ":wasip1-1",
     visibility = ["PUBLIC"],
 )
 
 http_archive(
-    name = "wasi-0.11.1+wasi-snapshot-preview1.crate",
-    sha256 = "ccf3ec651a847eb01de73ccad15eb7d99f80485de043efb2f370cd654f4ea44b",
-    strip_prefix = "wasi-0.11.1+wasi-snapshot-preview1",
-    urls = ["https://static.crates.io/crates/wasi/0.11.1+wasi-snapshot-preview1/download"],
+    name = "wasip1-1.0.0.crate",
+    sha256 = "b5e26842486624357dbeb8f0381cf1fb42f022291fd787d4a816768fec8cc760",
+    strip_prefix = "wasip1-1.0.0",
+    urls = ["https://static.crates.io/crates/wasip1/1.0.0/download"],
     visibility = [],
 )
 
 cargo.rust_library(
-    name = "wasi-0.11",
-    srcs = [":wasi-0.11.1+wasi-snapshot-preview1.crate"],
-    crate = "wasi",
-    crate_root = "wasi-0.11.1+wasi-snapshot-preview1.crate/src/lib.rs",
+    name = "wasip1-1",
+    srcs = [":wasip1-1.0.0.crate"],
+    crate = "wasip1",
+    crate_root = "wasip1-1.0.0.crate/src/lib.rs",
     edition = "2018",
     features = [
         "default",
@@ -1175,19 +1175,19 @@ cargo.rust_library(
 )
 
 http_archive(
-    name = "wasm-encoder-0.247.0.crate",
-    sha256 = "30b6733b8b91d010a6ac5b0fb237dc46a19650bc4c67db66857e2e787d437204",
-    strip_prefix = "wasm-encoder-0.247.0",
-    urls = ["https://static.crates.io/crates/wasm-encoder/0.247.0/download"],
+    name = "wasm-encoder-0.251.0.crate",
+    sha256 = "5a879a421bd17c528b74721b2abf4c62e8f1d1889c2ba8c3c50d02deaf2ce395",
+    strip_prefix = "wasm-encoder-0.251.0",
+    urls = ["https://static.crates.io/crates/wasm-encoder/0.251.0/download"],
     visibility = [],
 )
 
 cargo.rust_library(
-    name = "wasm-encoder-0.247",
-    srcs = [":wasm-encoder-0.247.0.crate"],
+    name = "wasm-encoder-0.251",
+    srcs = [":wasm-encoder-0.251.0.crate"],
     crate = "wasm_encoder",
-    crate_root = "wasm-encoder-0.247.0.crate/src/lib.rs",
-    edition = "2021",
+    crate_root = "wasm-encoder-0.251.0.crate/src/lib.rs",
+    edition = "2024",
     features = [
         "component-model",
         "std",
@@ -1196,47 +1196,47 @@ cargo.rust_library(
     visibility = [],
     deps = [
         ":leb128fmt-0.1",
-        ":wasmparser-0.247",
+        ":wasmparser-0.251",
     ],
 )
 
 http_archive(
-    name = "wasm-metadata-0.247.0.crate",
-    sha256 = "665fe59e56cc9b419ca6fcca56673e3421d1a5011e3b65caf6b726fd9e041d10",
-    strip_prefix = "wasm-metadata-0.247.0",
-    urls = ["https://static.crates.io/crates/wasm-metadata/0.247.0/download"],
+    name = "wasm-metadata-0.251.0.crate",
+    sha256 = "5f998ccc6e012f7b86865eb2a106c8a0422017a1a88977ce01a69f2244be2e57",
+    strip_prefix = "wasm-metadata-0.251.0",
+    urls = ["https://static.crates.io/crates/wasm-metadata/0.251.0/download"],
     visibility = [],
 )
 
 cargo.rust_library(
-    name = "wasm-metadata-0.247",
-    srcs = [":wasm-metadata-0.247.0.crate"],
+    name = "wasm-metadata-0.251",
+    srcs = [":wasm-metadata-0.251.0.crate"],
     crate = "wasm_metadata",
-    crate_root = "wasm-metadata-0.247.0.crate/src/lib.rs",
-    edition = "2021",
+    crate_root = "wasm-metadata-0.251.0.crate/src/lib.rs",
+    edition = "2024",
     visibility = [],
     deps = [
         ":anyhow-1",
         ":indexmap-2",
-        ":wasm-encoder-0.247",
-        ":wasmparser-0.247",
+        ":wasm-encoder-0.251",
+        ":wasmparser-0.251",
     ],
 )
 
 http_archive(
-    name = "wasmparser-0.247.0.crate",
-    sha256 = "8e6fb4c2bee46c5ea4d40f8cdb5c131725cd976718ec56f1c8e82fbde5fa2a80",
-    strip_prefix = "wasmparser-0.247.0",
-    urls = ["https://static.crates.io/crates/wasmparser/0.247.0/download"],
+    name = "wasmparser-0.251.0.crate",
+    sha256 = "437970b35b1a85cfde9c74b2398352d8d653f3bd8e3a3db0c063ea8f5b4b36ff",
+    strip_prefix = "wasmparser-0.251.0",
+    urls = ["https://static.crates.io/crates/wasmparser/0.251.0/download"],
     visibility = [],
 )
 
 cargo.rust_library(
-    name = "wasmparser-0.247",
-    srcs = [":wasmparser-0.247.0.crate"],
+    name = "wasmparser-0.251",
+    srcs = [":wasmparser-0.251.0.crate"],
     crate = "wasmparser",
-    crate_root = "wasmparser-0.247.0.crate/src/lib.rs",
-    edition = "2021",
+    crate_root = "wasmparser-0.251.0.crate/src/lib.rs",
+    edition = "2024",
     features = [
         "component-model",
         "features",
@@ -1256,28 +1256,28 @@ cargo.rust_library(
 
 alias(
     name = "wit-bindgen",
-    actual = ":wit-bindgen-0.57",
+    actual = ":wit-bindgen-0.58",
     visibility = ["PUBLIC"],
 )
 
 http_archive(
-    name = "wit-bindgen-0.57.1.crate",
-    sha256 = "1ebf944e87a7c253233ad6766e082e3cd714b5d03812acc24c318f549614536e",
-    strip_prefix = "wit-bindgen-0.57.1",
-    urls = ["https://static.crates.io/crates/wit-bindgen/0.57.1/download"],
+    name = "wit-bindgen-0.58.0.crate",
+    sha256 = "a43552cfa071f246cfd99e5dbb23710dfe7336b3259e09339818483359470749",
+    strip_prefix = "wit-bindgen-0.58.0",
+    urls = ["https://static.crates.io/crates/wit-bindgen/0.58.0/download"],
     visibility = [],
 )
 
 cargo.rust_library(
-    name = "wit-bindgen-0.57",
-    srcs = [":wit-bindgen-0.57.1.crate"],
+    name = "wit-bindgen-0.58",
+    srcs = [":wit-bindgen-0.58.0.crate"],
     crate = "wit_bindgen",
-    crate_root = "wit-bindgen-0.57.1.crate/src/lib.rs",
+    crate_root = "wit-bindgen-0.58.0.crate/src/lib.rs",
     edition = "2024",
     env = {
         "CARGO_BIN_NAME": "wit_bindgen",
         "CARGO_CRATE_NAME": "wit_bindgen",
-        "CARGO_MANIFEST_DIR": "wit-bindgen-0.57.1.crate",
+        "CARGO_MANIFEST_DIR": "wit-bindgen-0.58.0.crate",
         "CARGO_PKG_AUTHORS": "Alex Crichton <alex@alexcrichton.com>",
         "CARGO_PKG_DESCRIPTION": "Rust bindings generator and runtime support for WIT and the component model.\nUsed when compiling Rust programs to the component model.\n",
         "CARGO_PKG_HOMEPAGE": "https://github.com/bytecodealliance/wit-bindgen",
@@ -1285,12 +1285,12 @@ cargo.rust_library(
         "CARGO_PKG_README": "README.md",
         "CARGO_PKG_REPOSITORY": "https://github.com/bytecodealliance/wit-bindgen",
         "CARGO_PKG_RUST_VERSION": "1.85.0",
-        "CARGO_PKG_VERSION": "0.57.1",
+        "CARGO_PKG_VERSION": "0.58.0",
         "CARGO_PKG_VERSION_MAJOR": "0",
-        "CARGO_PKG_VERSION_MINOR": "57",
-        "CARGO_PKG_VERSION_PATCH": "1",
+        "CARGO_PKG_VERSION_MINOR": "58",
+        "CARGO_PKG_VERSION_PATCH": "0",
         "CARGO_PKG_VERSION_PRE": "",
-        "OUT_DIR": "$(location :wit-bindgen-0.57-build-script-run[out_dir])",
+        "OUT_DIR": "$(location :wit-bindgen-0.58-build-script-run[out_dir])",
     },
     features = [
         "async",
@@ -1302,25 +1302,25 @@ cargo.rust_library(
         "realloc",
         "std",
     ],
-    rustc_flags = ["@$(location :wit-bindgen-0.57-build-script-run[rustc_flags])"],
+    rustc_flags = ["@$(location :wit-bindgen-0.58-build-script-run[rustc_flags])"],
     visibility = [],
     deps = [
         ":bitflags-2",
         ":futures-0.3",
-        ":wit-bindgen-rust-macro-0.57",
+        ":wit-bindgen-rust-macro-0.58",
     ],
 )
 
 cargo.rust_binary(
-    name = "wit-bindgen-0.57-build-script-build",
-    srcs = [":wit-bindgen-0.57.1.crate"],
+    name = "wit-bindgen-0.58-build-script-build",
+    srcs = [":wit-bindgen-0.58.0.crate"],
     crate = "build_script_build",
-    crate_root = "wit-bindgen-0.57.1.crate/build.rs",
+    crate_root = "wit-bindgen-0.58.0.crate/build.rs",
     edition = "2024",
     env = {
         "CARGO_BIN_NAME": "build-script-build",
         "CARGO_CRATE_NAME": "build_script_build",
-        "CARGO_MANIFEST_DIR": "wit-bindgen-0.57.1.crate",
+        "CARGO_MANIFEST_DIR": "wit-bindgen-0.58.0.crate",
         "CARGO_PKG_AUTHORS": "Alex Crichton <alex@alexcrichton.com>",
         "CARGO_PKG_DESCRIPTION": "Rust bindings generator and runtime support for WIT and the component model.\nUsed when compiling Rust programs to the component model.\n",
         "CARGO_PKG_HOMEPAGE": "https://github.com/bytecodealliance/wit-bindgen",
@@ -1328,10 +1328,10 @@ cargo.rust_binary(
         "CARGO_PKG_README": "README.md",
         "CARGO_PKG_REPOSITORY": "https://github.com/bytecodealliance/wit-bindgen",
         "CARGO_PKG_RUST_VERSION": "1.85.0",
-        "CARGO_PKG_VERSION": "0.57.1",
+        "CARGO_PKG_VERSION": "0.58.0",
         "CARGO_PKG_VERSION_MAJOR": "0",
-        "CARGO_PKG_VERSION_MINOR": "57",
-        "CARGO_PKG_VERSION_PATCH": "1",
+        "CARGO_PKG_VERSION_MINOR": "58",
+        "CARGO_PKG_VERSION_PATCH": "0",
         "CARGO_PKG_VERSION_PRE": "",
     },
     features = [
@@ -1348,9 +1348,9 @@ cargo.rust_binary(
 )
 
 buildscript_run(
-    name = "wit-bindgen-0.57-build-script-run",
+    name = "wit-bindgen-0.58-build-script-run",
     package_name = "wit-bindgen",
-    buildscript_rule = ":wit-bindgen-0.57-build-script-build",
+    buildscript_rule = ":wit-bindgen-0.58-build-script-build",
     env = {
         "CARGO_PKG_AUTHORS": "Alex Crichton <alex@alexcrichton.com>",
         "CARGO_PKG_DESCRIPTION": "Rust bindings generator and runtime support for WIT and the component model.\nUsed when compiling Rust programs to the component model.\n",
@@ -1359,8 +1359,8 @@ buildscript_run(
         "CARGO_PKG_REPOSITORY": "https://github.com/bytecodealliance/wit-bindgen",
         "CARGO_PKG_RUST_VERSION": "1.85.0",
         "CARGO_PKG_VERSION_MAJOR": "0",
-        "CARGO_PKG_VERSION_MINOR": "57",
-        "CARGO_PKG_VERSION_PATCH": "1",
+        "CARGO_PKG_VERSION_MINOR": "58",
+        "CARGO_PKG_VERSION_PATCH": "0",
         "CARGO_PKG_VERSION_PRE": "",
     },
     features = [
@@ -1373,49 +1373,49 @@ buildscript_run(
         "realloc",
         "std",
     ],
-    version = "0.57.1",
+    version = "0.58.0",
 )
 
 http_archive(
-    name = "wit-bindgen-core-0.57.1.crate",
-    sha256 = "02dee27a2dc20d1008016c742ec9fc6ea498492994ba3750be7454cbc97ff04c",
-    strip_prefix = "wit-bindgen-core-0.57.1",
-    urls = ["https://static.crates.io/crates/wit-bindgen-core/0.57.1/download"],
+    name = "wit-bindgen-core-0.58.0.crate",
+    sha256 = "4738d1c9a78e97bc7f664bfafd5d8e67d7bb26faa5c41e6d628e8bbdad3ec351",
+    strip_prefix = "wit-bindgen-core-0.58.0",
+    urls = ["https://static.crates.io/crates/wit-bindgen-core/0.58.0/download"],
     visibility = [],
 )
 
 cargo.rust_library(
-    name = "wit-bindgen-core-0.57",
-    srcs = [":wit-bindgen-core-0.57.1.crate"],
+    name = "wit-bindgen-core-0.58",
+    srcs = [":wit-bindgen-core-0.58.0.crate"],
     crate = "wit_bindgen_core",
-    crate_root = "wit-bindgen-core-0.57.1.crate/src/lib.rs",
+    crate_root = "wit-bindgen-core-0.58.0.crate/src/lib.rs",
     edition = "2024",
     visibility = [],
     deps = [
         ":anyhow-1",
         ":heck-0.5",
-        ":wit-parser-0.247",
+        ":wit-parser-0.251",
     ],
 )
 
 http_archive(
-    name = "wit-bindgen-rust-0.57.1.crate",
-    sha256 = "b5007dae772945b7a5003d69d90a3a4a78929d41f19d004e980c4259a6af4484",
-    strip_prefix = "wit-bindgen-rust-0.57.1",
-    urls = ["https://static.crates.io/crates/wit-bindgen-rust/0.57.1/download"],
+    name = "wit-bindgen-rust-0.58.0.crate",
+    sha256 = "1130ce1f531bc9f9a75922244aa773bf5e2117fda1ef4a86b9f98d6b8135eb46",
+    strip_prefix = "wit-bindgen-rust-0.58.0",
+    urls = ["https://static.crates.io/crates/wit-bindgen-rust/0.58.0/download"],
     visibility = [],
 )
 
 cargo.rust_library(
-    name = "wit-bindgen-rust-0.57",
-    srcs = [":wit-bindgen-rust-0.57.1.crate"],
+    name = "wit-bindgen-rust-0.58",
+    srcs = [":wit-bindgen-rust-0.58.0.crate"],
     crate = "wit_bindgen_rust",
-    crate_root = "wit-bindgen-rust-0.57.1.crate/src/lib.rs",
+    crate_root = "wit-bindgen-rust-0.58.0.crate/src/lib.rs",
     edition = "2024",
     env = {
         "CARGO_BIN_NAME": "wit_bindgen_rust",
         "CARGO_CRATE_NAME": "wit_bindgen_rust",
-        "CARGO_MANIFEST_DIR": "wit-bindgen-rust-0.57.1.crate",
+        "CARGO_MANIFEST_DIR": "wit-bindgen-rust-0.58.0.crate",
         "CARGO_PKG_AUTHORS": "Alex Crichton <alex@alexcrichton.com>",
         "CARGO_PKG_DESCRIPTION": "Rust bindings generator for WIT and the component model, typically used through\nthe `wit-bindgen` crate's `generate!` macro.\n",
         "CARGO_PKG_HOMEPAGE": "https://github.com/bytecodealliance/wit-bindgen",
@@ -1423,14 +1423,14 @@ cargo.rust_library(
         "CARGO_PKG_README": "",
         "CARGO_PKG_REPOSITORY": "https://github.com/bytecodealliance/wit-bindgen",
         "CARGO_PKG_RUST_VERSION": "1.85.0",
-        "CARGO_PKG_VERSION": "0.57.1",
+        "CARGO_PKG_VERSION": "0.58.0",
         "CARGO_PKG_VERSION_MAJOR": "0",
-        "CARGO_PKG_VERSION_MINOR": "57",
-        "CARGO_PKG_VERSION_PATCH": "1",
+        "CARGO_PKG_VERSION_MINOR": "58",
+        "CARGO_PKG_VERSION_PATCH": "0",
         "CARGO_PKG_VERSION_PRE": "",
-        "OUT_DIR": "$(location :wit-bindgen-rust-0.57-build-script-run[out_dir])",
+        "OUT_DIR": "$(location :wit-bindgen-rust-0.58-build-script-run[out_dir])",
     },
-    rustc_flags = ["@$(location :wit-bindgen-rust-0.57-build-script-run[rustc_flags])"],
+    rustc_flags = ["@$(location :wit-bindgen-rust-0.58-build-script-run[rustc_flags])"],
     visibility = [],
     deps = [
         ":anyhow-1",
@@ -1438,22 +1438,22 @@ cargo.rust_library(
         ":indexmap-2",
         ":prettyplease-0.2",
         ":syn-2",
-        ":wasm-metadata-0.247",
-        ":wit-bindgen-core-0.57",
-        ":wit-component-0.247",
+        ":wasm-metadata-0.251",
+        ":wit-bindgen-core-0.58",
+        ":wit-component-0.251",
     ],
 )
 
 cargo.rust_binary(
-    name = "wit-bindgen-rust-0.57-build-script-build",
-    srcs = [":wit-bindgen-rust-0.57.1.crate"],
+    name = "wit-bindgen-rust-0.58-build-script-build",
+    srcs = [":wit-bindgen-rust-0.58.0.crate"],
     crate = "build_script_build",
-    crate_root = "wit-bindgen-rust-0.57.1.crate/build.rs",
+    crate_root = "wit-bindgen-rust-0.58.0.crate/build.rs",
     edition = "2024",
     env = {
         "CARGO_BIN_NAME": "build-script-build",
         "CARGO_CRATE_NAME": "build_script_build",
-        "CARGO_MANIFEST_DIR": "wit-bindgen-rust-0.57.1.crate",
+        "CARGO_MANIFEST_DIR": "wit-bindgen-rust-0.58.0.crate",
         "CARGO_PKG_AUTHORS": "Alex Crichton <alex@alexcrichton.com>",
         "CARGO_PKG_DESCRIPTION": "Rust bindings generator for WIT and the component model, typically used through\nthe `wit-bindgen` crate's `generate!` macro.\n",
         "CARGO_PKG_HOMEPAGE": "https://github.com/bytecodealliance/wit-bindgen",
@@ -1461,19 +1461,19 @@ cargo.rust_binary(
         "CARGO_PKG_README": "",
         "CARGO_PKG_REPOSITORY": "https://github.com/bytecodealliance/wit-bindgen",
         "CARGO_PKG_RUST_VERSION": "1.85.0",
-        "CARGO_PKG_VERSION": "0.57.1",
+        "CARGO_PKG_VERSION": "0.58.0",
         "CARGO_PKG_VERSION_MAJOR": "0",
-        "CARGO_PKG_VERSION_MINOR": "57",
-        "CARGO_PKG_VERSION_PATCH": "1",
+        "CARGO_PKG_VERSION_MINOR": "58",
+        "CARGO_PKG_VERSION_PATCH": "0",
         "CARGO_PKG_VERSION_PRE": "",
     },
     visibility = [],
 )
 
 buildscript_run(
-    name = "wit-bindgen-rust-0.57-build-script-run",
+    name = "wit-bindgen-rust-0.58-build-script-run",
     package_name = "wit-bindgen-rust",
-    buildscript_rule = ":wit-bindgen-rust-0.57-build-script-build",
+    buildscript_rule = ":wit-bindgen-rust-0.58-build-script-build",
     env = {
         "CARGO_PKG_AUTHORS": "Alex Crichton <alex@alexcrichton.com>",
         "CARGO_PKG_DESCRIPTION": "Rust bindings generator for WIT and the component model, typically used through\nthe `wit-bindgen` crate's `generate!` macro.\n",
@@ -1482,31 +1482,31 @@ buildscript_run(
         "CARGO_PKG_REPOSITORY": "https://github.com/bytecodealliance/wit-bindgen",
         "CARGO_PKG_RUST_VERSION": "1.85.0",
         "CARGO_PKG_VERSION_MAJOR": "0",
-        "CARGO_PKG_VERSION_MINOR": "57",
-        "CARGO_PKG_VERSION_PATCH": "1",
+        "CARGO_PKG_VERSION_MINOR": "58",
+        "CARGO_PKG_VERSION_PATCH": "0",
         "CARGO_PKG_VERSION_PRE": "",
     },
-    version = "0.57.1",
+    version = "0.58.0",
 )
 
 http_archive(
-    name = "wit-bindgen-rust-macro-0.57.1.crate",
-    sha256 = "af9237d678e3513ad24e96fe98beacdc0db6405284ba2a2400418cf0d42caa89",
-    strip_prefix = "wit-bindgen-rust-macro-0.57.1",
-    urls = ["https://static.crates.io/crates/wit-bindgen-rust-macro/0.57.1/download"],
+    name = "wit-bindgen-rust-macro-0.58.0.crate",
+    sha256 = "07296369e4d598e7e79b64eef66f724d83324ea671bcf677d78fc5cf92604ae5",
+    strip_prefix = "wit-bindgen-rust-macro-0.58.0",
+    urls = ["https://static.crates.io/crates/wit-bindgen-rust-macro/0.58.0/download"],
     visibility = [],
 )
 
 cargo.rust_library(
-    name = "wit-bindgen-rust-macro-0.57",
-    srcs = [":wit-bindgen-rust-macro-0.57.1.crate"],
+    name = "wit-bindgen-rust-macro-0.58",
+    srcs = [":wit-bindgen-rust-macro-0.58.0.crate"],
     crate = "wit_bindgen_rust_macro",
-    crate_root = "wit-bindgen-rust-macro-0.57.1.crate/src/lib.rs",
+    crate_root = "wit-bindgen-rust-macro-0.58.0.crate/src/lib.rs",
     edition = "2024",
     env = {
         "CARGO_BIN_NAME": "wit_bindgen_rust_macro",
         "CARGO_CRATE_NAME": "wit_bindgen_rust_macro",
-        "CARGO_MANIFEST_DIR": "wit-bindgen-rust-macro-0.57.1.crate",
+        "CARGO_MANIFEST_DIR": "wit-bindgen-rust-macro-0.58.0.crate",
         "CARGO_PKG_AUTHORS": "Alex Crichton <alex@alexcrichton.com>",
         "CARGO_PKG_DESCRIPTION": "Procedural macro paired with the `wit-bindgen` crate.\n",
         "CARGO_PKG_HOMEPAGE": "https://github.com/bytecodealliance/wit-bindgen",
@@ -1514,17 +1514,16 @@ cargo.rust_library(
         "CARGO_PKG_README": "",
         "CARGO_PKG_REPOSITORY": "https://github.com/bytecodealliance/wit-bindgen",
         "CARGO_PKG_RUST_VERSION": "",
-        "CARGO_PKG_VERSION": "0.57.1",
+        "CARGO_PKG_VERSION": "0.58.0",
         "CARGO_PKG_VERSION_MAJOR": "0",
-        "CARGO_PKG_VERSION_MINOR": "57",
-        "CARGO_PKG_VERSION_PATCH": "1",
+        "CARGO_PKG_VERSION_MINOR": "58",
+        "CARGO_PKG_VERSION_PATCH": "0",
         "CARGO_PKG_VERSION_PRE": "",
-        "DEBUG_OUTPUT_DIR": "$(location :wit-bindgen-rust-macro-0.57-build-script-run[out_dir])",
-        "OUT_DIR": "$(location :wit-bindgen-rust-macro-0.57-build-script-run[out_dir])",
+        "OUT_DIR": "$(location :wit-bindgen-rust-macro-0.58-build-script-run[out_dir])",
     },
     features = ["macro-string"],
     proc_macro = True,
-    rustc_flags = ["@$(location :wit-bindgen-rust-macro-0.57-build-script-run[rustc_flags])"],
+    rustc_flags = ["@$(location :wit-bindgen-rust-macro-0.58-build-script-run[rustc_flags])"],
     visibility = [],
     deps = [
         ":anyhow-1",
@@ -1533,21 +1532,21 @@ cargo.rust_library(
         ":proc-macro2-1",
         ":quote-1",
         ":syn-2",
-        ":wit-bindgen-core-0.57",
-        ":wit-bindgen-rust-0.57",
+        ":wit-bindgen-core-0.58",
+        ":wit-bindgen-rust-0.58",
     ],
 )
 
 cargo.rust_binary(
-    name = "wit-bindgen-rust-macro-0.57-build-script-build",
-    srcs = [":wit-bindgen-rust-macro-0.57.1.crate"],
+    name = "wit-bindgen-rust-macro-0.58-build-script-build",
+    srcs = [":wit-bindgen-rust-macro-0.58.0.crate"],
     crate = "build_script_build",
-    crate_root = "wit-bindgen-rust-macro-0.57.1.crate/build.rs",
+    crate_root = "wit-bindgen-rust-macro-0.58.0.crate/build.rs",
     edition = "2024",
     env = {
         "CARGO_BIN_NAME": "build-script-build",
         "CARGO_CRATE_NAME": "build_script_build",
-        "CARGO_MANIFEST_DIR": "wit-bindgen-rust-macro-0.57.1.crate",
+        "CARGO_MANIFEST_DIR": "wit-bindgen-rust-macro-0.58.0.crate",
         "CARGO_PKG_AUTHORS": "Alex Crichton <alex@alexcrichton.com>",
         "CARGO_PKG_DESCRIPTION": "Procedural macro paired with the `wit-bindgen` crate.\n",
         "CARGO_PKG_HOMEPAGE": "https://github.com/bytecodealliance/wit-bindgen",
@@ -1555,10 +1554,10 @@ cargo.rust_binary(
         "CARGO_PKG_README": "",
         "CARGO_PKG_REPOSITORY": "https://github.com/bytecodealliance/wit-bindgen",
         "CARGO_PKG_RUST_VERSION": "",
-        "CARGO_PKG_VERSION": "0.57.1",
+        "CARGO_PKG_VERSION": "0.58.0",
         "CARGO_PKG_VERSION_MAJOR": "0",
-        "CARGO_PKG_VERSION_MINOR": "57",
-        "CARGO_PKG_VERSION_PATCH": "1",
+        "CARGO_PKG_VERSION_MINOR": "58",
+        "CARGO_PKG_VERSION_PATCH": "0",
         "CARGO_PKG_VERSION_PRE": "",
     },
     features = ["macro-string"],
@@ -1566,9 +1565,9 @@ cargo.rust_binary(
 )
 
 buildscript_run(
-    name = "wit-bindgen-rust-macro-0.57-build-script-run",
+    name = "wit-bindgen-rust-macro-0.58-build-script-run",
     package_name = "wit-bindgen-rust-macro",
-    buildscript_rule = ":wit-bindgen-rust-macro-0.57-build-script-build",
+    buildscript_rule = ":wit-bindgen-rust-macro-0.58-build-script-build",
     env = {
         "CARGO_PKG_AUTHORS": "Alex Crichton <alex@alexcrichton.com>",
         "CARGO_PKG_DESCRIPTION": "Procedural macro paired with the `wit-bindgen` crate.\n",
@@ -1577,32 +1576,32 @@ buildscript_run(
         "CARGO_PKG_REPOSITORY": "https://github.com/bytecodealliance/wit-bindgen",
         "CARGO_PKG_RUST_VERSION": "",
         "CARGO_PKG_VERSION_MAJOR": "0",
-        "CARGO_PKG_VERSION_MINOR": "57",
-        "CARGO_PKG_VERSION_PATCH": "1",
+        "CARGO_PKG_VERSION_MINOR": "58",
+        "CARGO_PKG_VERSION_PATCH": "0",
         "CARGO_PKG_VERSION_PRE": "",
     },
     features = ["macro-string"],
-    version = "0.57.1",
+    version = "0.58.0",
 )
 
 http_archive(
-    name = "wit-component-0.247.0.crate",
-    sha256 = "9d567162a6b9843080e5e0053f696623ff694bae8ae017c9ec536d1873bbe3d8",
-    strip_prefix = "wit-component-0.247.0",
-    urls = ["https://static.crates.io/crates/wit-component/0.247.0/download"],
+    name = "wit-component-0.251.0.crate",
+    sha256 = "83a5e60173c413659c689f0581b0cf5d1a2404077568f9ffdce748a9eb2fc913",
+    strip_prefix = "wit-component-0.251.0",
+    urls = ["https://static.crates.io/crates/wit-component/0.251.0/download"],
     visibility = [],
 )
 
 cargo.rust_library(
-    name = "wit-component-0.247",
-    srcs = [":wit-component-0.247.0.crate"],
+    name = "wit-component-0.251",
+    srcs = [":wit-component-0.251.0.crate"],
     crate = "wit_component",
-    crate_root = "wit-component-0.247.0.crate/src/lib.rs",
-    edition = "2021",
+    crate_root = "wit-component-0.251.0.crate/src/lib.rs",
+    edition = "2024",
     env = {
         "CARGO_BIN_NAME": "wit_component",
         "CARGO_CRATE_NAME": "wit_component",
-        "CARGO_MANIFEST_DIR": "wit-component-0.247.0.crate",
+        "CARGO_MANIFEST_DIR": "wit-component-0.251.0.crate",
         "CARGO_PKG_AUTHORS": "Peter Huene <peter@huene.dev>",
         "CARGO_PKG_DESCRIPTION": "Tooling for working with `*.wit` and component files together.\n",
         "CARGO_PKG_HOMEPAGE": "https://github.com/bytecodealliance/wasm-tools/tree/main/crates/wit-component",
@@ -1610,9 +1609,9 @@ cargo.rust_library(
         "CARGO_PKG_README": "README.md",
         "CARGO_PKG_REPOSITORY": "https://github.com/bytecodealliance/wasm-tools/tree/main/crates/wit-component",
         "CARGO_PKG_RUST_VERSION": "1.85.0",
-        "CARGO_PKG_VERSION": "0.247.0",
+        "CARGO_PKG_VERSION": "0.251.0",
         "CARGO_PKG_VERSION_MAJOR": "0",
-        "CARGO_PKG_VERSION_MINOR": "247",
+        "CARGO_PKG_VERSION_MINOR": "251",
         "CARGO_PKG_VERSION_PATCH": "0",
         "CARGO_PKG_VERSION_PRE": "",
     },
@@ -1625,27 +1624,27 @@ cargo.rust_library(
         ":serde-1",
         ":serde_derive-1",
         ":serde_json-1",
-        ":wasm-encoder-0.247",
-        ":wasm-metadata-0.247",
-        ":wasmparser-0.247",
-        ":wit-parser-0.247",
+        ":wasm-encoder-0.251",
+        ":wasm-metadata-0.251",
+        ":wasmparser-0.251",
+        ":wit-parser-0.251",
     ],
 )
 
 http_archive(
-    name = "wit-parser-0.247.0.crate",
-    sha256 = "8ffe4064318cdf3c08cb99343b44c039fcefe61ccdf58aa9975285f13d74d1fc",
-    strip_prefix = "wit-parser-0.247.0",
-    urls = ["https://static.crates.io/crates/wit-parser/0.247.0/download"],
+    name = "wit-parser-0.251.0.crate",
+    sha256 = "e960732e824fab95099971a09e638979347c94ca48568d3c854c945729196947",
+    strip_prefix = "wit-parser-0.251.0",
+    urls = ["https://static.crates.io/crates/wit-parser/0.251.0/download"],
     visibility = [],
 )
 
 cargo.rust_library(
-    name = "wit-parser-0.247",
-    srcs = [":wit-parser-0.247.0.crate"],
+    name = "wit-parser-0.251",
+    srcs = [":wit-parser-0.251.0.crate"],
     crate = "wit_parser",
-    crate_root = "wit-parser-0.247.0.crate/src/lib.rs",
-    edition = "2021",
+    crate_root = "wit-parser-0.251.0.crate/src/lib.rs",
+    edition = "2024",
     features = [
         "decoding",
         "default",
@@ -1665,7 +1664,7 @@ cargo.rust_library(
         ":serde_derive-1",
         ":serde_json-1",
         ":unicode-xid-0.2",
-        ":wasmparser-0.247",
+        ":wasmparser-0.251",
     ],
 )
 

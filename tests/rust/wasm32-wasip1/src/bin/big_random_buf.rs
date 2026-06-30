@@ -1,3 +1,5 @@
+use wasip1 as wasi;
+
 fn test_big_random_buf() {
     let mut buf = Vec::new();
     buf.resize(1024, 0);

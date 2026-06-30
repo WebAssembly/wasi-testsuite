@@ -1,5 +1,6 @@
 use std::{env, process};
 use wasi_tests::{TESTCONFIG, root_directory};
+use wasip1 as wasi;
 
 unsafe fn test_dangling_fd(dir_fd: wasi::Fd) {
     if TESTCONFIG.support_dangling_filesystem() {

@@ -1,5 +1,6 @@
 use std::{env, process};
 use wasi_tests::{create_tmp_dir, root_directory};
+use wasip1 as wasi;
 
 unsafe fn test_file_unbuffered_write(dir_fd: wasi::Fd) {
     // Create and open file for reading

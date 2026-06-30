@@ -1,5 +1,6 @@
 use std::{env, process};
 use wasi_tests::{assert_errno, root_directory};
+use wasip1 as wasi;
 
 unsafe fn test_directory_seek(dir_fd: wasi::Fd) {
     const DIR_NAME: &str = "directory_seek_dir.cleanup";
