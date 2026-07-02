@@ -1,3 +1,4 @@
+load("@prelude//utils:utils.bzl", "value_or")
 load("@wasmono//:defs.bzl", "wasm_component")
 load("//tools:conformance.bzl", "wasi_test")
 
@@ -13,9 +14,10 @@ def _config_for(name, conf):
     return path if glob([path]) else None
 
 def _fixture_dirs_for(config, dirs):
-    if dirs != None:
-        return dirs
-    return _DEFAULT_FIXTURE_DIRS if config and config.startswith("src/bin/filesystem-") else {}
+    return value_or(
+        dirs,
+        _DEFAULT_FIXTURE_DIRS if config and config.startswith("src/bin/filesystem-") else {},
+    )
 
 def _rust_p3_artifact(name, deps, wit_srcs):
     module_name = "{}_module".format(name)

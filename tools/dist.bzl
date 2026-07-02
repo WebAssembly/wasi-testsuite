@@ -1,11 +1,18 @@
 """Rules for packaging WASI tests into a distribution archive."""
 
+load("@prelude//utils:dicts.bzl", "update_x")
+load("@prelude//utils:expect.bzl", "expect")
+load("@prelude//utils:utils.bzl", "map_idx")
 load("//tools:conformance.bzl", "WasiTestSuiteInfo")
 
 def _single_output(dep, attr_name):
     outputs = dep[DefaultInfo].default_outputs
-    if len(outputs) != 1:
-        fail("{} must provide exactly one output, got {}".format(attr_name, len(outputs)))
+    expect(
+        len(outputs) == 1,
+        "{} must provide exactly one output, got {}",
+        attr_name,
+        len(outputs),
+    )
     return outputs[0]
 
 def _add_item(items, path, src):
@@ -23,8 +30,7 @@ def _wasi_dist_impl(ctx: AnalysisContext) -> list[Provider]:
 
     for suite in ctx.attrs.suites:
         for test in suite[WasiTestSuiteInfo].tests:
-            if test.dist_dir == None:
-                fail("{} does not set dist_dir in wasi_test".format(test.test_name))
+            expect(test.dist_dir != None, "{} does not set dist_dir in wasi_test", test.test_name)
 
             manifest_path = "{}/manifest.json".format(test.dist_dir)
             manifest = {
@@ -32,10 +38,12 @@ def _wasi_dist_impl(ctx: AnalysisContext) -> list[Provider]:
                 "version": test.wasi_version,
             }
 
-            if manifest_path in manifests and manifests[manifest_path] != manifest:
-                fail("conflicting manifest metadata for {}".format(manifest_path))
-
-            manifests[manifest_path] = manifest
+            update_x(
+                manifests,
+                manifest_path,
+                manifest,
+                fmt = "conflicting manifest metadata for {}: {} != {}",
+            )
 
             _add_item(item_map, "{}/{}.wasm".format(test.dist_dir, test.test_name), test.wasm)
             _add_item(item_map, "{}/{}.json".format(test.dist_dir, test.test_name), test.config)
@@ -73,7 +81,7 @@ def _wasi_dist_impl(ctx: AnalysisContext) -> list[Provider]:
             spec,
             "--output",
             output.as_output(),
-            hidden = [item["src"] for item in items],
+            hidden = map_idx("src", items),
         ),
         category = "wasi_dist",
     )

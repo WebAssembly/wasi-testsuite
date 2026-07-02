@@ -1,5 +1,6 @@
 """Download rules for WASI runtime binaries used by the test suite."""
 
+load("@prelude//utils:expect.bzl", "expect")
 load("@wasmono//toolchains/wasm:node.bzl", "NodeInfo")
 load("@wasmono//:defs.bzl", "host_arch", "host_os")
 load(":releases.bzl", "WAMR_RELEASES", "WASMEDGE_RELEASES", "WASMTIME_RELEASES", "WAZERO_RELEASES")
@@ -16,24 +17,26 @@ def _runtime_platform() -> str:
 
 def _runtime_release(releases, runtime_name: str, version: str, target_compatible_with = []):
     platform = _runtime_platform()
-    if version not in releases:
-        fail("Unknown {} version '{}'. Available: {}".format(
-            runtime_name,
-            version,
-            ", ".join(releases.keys()),
-        ))
+    expect(
+        version in releases,
+        "Unknown {} version '{}'. Available: {}",
+        runtime_name,
+        version,
+        ", ".join(releases.keys()),
+    )
 
     release = releases[version]
     if platform not in release and target_compatible_with:
         for fallback in release.values():
             return fallback
 
-    if platform not in release:
-        fail("No {} release for platform '{}'. Available: {}".format(
-            runtime_name,
-            platform,
-            ", ".join(release.keys()),
-        ))
+    expect(
+        platform in release,
+        "No {} release for platform '{}'. Available: {}",
+        runtime_name,
+        platform,
+        ", ".join(release.keys()),
+    )
     return release[platform]
 
 def _runtime_distribution_impl(ctx: AnalysisContext) -> list[Provider]:
