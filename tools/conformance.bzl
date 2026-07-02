@@ -13,6 +13,9 @@ The build target that produces a `.wasm` file should stay language-specific
 
 load("@prelude//decls:common.bzl", "buck")
 load("@prelude//test:inject_test_run_info.bzl", "inject_test_run_info")
+load("@prelude//utils:expect.bzl", "expect")
+load("@prelude//utils:type_defs.bzl", "type_utils")
+load("@prelude//utils:utils.bzl", "value_or")
 load(":runtime.bzl", "WasiRuntimeInfo")
 
 WasiTestInfo = provider(
@@ -55,23 +58,32 @@ def wasi_manifest(
     )
 
 def _infer_test_name(wasm):
-    if type(wasm) != type(""):
-        fail("wasi_test: test_name is required when wasm is not a label string")
-    if ":" not in wasm:
-        fail("wasi_test: cannot infer test_name from '{}'; pass test_name explicitly".format(wasm))
+    expect(
+        type_utils.is_string(wasm),
+        "wasi_test: test_name is required when wasm is not a label string",
+    )
+    expect(
+        ":" in wasm,
+        "wasi_test: cannot infer test_name from '{}'; pass test_name explicitly",
+        wasm,
+    )
     return wasm.rsplit(":", 1)[1]
 
 def _single_output(dep, attr_name):
     outputs = dep[DefaultInfo].default_outputs
-    if len(outputs) != 1:
-        fail("{} must provide exactly one output, got {}".format(attr_name, len(outputs)))
+    expect(
+        len(outputs) == 1,
+        "{} must provide exactly one output, got {}",
+        attr_name,
+        len(outputs),
+    )
     return outputs[0]
 
 def _wasi_test_impl(ctx: AnalysisContext) -> list[Provider]:
     wasm = _single_output(ctx.attrs.wasm, "wasm")
     runtime_info = ctx.attrs.runtime[WasiRuntimeInfo]
     runtime = runtime_info.runtime
-    expectations = ctx.attrs.expectations or runtime_info.expectations
+    expectations = value_or(ctx.attrs.expectations, runtime_info.expectations)
 
     cmd = cmd_args(ctx.attrs._runner[RunInfo])
     cmd.add("--wasm", wasm)
@@ -203,12 +215,15 @@ def _wasi_test_suite_impl(ctx: AnalysisContext) -> list[Provider]:
         other_outputs.extend(default_info.other_outputs)
 
         # Collect test metadata, flattening nested wasi_suite targets.
+        expect(
+            WasiTestInfo in test or WasiTestSuiteInfo in test,
+            "{} does not provide WasiTestInfo or WasiTestSuiteInfo",
+            test.label,
+        )
         if WasiTestInfo in test:
             tests.append(test[WasiTestInfo])
-        elif WasiTestSuiteInfo in test:
-            tests.extend(test[WasiTestSuiteInfo].tests)
         else:
-            fail("{} does not provide WasiTestInfo or WasiTestSuiteInfo".format(test.label))
+            tests.extend(test[WasiTestSuiteInfo].tests)
 
     return [
         DefaultInfo(

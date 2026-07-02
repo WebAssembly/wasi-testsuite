@@ -1,3 +1,4 @@
+load("@prelude//utils:utils.bzl", "value_or")
 load("//platforms:defs.bzl", "transition_alias")
 load("//tools:conformance.bzl", "wasi_test")
 
@@ -13,9 +14,7 @@ def _config_for(name, conf):
     return path if glob([path]) else None
 
 def _fixture_dirs_for(config, dirs):
-    if dirs != None:
-        return dirs
-    return _DEFAULT_FIXTURE_DIRS if config else {}
+    return value_or(dirs, _DEFAULT_FIXTURE_DIRS if config else {})
 
 def _rust_artifact(name, deps):
     native.rust_binary(

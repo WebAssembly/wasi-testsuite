@@ -3,6 +3,7 @@ Adapted from https://github.com/rue-language/rue/blob/trunk/toolchains/rust/defs
 """
 
 load("@prelude//rust:rust_toolchain.bzl", "PanicRuntime", "RustToolchainInfo")
+load("@prelude//utils:expect.bzl", "expect")
 load("@wasmono//:defs.bzl", "host_arch", "host_os")
 load(
     ":releases.bzl",
@@ -26,17 +27,21 @@ _HOST_TRIPLES = {
 def host_rust_triple() -> str:
     """Return the Rust host triple for the machine running Buck."""
     key = "{}-{}".format(host_arch(), host_os())
-    if key not in _HOST_TRIPLES:
-        fail("Unsupported host platform for the hermetic Rust toolchain: '{}'".format(key))
+    expect(
+        key in _HOST_TRIPLES,
+        "Unsupported host platform for the hermetic Rust toolchain: '{}'",
+        key,
+    )
     return _HOST_TRIPLES[key]
 
 def download_rust_host(name: str, triple: str):
     """Download the combined ``rust`` package for ``triple``."""
-    if triple not in RUST_HOST_RELEASES:
-        fail("No pinned Rust host release for '{}'. Available: {}".format(
-            triple,
-            ", ".join(sorted(RUST_HOST_RELEASES.keys())),
-        ))
+    expect(
+        triple in RUST_HOST_RELEASES,
+        "No pinned Rust host release for '{}'. Available: {}",
+        triple,
+        ", ".join(sorted(RUST_HOST_RELEASES.keys())),
+    )
     native.http_archive(
         name = name,
         urls = [rust_host_url(triple)],
@@ -47,11 +52,12 @@ def download_rust_host(name: str, triple: str):
 
 def download_rust_std(name: str, target: str):
     """Download the ``rust-std`` package for a wasm ``target``."""
-    if target not in RUST_STD_RELEASES:
-        fail("No pinned Rust std release for '{}'. Available: {}".format(
-            target,
-            ", ".join(sorted(RUST_STD_RELEASES.keys())),
-        ))
+    expect(
+        target in RUST_STD_RELEASES,
+        "No pinned Rust std release for '{}'. Available: {}",
+        target,
+        ", ".join(sorted(RUST_STD_RELEASES.keys())),
+    )
     native.http_archive(
         name = name,
         urls = [rust_std_url(target)],
