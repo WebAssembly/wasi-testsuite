@@ -44,7 +44,7 @@ alias(name = "node_dist_shared", actual = ":node_dist", visibility = ["toolchain
 toolchain_alias(name = "asc", actual = "//typescript:asc", visibility = ["PUBLIC"])
 
 # Component-model tooling used to lift Rust WASI P3 core modules into components.
-download_wasm_tools(name = "wasm_tools_dist", version = "1.245.1")
+download_wasm_tools(name = "wasm_tools_dist", version = "1.252.0")
 wasm_tools_toolchain(name = "wasm_tools", distribution = ":wasm_tools_dist", visibility = ["PUBLIC"])
 
 # Test execution toolchains required by Buck's test command.

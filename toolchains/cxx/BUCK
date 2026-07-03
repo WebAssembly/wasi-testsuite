@@ -11,7 +11,7 @@ load(
 )
 load(":defs.bzl", "clang_format")
 
-download_wasi_sdk(name = "wasi_sdk", version = "27.0")
+download_wasi_sdk(name = "wasi_sdk", version = "33.0")
 
 cxx_wasi_toolchain(
     name = "cxx_wasi_p1",

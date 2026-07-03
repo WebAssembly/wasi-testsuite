@@ -19,7 +19,7 @@
 
 [external_cell_wasmono]
   git_origin = https://github.com/andreiltd/wasmono.git
-  commit_hash = 040f838f488966c94d74c5aa3db61f296f98ddb1
+  commit_hash = d7c49b331295c6bc04711e2f735a425c21b0217f
 
 [parser]
   target_platform_detector_spec = target:root//...->prelude//platforms:default \
