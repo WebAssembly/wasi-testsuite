@@ -245,6 +245,15 @@ fn test_immutable_headers(headers: &Fields) {
         headers.append("Last-Modified", b"whatever"),
         Err(HeaderError::Immutable)
     );
+    assert_eq!(
+        headers.set("Last-Modified", &[b"whatever".to_vec()]),
+        Err(HeaderError::Immutable)
+    );
+    let all = headers.copy_all();
+    if let Some((name, _)) = all.first() {
+        assert_eq!(headers.delete(name), Err(HeaderError::Immutable));
+        assert_eq!(headers.get_and_delete(name), Err(HeaderError::Immutable));
+    }
 }
 
 fn test_headers_same(left: &Fields, right: &Fields) {
