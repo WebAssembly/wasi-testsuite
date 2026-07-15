@@ -202,6 +202,33 @@ def test_request_from_config() -> None:
     assert req.method == "POST"
     assert req.path == "/"
     assert req.response == Response(status=200, headers={}, body="hey")
+    assert req.headers == {}
+    assert req.body == ""
+
+
+def test_request_from_config_with_body_and_headers() -> None:
+    req = Request.from_config({
+        "method": "POST",
+        "path": "/echo",
+        "headers": {"x-echo": "ping"},
+        "body": "hello",
+        "response": {"status": 200, "body": "hello"},
+    })
+    assert req.method == "POST"
+    assert req.path == "/echo"
+    assert req.headers == {"x-echo": "ping"}
+    assert req.body == "hello"
+    assert req.response == Response(status=200, headers={}, body="hello")
+
+
+def test_request_from_config_rejects_non_dict_headers() -> None:
+    with pytest.raises(ValueError):
+        Request.from_config({"headers": "not-a-dict", "response": {}})
+
+
+def test_request_from_config_rejects_non_str_body() -> None:
+    with pytest.raises(ValueError):
+        Request.from_config({"body": 123, "response": {}})
 
 
 def test_kill_from_config_with_signal() -> None:

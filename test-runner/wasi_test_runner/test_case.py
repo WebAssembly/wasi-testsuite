@@ -236,20 +236,33 @@ class Request(NamedTuple):
     method: str
     path: str
     response: Response
+    headers: Dict[str, str] = {}
+    body: str = ""
 
     @classmethod
     def from_config(cls: Type[Req], config: Dict[str, Any]) -> Req:
         method = config.get("method", "GET")
         path = config.get("path", "/")
         response = config.get("response", {})
+        headers = config.get("headers", {})
+        body = config.get("body", "")
 
         if not isinstance(method, str):
             raise ValueError("Request method should be a str")
         if not isinstance(path, str):
             raise ValueError("Request path should be a str")
+        if not isinstance(headers, dict):
+            raise ValueError("Request headers should be a dict")
+        for k, v in headers.items():
+            if not isinstance(k, str):
+                raise ValueError("Request header name should be a str")
+            if not isinstance(v, str):
+                raise ValueError("Request header value should be a str")
+        if not isinstance(body, str):
+            raise ValueError("Request body should be a str")
         response = Response.from_config(response)
 
-        return cls(method, path, response)
+        return cls(method, path, response, headers, body)
 
 
 K = TypeVar("K", bound="Kill")
