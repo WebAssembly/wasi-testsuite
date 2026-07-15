@@ -2,3 +2,10 @@ version = 1
 
 [[suite]]
 name = "WASI Rust tests [wasm32-wasip3]"
+
+# Inbound request scheme / authority are not always set, see:
+# - https://github.com/WebAssembly/WASI/issues/788
+# - https://github.com/bytecodealliance/wasmtime/issues/11571
+[[suite.test]]
+name = "http-service-uri"
+expected = "fail"
