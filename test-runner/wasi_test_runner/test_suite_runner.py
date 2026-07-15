@@ -227,7 +227,13 @@ class TestCaseRunner(TestCaseRunnerBase):
             return
         url = join_http_url(http_server, req.path)
         try:
-            response = requests.request(req.method, url, timeout=5)
+            response = requests.request(
+                req.method,
+                url,
+                headers=req.headers or None,
+                data=req.body.encode("utf-8") if req.body else None,
+                timeout=5,
+            )
         except requests.exceptions.Timeout:
             self.fail_unexpected(f"{req}: Timeout waiting for response")
             return

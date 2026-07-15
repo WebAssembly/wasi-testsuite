@@ -6,8 +6,10 @@ pkgs.mkShell {
     python3
     python3Packages.pip
     python3Packages.virtualenv
+    buck2
+    dotslash
   ];
-  
+
   shellHook = ''
     # Create and activate virtual environment
     if [ ! -d .venv ]; then
