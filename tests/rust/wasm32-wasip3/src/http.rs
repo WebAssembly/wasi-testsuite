@@ -4,6 +4,7 @@ wit_bindgen::generate!({
 
 	world http-test {
 	    include wasi:http/service@0.3.0;
+	    import wasi:cli/environment@0.3.0;
 	}
     ",
     additional_derives: [PartialEq, Eq, Hash, Clone],
