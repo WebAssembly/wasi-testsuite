@@ -9,6 +9,7 @@ import pytest
 from wasi_test_runner.test_case import (
     Config, Failure, Result,
     Run, Wait, Read, Write, Connect, Send, Recv, Request, Response, Kill,
+    Endpoint, EndpointResponse,
     ProtocolType, WasiProposal, WasiWorld, TestCaseValidator
 )
 
@@ -229,6 +230,117 @@ def test_request_from_config_rejects_non_dict_headers() -> None:
 def test_request_from_config_rejects_non_str_body() -> None:
     with pytest.raises(ValueError):
         Request.from_config({"body": 123, "response": {}})
+
+
+def test_endpoint_response_from_config_str_shorthand() -> None:
+    response = EndpointResponse.from_config("hello")
+
+    assert response.status == 200
+    assert response.headers == {}
+    assert response.body == "hello"
+
+
+def test_endpoint_response_from_config_object() -> None:
+    response = EndpointResponse.from_config({
+        "status": 404,
+        "headers": {"content-type": "text/plain"},
+        "body": "nope",
+    })
+
+    assert response.status == 404
+    assert response.headers == {"content-type": "text/plain"}
+    assert response.body == "nope"
+
+
+def test_endpoint_response_from_config_rejects_non_str_non_dict() -> None:
+    with pytest.raises(ValueError, match="should be a str or an object"):
+        EndpointResponse.from_config(42)
+
+
+def test_endpoint_response_from_config_rejects_non_int_status() -> None:
+    with pytest.raises(ValueError):
+        EndpointResponse.from_config({"status": "200"})
+
+
+def test_endpoint_from_config_with_defaults() -> None:
+    endpoint = Endpoint.from_config({})
+
+    assert endpoint.method == "GET"
+    assert endpoint.path == "/"
+    assert endpoint.response == EndpointResponse(status=200, headers={}, body="")
+
+
+def test_endpoint_from_config_with_values() -> None:
+    endpoint = Endpoint.from_config({
+        "method": "PUT",
+        "path": "/greet",
+        "response": {"status": 201, "body": "hi"},
+    })
+
+    assert endpoint.method == "PUT"
+    assert endpoint.path == "/greet"
+    assert endpoint.response == EndpointResponse(status=201, headers={}, body="hi")
+
+
+def test_endpoint_from_config_uppercases_method() -> None:
+    endpoint = Endpoint.from_config({"method": "post", "path": "/greet"})
+
+    assert endpoint.method == "POST"
+
+
+def test_endpoint_from_config_rejects_unknown_method() -> None:
+    with pytest.raises(ValueError, match="Unknown endpoint method: TRACE"):
+        Endpoint.from_config({"method": "TRACE", "path": "/greet"})
+
+
+def test_endpoint_from_config_rejects_non_str_method() -> None:
+    with pytest.raises(ValueError, match="method should be a str"):
+        Endpoint.from_config({"method": 1, "path": "/greet"})
+
+
+def test_endpoint_from_config_rejects_non_str_path() -> None:
+    with pytest.raises(ValueError, match="path should be a str"):
+        Endpoint.from_config({"method": "GET", "path": 1})
+
+
+def test_endpoint_from_config_echo_path_has_no_response() -> None:
+    endpoint = Endpoint.from_config({"method": "POST", "path": "/echo"})
+
+    assert endpoint.method == "POST"
+    assert endpoint.path == "/echo"
+    assert endpoint.response is None
+
+
+def test_endpoint_from_config_echo_path_rejects_response() -> None:
+    with pytest.raises(ValueError, match="reserved echo path"):
+        Endpoint.from_config({"method": "POST", "path": "/echo", "response": "hi"})
+
+
+@patch(
+    "builtins.open",
+    new_callable=mock_open,
+    read_data='{"endpoints": [{"method": "post", "path": "/echo"},'
+              ' {"path": "/greet", "response": "hello"}]}',
+)
+def test_new_config_with_endpoints(_mock_file: Mock) -> None:
+    config = Config.from_file("file")
+
+    assert config.endpoints == [
+        Endpoint(method="POST", path="/echo", response=None),
+        Endpoint(method="GET", path="/greet",
+                 response=EndpointResponse(status=200, headers={}, body="hello")),
+    ]
+
+
+@patch(
+    "builtins.open",
+    new_callable=mock_open,
+    read_data='{"operations": [{"type": "run"}, {"type": "wait"}]}',
+)
+def test_new_config_without_endpoints(_mock_file: Mock) -> None:
+    config = Config.from_file("file")
+
+    assert config.endpoints == []
 
 
 def test_kill_from_config_with_signal() -> None:

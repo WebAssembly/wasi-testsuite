@@ -5,17 +5,20 @@ import re
 import shutil
 import subprocess
 import socket
+import threading
 import time
 
 from datetime import datetime
+from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
-from typing import List, NamedTuple, Tuple, Dict, Any, IO
+from typing import List, NamedTuple, Optional, Tuple, Dict, Any, IO
 
 from .filters import TestFilter
 from .runtime_adapter import RuntimeAdapter
 from .test_case import (
     Result, Failure, WasiVersion, Config, Outcome,
     TestCase, TestCaseRunnerBase, TestCaseValidator,
+    EndpointResponse,
     # Operation types
     Run, Read, Write, Wait, Send, Recv, Connect, Request, Kill
 )
@@ -34,6 +37,50 @@ class _TestSpec(NamedTuple):
     config: Config
 
 
+class _EndpointServer(ThreadingHTTPServer):
+    daemon_threads = True
+
+    def __init__(self, server_address: Tuple[str, int], handler: Any) -> None:
+        super().__init__(server_address, handler)
+        self.routes: Dict[Tuple[str, str], Optional[EndpointResponse]] = {}
+
+
+class _EndpointRequestHandler(BaseHTTPRequestHandler):
+    def _dispatch(self) -> None:
+        length = int(self.headers.get("Content-Length") or 0)
+        body = self.rfile.read(length) if length else b""
+        if (self.command, self.path) not in self.server.routes:  # type: ignore[attr-defined]
+            self._reply(404, {}, b"")
+            return
+        response = self.server.routes[(self.command, self.path)]  # type: ignore[attr-defined]
+        if response is None:
+            # Reserved echo path: reflect the request body back verbatim.
+            self._reply(200, {}, body)
+        else:
+            self._reply(response.status, response.headers, response.body.encode("utf-8"))
+
+    do_GET = _dispatch
+    do_POST = _dispatch
+    do_PUT = _dispatch
+    do_DELETE = _dispatch
+    do_PATCH = _dispatch
+    do_HEAD = _dispatch
+    do_OPTIONS = _dispatch
+
+    def _reply(self, status: int, headers: Dict[str, str], body: bytes) -> None:
+        self.send_response(status)
+        for name, value in headers.items():
+            self.send_header(name, value)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        if self.command != "HEAD":
+            self.wfile.write(body)
+
+    def log_message(self, *_args: Any) -> None:
+        # Avoiding polluting stderr.
+        pass
+
+
 class TestCaseRunner(TestCaseRunnerBase):
     # pylint: disable-msg=too-many-instance-attributes
     _test_path: str
@@ -45,6 +92,8 @@ class TestCaseRunner(TestCaseRunnerBase):
     _sockets: Dict[str, socket.socket]
     _last_argv: List[str]
     _http_server: str | None
+    _endpoint_server: _EndpointServer | None
+    _endpoint_addr: str | None
     _windows_terminated_by_runner: bool
 
     def __init__(self, config: Config, test_path: str, wasi_version: WasiVersion,
@@ -59,7 +108,20 @@ class TestCaseRunner(TestCaseRunnerBase):
         self._sockets = {}
         self._last_argv = []
         self._http_server = None
+        self._endpoint_server = None
+        self._endpoint_addr = None
         self._windows_terminated_by_runner = False
+
+    def _start_endpoints(self) -> None:
+        if not self.config.endpoints or self._endpoint_server is not None:
+            return
+        server = _EndpointServer(("127.0.0.1", 0), _EndpointRequestHandler)
+        for endpoint in self.config.endpoints:
+            server.routes[(endpoint.method, endpoint.path)] = endpoint.response
+        host, port = server.server_address
+        self._endpoint_addr = f"{host}:{port}"  # noqa: E231
+        self._endpoint_server = server
+        threading.Thread(target=server.serve_forever, daemon=True).start()
 
     def _add_cleanup_dir(self, d: Path) -> None:
         _cleanup_test_output(d)
@@ -113,9 +175,13 @@ class TestCaseRunner(TestCaseRunnerBase):
     def do_run(self, run: Run) -> None:
         if run.root:
             self._add_cleanup_dir(run.root)
+        self._start_endpoints()
         proposals = self.config.proposals_as_str()
+        wasi_env = dict(run.env)
+        if self._endpoint_addr is not None:
+            wasi_env["HTTP_ENDPOINT"] = self._endpoint_addr
         argv = self._runtime.compute_argv(
-            self._test_path, run.args, run.env, run.root, proposals,
+            self._test_path, run.args, wasi_env, run.root, proposals,
             self.config.world, self._wasi_version)
         self._last_argv = argv
         try:
@@ -281,6 +347,12 @@ class TestCaseRunner(TestCaseRunnerBase):
                 self.fail_unexpected(
                     f"Timeout expired after killing proc {self._proc}")
                 self._proc = None
+
+        if self._endpoint_server is not None:
+            self._endpoint_server.shutdown()
+            self._endpoint_server.server_close()
+            self._endpoint_server = None
+            self._endpoint_addr = None
 
         for sock in self._sockets.values():
             sock.close()

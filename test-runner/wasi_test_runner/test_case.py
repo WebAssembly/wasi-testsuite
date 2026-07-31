@@ -7,12 +7,17 @@ from typing import List, NamedTuple, TypeVar, Type, Dict, Any, Set, Optional
 
 # Top level configuration keys
 LEGACY_CONFIG_KEYS = {"args", "root", "env", "exit_code", "stderr", "stdout"}
-CONFIG_KEYS = {"operations", "proposals", "world"}
+CONFIG_KEYS = {"operations", "proposals", "world", "endpoints"}
 
 
-# Supported operations
+# Supported operations.
 SUPPORTED_OPERATIONS = {"run", "wait", "read", "write", "connect",
                         "send", "recv", "request", "kill"}
+
+# Supported http methods.
+HTTP_METHODS = {"GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"}
+
+ECHO_PATH = "/echo"
 
 
 class WasiWorld(StrEnum):
@@ -265,6 +270,57 @@ class Request(NamedTuple):
         return cls(method, path, response, headers, body)
 
 
+Er = TypeVar("Er", bound="EndpointResponse")
+
+
+class EndpointResponse(NamedTuple):
+    status: int = 200
+    headers: Dict[str, str] = {}
+    body: str = ""
+
+    @classmethod
+    def from_config(cls: Type[Er], config: Any) -> Er:
+        # This is a shorthand for { status: 200, body: config }
+        if isinstance(config, str):
+            return cls(body=config)
+        if not isinstance(config, dict):
+            raise ValueError("Endpoint response should be a str or an object")
+        base = Response.from_config(config)
+        return cls(status=base.status, headers=base.headers, body=base.body)
+
+
+Ep = TypeVar("Ep", bound="Endpoint")
+
+
+class Endpoint(NamedTuple):
+    method: str
+    path: str
+    response: Optional[EndpointResponse]
+
+    @classmethod
+    def from_config(cls: Type[Ep], config: Dict[str, Any]) -> Ep:
+        method = config.get("method", "GET")
+        path = config.get("path", "/")
+
+        if not isinstance(method, str):
+            raise ValueError("Endpoint method should be a str")
+        if method.upper() not in HTTP_METHODS:
+            raise ValueError(f"Unknown endpoint method: {method}")
+        if not isinstance(path, str):
+            raise ValueError("Endpoint path should be a str")
+
+        method = method.upper()
+
+        if path == ECHO_PATH:
+            if "response" in config:
+                raise ValueError(
+                    f"The reserved echo path {ECHO_PATH} takes no 'response'")
+            return cls(method=method, path=path, response=None)
+
+        response = EndpointResponse.from_config(config.get("response", ""))
+        return cls(method=method, path=path, response=response)
+
+
 K = TypeVar("K", bound="Kill")
 
 
@@ -303,6 +359,8 @@ class Config(NamedTuple):
     debug: bool = False
     # WASI world to target
     world: WasiWorld = WasiWorld.CLI_COMMAND
+    # HTTP endpoints served for outbound `wasi:http/client` requests.
+    endpoints: List[Endpoint] = []
 
     @classmethod
     def from_file(cls: Type[T], config_file: str) -> T:
@@ -310,7 +368,9 @@ class Config(NamedTuple):
             dict_config = json.load(file)
 
         test_config_path = Path(config_file)
-        if dict_config.get("operations") is not None or dict_config.get("proposals") is not None:
+        if (dict_config.get("operations") is not None
+                or dict_config.get("proposals") is not None
+                or dict_config.get("endpoints") is not None):
             cls._validate_config(dict_config, CONFIG_KEYS)
 
             operations = []
@@ -321,6 +381,10 @@ class Config(NamedTuple):
             if dict_config.get("proposals") is not None:
                 proposals = cls._proposals_from_config(dict_config.get("proposals"))
 
+            endpoints = []
+            if dict_config.get("endpoints") is not None:
+                endpoints = cls._endpoints_from_config(dict_config.get("endpoints"))
+
             world = dict_config.get("world", WasiWorld.CLI_COMMAND.value)
             if world not in WasiWorld:
                 raise ValueError(f"Unknown WASI world: {world}")
@@ -328,7 +392,7 @@ class Config(NamedTuple):
             debug = bool(dict_config.get("debug"))
 
             return cls(operations=operations, proposals=proposals,
-                       world=WasiWorld(world), debug=debug)
+                       world=WasiWorld(world), debug=debug, endpoints=endpoints)
 
         cls._validate_config(dict_config, LEGACY_CONFIG_KEYS)
 
@@ -415,6 +479,10 @@ class Config(NamedTuple):
     @classmethod
     def _proposals_from_config(cls: Type[T], proposals: List[Any]) -> List[WasiProposal]:
         return [WasiProposal(p) for p in proposals]
+
+    @classmethod
+    def _endpoints_from_config(cls: Type[T], endpoints: List[Any]) -> List[Endpoint]:
+        return [Endpoint.from_config(ep) for ep in endpoints]
 
 
 class TestCase(NamedTuple):
