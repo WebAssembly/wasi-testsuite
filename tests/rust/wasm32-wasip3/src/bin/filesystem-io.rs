@@ -112,8 +112,6 @@ async fn pappend(fd: &Descriptor, data: &[u8]) -> Result<usize, ErrorCode> {
                         assert!(n <= len - written);
                         written += n;
                         assert_eq!(buf.remaining(), len - written);
-                        assert_eq!(fd.stat().await.unwrap().size as usize,
-                                   initial_size + written);
                         if buf.remaining() != 0 {
                             (result, buf) = tx.write_buf(buf).await;
                         } else {
@@ -134,7 +132,13 @@ async fn pappend(fd: &Descriptor, data: &[u8]) -> Result<usize, ErrorCode> {
         async { result = future.await; }
     };
     match result {
-        Ok(()) => Ok(written),
+        Ok(()) => {
+            assert_eq!(
+                fd.stat().await.unwrap().size as usize,
+                initial_size + written
+            );
+            Ok(written)
+        }
         Err(err) => Err(err),
     }
 }
