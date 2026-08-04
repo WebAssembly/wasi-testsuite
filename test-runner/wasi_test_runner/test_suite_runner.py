@@ -11,14 +11,14 @@ import time
 from datetime import datetime
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
-from typing import List, NamedTuple, Optional, Tuple, Dict, Any, IO
+from typing import List, NamedTuple, Tuple, Dict, Any, IO
 
 from .filters import TestFilter
 from .runtime_adapter import RuntimeAdapter
 from .test_case import (
     Result, Failure, WasiVersion, Config, Outcome,
     TestCase, TestCaseRunnerBase, TestCaseValidator,
-    EndpointResponse,
+    Endpoint, EndpointMode, ECHO_HEADER_PREFIX,
     # Operation types
     Run, Read, Write, Wait, Send, Recv, Connect, Request, Kill
 )
@@ -42,22 +42,34 @@ class _EndpointServer(ThreadingHTTPServer):
 
     def __init__(self, server_address: Tuple[str, int], handler: Any) -> None:
         super().__init__(server_address, handler)
-        self.routes: Dict[Tuple[str, str], Optional[EndpointResponse]] = {}
+        self.routes: Dict[Tuple[str, str], Endpoint] = {}
 
 
 class _EndpointRequestHandler(BaseHTTPRequestHandler):
     def _dispatch(self) -> None:
         length = int(self.headers.get("Content-Length") or 0)
         body = self.rfile.read(length) if length else b""
-        if (self.command, self.path) not in self.server.routes:  # type: ignore[attr-defined]
-            self._reply(404, {}, b"")
-            return
-        response = self.server.routes[(self.command, self.path)]  # type: ignore[attr-defined]
-        if response is None:
-            # Reserved echo path: reflect the request body back verbatim.
-            self._reply(200, {}, body)
+        endpoint = self.server.routes.get((self.command, self.path))  # type: ignore[attr-defined]
+        if endpoint is None:
+            self._reply(404, [], b"")
+        elif endpoint.mode is EndpointMode.ECHO_BODY:
+            self._reply(200, [], body)
+        elif endpoint.mode is EndpointMode.ECHO_HEADERS:
+            self._reply(200, self._echoed_headers(), b"")
         else:
-            self._reply(response.status, response.headers, response.body.encode("utf-8"))
+            response = endpoint.response
+            assert response is not None
+            self._reply(response.status, list(response.headers.items()),
+                        response.body.encode("utf-8"))
+
+    def _echoed_headers(self) -> List[Tuple[str, str]]:
+        echoed = [("x-request-method", self.command),
+                  ("x-request-path", self.path)]
+
+        for name in dict.fromkeys(key.lower() for key in self.headers.keys()):
+            for value in self.headers.get_all(name, []):
+                echoed.append((f"{ECHO_HEADER_PREFIX}{name}", value))
+        return echoed
 
     do_GET = _dispatch
     do_POST = _dispatch
@@ -67,9 +79,9 @@ class _EndpointRequestHandler(BaseHTTPRequestHandler):
     do_HEAD = _dispatch
     do_OPTIONS = _dispatch
 
-    def _reply(self, status: int, headers: Dict[str, str], body: bytes) -> None:
+    def _reply(self, status: int, headers: List[Tuple[str, str]], body: bytes) -> None:
         self.send_response(status)
-        for name, value in headers.items():
+        for name, value in headers:
             self.send_header(name, value)
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
@@ -117,7 +129,7 @@ class TestCaseRunner(TestCaseRunnerBase):
             return
         server = _EndpointServer(("127.0.0.1", 0), _EndpointRequestHandler)
         for endpoint in self.config.endpoints:
-            server.routes[(endpoint.method, endpoint.path)] = endpoint.response
+            server.routes[(endpoint.method, endpoint.path)] = endpoint
         host, port = server.server_address
         self._endpoint_addr = f"{host}:{port}"  # noqa: E231
         self._endpoint_server = server

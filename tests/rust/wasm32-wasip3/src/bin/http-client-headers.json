@@ -2,7 +2,7 @@
   "proposals": ["http"],
   "world": "wasi:http/service",
   "endpoints": [
-    { "method": "POST", "path": "/echo", "mode": "echo-body" }
+    { "method": "GET", "path": "/echo-headers", "mode": "echo-headers" }
   ],
   "operations": [
     { "type": "run" },

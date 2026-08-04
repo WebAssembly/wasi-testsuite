@@ -9,7 +9,7 @@ import pytest
 from wasi_test_runner.test_case import (
     Config, Failure, Result,
     Run, Wait, Read, Write, Connect, Send, Recv, Request, Response, Kill,
-    Endpoint, EndpointResponse,
+    Endpoint, EndpointMode, EndpointResponse,
     ProtocolType, WasiProposal, WasiWorld, TestCaseValidator
 )
 
@@ -303,32 +303,69 @@ def test_endpoint_from_config_rejects_non_str_path() -> None:
         Endpoint.from_config({"method": "GET", "path": 1})
 
 
-def test_endpoint_from_config_echo_path_has_no_response() -> None:
-    endpoint = Endpoint.from_config({"method": "POST", "path": "/echo"})
+def test_endpoint_from_config_echo_body_mode() -> None:
+    endpoint = Endpoint.from_config(
+        {"method": "POST", "path": "/echo", "mode": "echo-body"})
 
     assert endpoint.method == "POST"
     assert endpoint.path == "/echo"
     assert endpoint.response is None
+    assert endpoint.mode == EndpointMode.ECHO_BODY
 
 
-def test_endpoint_from_config_echo_path_rejects_response() -> None:
-    with pytest.raises(ValueError, match="reserved echo path"):
-        Endpoint.from_config({"method": "POST", "path": "/echo", "response": "hi"})
+def test_endpoint_from_config_echo_body_mode_rejects_response() -> None:
+    with pytest.raises(ValueError, match="'echo-body' mode takes no 'response'"):
+        Endpoint.from_config(
+            {"method": "POST", "path": "/echo", "mode": "echo-body", "response": "hi"})
+
+
+def test_endpoint_from_config_echo_path_is_not_special() -> None:
+    # The path is just a path; only `mode` selects behaviour.
+    endpoint = Endpoint.from_config({"method": "POST", "path": "/echo"})
+
+    assert endpoint.mode == EndpointMode.STATIC
+    assert endpoint.response == EndpointResponse(status=200, headers={}, body="")
+
+
+def test_endpoint_from_config_defaults_to_static_mode() -> None:
+    endpoint = Endpoint.from_config({"path": "/greet", "response": "hello"})
+
+    assert endpoint.mode == EndpointMode.STATIC
+    assert endpoint.response == EndpointResponse(status=200, headers={}, body="hello")
+
+
+def test_endpoint_from_config_echo_headers_mode() -> None:
+    endpoint = Endpoint.from_config({"path": "/echo-headers", "mode": "echo-headers"})
+
+    assert endpoint.mode == EndpointMode.ECHO_HEADERS
+    assert endpoint.response is None
+
+
+def test_endpoint_from_config_echo_headers_mode_rejects_response() -> None:
+    with pytest.raises(ValueError, match="'echo-headers' mode takes no 'response'"):
+        Endpoint.from_config({"path": "/echo-headers", "mode": "echo-headers", "response": "hi"})
+
+
+def test_endpoint_from_config_rejects_unknown_mode() -> None:
+    with pytest.raises(ValueError, match="Unknown endpoint mode"):
+        Endpoint.from_config({"path": "/greet", "mode": "shout"})
 
 
 @patch(
     "builtins.open",
     new_callable=mock_open,
-    read_data='{"endpoints": [{"method": "post", "path": "/echo"},'
+    read_data='{"endpoints": [{"method": "post", "path": "/echo", "mode": "echo-body"},'
               ' {"path": "/greet", "response": "hello"}]}',
 )
 def test_new_config_with_endpoints(_mock_file: Mock) -> None:
     config = Config.from_file("file")
 
     assert config.endpoints == [
-        Endpoint(method="POST", path="/echo", response=None),
+        Endpoint(method="POST", path="/echo", response=None,
+                 mode=EndpointMode.ECHO_BODY),
         Endpoint(method="GET", path="/greet",
-                 response=EndpointResponse(status=200, headers={}, body="hello")),
+                 response=EndpointResponse(status=200, headers={}, body="hello"),
+                 mode=EndpointMode.STATIC),
     ]
 
 

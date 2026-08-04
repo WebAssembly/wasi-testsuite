@@ -17,7 +17,17 @@ SUPPORTED_OPERATIONS = {"run", "wait", "read", "write", "connect",
 # Supported http methods.
 HTTP_METHODS = {"GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"}
 
-ECHO_PATH = "/echo"
+# Prefix under which request headers are echoed back as response headers.
+ECHO_HEADER_PREFIX = "x-echo-"
+
+
+class EndpointMode(StrEnum):
+    # Answer with the endpoint's configured `response`.
+    STATIC = 'static'
+    # Echo the request body back verbatim.
+    ECHO_BODY = 'echo-body'
+    # Echo the request line and headers back as response headers.
+    ECHO_HEADERS = 'echo-headers'
 
 
 class WasiWorld(StrEnum):
@@ -296,6 +306,7 @@ class Endpoint(NamedTuple):
     method: str
     path: str
     response: Optional[EndpointResponse]
+    mode: EndpointMode = EndpointMode.STATIC
 
     @classmethod
     def from_config(cls: Type[Ep], config: Dict[str, Any]) -> Ep:
@@ -311,14 +322,21 @@ class Endpoint(NamedTuple):
 
         method = method.upper()
 
-        if path == ECHO_PATH:
+        mode = config.get("mode", EndpointMode.STATIC.value)
+        if not isinstance(mode, str):
+            raise ValueError("Endpoint mode should be a str")
+        if mode not in EndpointMode:
+            raise ValueError(f"Unknown endpoint mode: {mode}")
+        mode = EndpointMode(mode)
+
+        if mode is not EndpointMode.STATIC:
             if "response" in config:
                 raise ValueError(
-                    f"The reserved echo path {ECHO_PATH} takes no 'response'")
-            return cls(method=method, path=path, response=None)
+                    f"An endpoint in '{mode}' mode takes no 'response'")
+            return cls(method=method, path=path, response=None, mode=mode)
 
         response = EndpointResponse.from_config(config.get("response", ""))
-        return cls(method=method, path=path, response=response)
+        return cls(method=method, path=path, response=response, mode=mode)
 
 
 K = TypeVar("K", bound="Kill")
