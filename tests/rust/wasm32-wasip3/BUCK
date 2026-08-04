@@ -64,6 +64,8 @@ _RUST_P3_TESTS = [
     rust_p3_test("http-service-echo", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
     rust_p3_test("http-service-uri", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
     rust_p3_test("http-client", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("http-client-method", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
+    rust_p3_test("http-client-status", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
     rust_p3_test("monotonic-clock", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
     rust_p3_test("multi-clock-wait", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
     rust_p3_test("random", deps = _RUST_P3_DEPS, wit_srcs = _WIT_SRCS),
