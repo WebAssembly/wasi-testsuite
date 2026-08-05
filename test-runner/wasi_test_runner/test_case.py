@@ -1,5 +1,6 @@
 import logging
 import json
+import re
 import signal
 from pathlib import Path
 from enum import Enum, StrEnum, auto
@@ -7,7 +8,7 @@ from typing import List, NamedTuple, TypeVar, Type, Dict, Any, Set, Optional
 
 # Top level configuration keys
 LEGACY_CONFIG_KEYS = {"args", "root", "env", "exit_code", "stderr", "stdout"}
-CONFIG_KEYS = {"operations", "proposals", "world", "endpoints"}
+CONFIG_KEYS = {"operations", "proposals", "world", "servers"}
 
 
 # Supported operations.
@@ -20,6 +21,9 @@ HTTP_METHODS = {"GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"}
 # Prefix under which request headers are echoed back as response headers.
 ECHO_HEADER_PREFIX = "x-echo-"
 
+# Server names travel to the guest inside an environment variable name.
+SERVER_NAME_RE = re.compile(r"[A-Za-z0-9_]+")
+
 
 class EndpointMode(StrEnum):
     # Answer with the endpoint's configured `response`.
@@ -28,6 +32,13 @@ class EndpointMode(StrEnum):
     ECHO_BODY = 'echo-body'
     # Echo the request line and headers back as response headers.
     ECHO_HEADERS = 'echo-headers'
+
+
+class ServerKind(StrEnum):
+    # Listening server.
+    LISTENING = 'listening'
+    # An address with nothing listening on it, so connecting is refused.
+    CLOSED = 'closed'
 
 
 class WasiWorld(StrEnum):
@@ -339,6 +350,50 @@ class Endpoint(NamedTuple):
         return cls(method=method, path=path, response=response, mode=mode)
 
 
+Sv = TypeVar("Sv", bound="Server")
+
+
+class Server(NamedTuple):
+    # Exported to the guest as `HTTP_SERVER_<NAME>`, uppercased.
+    name: str
+    kind: ServerKind = ServerKind.LISTENING
+    endpoints: List[Endpoint] = []
+
+    @property
+    def env_var(self) -> str:
+        return f"HTTP_SERVER_{self.name.upper()}"
+
+    @classmethod
+    def from_config(cls: Type[Sv], config: Dict[str, Any]) -> Sv:
+        name = config.get("name")
+        if not isinstance(name, str) or not name:
+            raise ValueError("Server name should be a non-empty str")
+        # The name becomes part of an environment variable, sent to the guest.
+        if not SERVER_NAME_RE.fullmatch(name):
+            raise ValueError(
+                f"Server name should be alphanumeric or '_': {name}")
+
+        kind = config.get("kind", ServerKind.LISTENING.value)
+        if not isinstance(kind, str):
+            raise ValueError("Server kind should be a str")
+        if kind not in ServerKind:
+            raise ValueError(f"Unknown server kind: {kind}")
+        kind = ServerKind(kind)
+
+        # No endpoints should be defined in a closed server.
+        if kind is ServerKind.CLOSED:
+            if "endpoints" in config:
+                raise ValueError(
+                    "A server of kind 'closed' takes no 'endpoints'")
+            return cls(name=name, kind=kind, endpoints=[])
+
+        endpoints = config.get("endpoints", [])
+        if not isinstance(endpoints, list):
+            raise ValueError("Server endpoints should be a list")
+        return cls(name=name, kind=kind,
+                   endpoints=[Endpoint.from_config(ep) for ep in endpoints])
+
+
 K = TypeVar("K", bound="Kill")
 
 
@@ -377,8 +432,8 @@ class Config(NamedTuple):
     debug: bool = False
     # WASI world to target
     world: WasiWorld = WasiWorld.CLI_COMMAND
-    # HTTP endpoints served for outbound `wasi:http/client` requests.
-    endpoints: List[Endpoint] = []
+    # HTTP servers stood up for outbound `wasi:http/client` requests.
+    servers: List[Server] = []
 
     @classmethod
     def from_file(cls: Type[T], config_file: str) -> T:
@@ -388,7 +443,7 @@ class Config(NamedTuple):
         test_config_path = Path(config_file)
         if (dict_config.get("operations") is not None
                 or dict_config.get("proposals") is not None
-                or dict_config.get("endpoints") is not None):
+                or dict_config.get("servers") is not None):
             cls._validate_config(dict_config, CONFIG_KEYS)
 
             operations = []
@@ -399,9 +454,9 @@ class Config(NamedTuple):
             if dict_config.get("proposals") is not None:
                 proposals = cls._proposals_from_config(dict_config.get("proposals"))
 
-            endpoints = []
-            if dict_config.get("endpoints") is not None:
-                endpoints = cls._endpoints_from_config(dict_config.get("endpoints"))
+            servers = []
+            if dict_config.get("servers") is not None:
+                servers = cls._servers_from_config(dict_config.get("servers"))
 
             world = dict_config.get("world", WasiWorld.CLI_COMMAND.value)
             if world not in WasiWorld:
@@ -410,7 +465,7 @@ class Config(NamedTuple):
             debug = bool(dict_config.get("debug"))
 
             return cls(operations=operations, proposals=proposals,
-                       world=WasiWorld(world), debug=debug, endpoints=endpoints)
+                       world=WasiWorld(world), debug=debug, servers=servers)
 
         cls._validate_config(dict_config, LEGACY_CONFIG_KEYS)
 
@@ -499,8 +554,13 @@ class Config(NamedTuple):
         return [WasiProposal(p) for p in proposals]
 
     @classmethod
-    def _endpoints_from_config(cls: Type[T], endpoints: List[Any]) -> List[Endpoint]:
-        return [Endpoint.from_config(ep) for ep in endpoints]
+    def _servers_from_config(cls: Type[T], servers: List[Any]) -> List[Server]:
+        parsed = [Server.from_config(sv) for sv in servers]
+        names = [sv.name.upper() for sv in parsed]
+        duplicates = {name for name in names if names.count(name) > 1}
+        if duplicates:
+            raise ValueError(f"Duplicate server names: {sorted(duplicates)}")
+        return parsed
 
 
 class TestCase(NamedTuple):

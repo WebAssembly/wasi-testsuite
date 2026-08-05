@@ -18,7 +18,7 @@ from .runtime_adapter import RuntimeAdapter
 from .test_case import (
     Result, Failure, WasiVersion, Config, Outcome,
     TestCase, TestCaseRunnerBase, TestCaseValidator,
-    Endpoint, EndpointMode, ECHO_HEADER_PREFIX,
+    Endpoint, EndpointMode, ServerKind, ECHO_HEADER_PREFIX,
     # Operation types
     Run, Read, Write, Wait, Send, Recv, Connect, Request, Kill
 )
@@ -93,6 +93,13 @@ class _EndpointRequestHandler(BaseHTTPRequestHandler):
         pass
 
 
+def _reserve_closed_addr() -> str:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.bind(("127.0.0.1", 0))
+        host, port = sock.getsockname()
+    return f"{host}:{port}"  # noqa: E231
+
+
 class TestCaseRunner(TestCaseRunnerBase):
     # pylint: disable-msg=too-many-instance-attributes
     _test_path: str
@@ -104,8 +111,8 @@ class TestCaseRunner(TestCaseRunnerBase):
     _sockets: Dict[str, socket.socket]
     _last_argv: List[str]
     _http_server: str | None
-    _endpoint_server: _EndpointServer | None
-    _endpoint_addr: str | None
+    _endpoint_servers: List[_EndpointServer]
+    _server_addrs: Dict[str, str]
     _windows_terminated_by_runner: bool
 
     def __init__(self, config: Config, test_path: str, wasi_version: WasiVersion,
@@ -120,20 +127,24 @@ class TestCaseRunner(TestCaseRunnerBase):
         self._sockets = {}
         self._last_argv = []
         self._http_server = None
-        self._endpoint_server = None
-        self._endpoint_addr = None
+        self._endpoint_servers = []
+        self._server_addrs = {}
         self._windows_terminated_by_runner = False
 
-    def _start_endpoints(self) -> None:
-        if not self.config.endpoints or self._endpoint_server is not None:
+    def _start_servers(self) -> None:
+        if self._server_addrs:
             return
-        server = _EndpointServer(("127.0.0.1", 0), _EndpointRequestHandler)
-        for endpoint in self.config.endpoints:
-            server.routes[(endpoint.method, endpoint.path)] = endpoint
-        host, port = server.server_address
-        self._endpoint_addr = f"{host}:{port}"  # noqa: E231
-        self._endpoint_server = server
-        threading.Thread(target=server.serve_forever, daemon=True).start()
+        for spec in self.config.servers:
+            if spec.kind is ServerKind.CLOSED:
+                self._server_addrs[spec.env_var] = _reserve_closed_addr()
+                continue
+            server = _EndpointServer(("127.0.0.1", 0), _EndpointRequestHandler)
+            for endpoint in spec.endpoints:
+                server.routes[(endpoint.method, endpoint.path)] = endpoint
+            host, port = server.server_address
+            self._server_addrs[spec.env_var] = f"{host}:{port}"  # noqa: E231
+            self._endpoint_servers.append(server)
+            threading.Thread(target=server.serve_forever, daemon=True).start()
 
     def _add_cleanup_dir(self, d: Path) -> None:
         _cleanup_test_output(d)
@@ -187,11 +198,10 @@ class TestCaseRunner(TestCaseRunnerBase):
     def do_run(self, run: Run) -> None:
         if run.root:
             self._add_cleanup_dir(run.root)
-        self._start_endpoints()
+        self._start_servers()
         proposals = self.config.proposals_as_str()
         wasi_env = dict(run.env)
-        if self._endpoint_addr is not None:
-            wasi_env["HTTP_ENDPOINT"] = self._endpoint_addr
+        wasi_env.update(self._server_addrs)
         argv = self._runtime.compute_argv(
             self._test_path, run.args, wasi_env, run.root, proposals,
             self.config.world, self._wasi_version)
@@ -360,11 +370,11 @@ class TestCaseRunner(TestCaseRunnerBase):
                     f"Timeout expired after killing proc {self._proc}")
                 self._proc = None
 
-        if self._endpoint_server is not None:
-            self._endpoint_server.shutdown()
-            self._endpoint_server.server_close()
-            self._endpoint_server = None
-            self._endpoint_addr = None
+        for server in self._endpoint_servers:
+            server.shutdown()
+            server.server_close()
+        self._endpoint_servers = []
+        self._server_addrs = {}
 
         for sock in self._sockets.values():
             sock.close()

@@ -9,7 +9,7 @@ import pytest
 from wasi_test_runner.test_case import (
     Config, Failure, Result,
     Run, Wait, Read, Write, Connect, Send, Recv, Request, Response, Kill,
-    Endpoint, EndpointMode, EndpointResponse,
+    Endpoint, EndpointMode, EndpointResponse, Server, ServerKind,
     ProtocolType, WasiProposal, WasiWorld, TestCaseValidator
 )
 
@@ -351,22 +351,73 @@ def test_endpoint_from_config_rejects_unknown_mode() -> None:
         Endpoint.from_config({"path": "/greet", "mode": "shout"})
 
 
+def test_server_from_config_defaults_to_listening() -> None:
+    server = Server.from_config(
+        {"name": "main", "endpoints": [{"path": "/greet", "response": "hi"}]})
+
+    assert server.name == "main"
+    assert server.kind == ServerKind.LISTENING
+    assert server.env_var == "HTTP_SERVER_MAIN"
+    assert server.endpoints == [
+        Endpoint(method="GET", path="/greet",
+                 response=EndpointResponse(status=200, headers={}, body="hi"),
+                 mode=EndpointMode.STATIC),
+    ]
+
+
+def test_server_from_config_closed_kind() -> None:
+    server = Server.from_config({"name": "dead", "kind": "closed"})
+
+    assert server.kind == ServerKind.CLOSED
+    assert server.endpoints == []
+    assert server.env_var == "HTTP_SERVER_DEAD"
+
+
+def test_server_from_config_closed_kind_rejects_endpoints() -> None:
+    with pytest.raises(ValueError, match="'closed' takes no 'endpoints'"):
+        Server.from_config({"name": "dead", "kind": "closed", "endpoints": []})
+
+
+@pytest.mark.parametrize("config", [
+    {}, {"name": ""}, {"name": 1}, {"name": "has space"}, {"name": "has-dash"},
+])
+def test_server_from_config_rejects_bad_name(config: dict) -> None:
+    with pytest.raises(ValueError, match="Server name should be"):
+        Server.from_config(config)
+
+
+def test_server_from_config_rejects_unknown_kind() -> None:
+    with pytest.raises(ValueError, match="Unknown server kind"):
+        Server.from_config({"name": "main", "kind": "haunted"})
+
+
 @patch(
     "builtins.open",
     new_callable=mock_open,
-    read_data='{"endpoints": [{"method": "post", "path": "/echo", "mode": "echo-body"},'
-              ' {"path": "/greet", "response": "hello"}]}',
+    read_data='{"servers": [{"name": "main", "endpoints":'
+              ' [{"method": "post", "path": "/echo", "mode": "echo-body"}]},'
+              ' {"name": "dead", "kind": "closed"}]}',
 )
-def test_new_config_with_endpoints(_mock_file: Mock) -> None:
+def test_new_config_with_servers(_mock_file: Mock) -> None:
     config = Config.from_file("file")
 
-    assert config.endpoints == [
-        Endpoint(method="POST", path="/echo", response=None,
-                 mode=EndpointMode.ECHO_BODY),
-        Endpoint(method="GET", path="/greet",
-                 response=EndpointResponse(status=200, headers={}, body="hello"),
-                 mode=EndpointMode.STATIC),
+    assert config.servers == [
+        Server(name="main", kind=ServerKind.LISTENING, endpoints=[
+            Endpoint(method="POST", path="/echo", response=None,
+                     mode=EndpointMode.ECHO_BODY),
+        ]),
+        Server(name="dead", kind=ServerKind.CLOSED, endpoints=[]),
     ]
+
+
+@patch(
+    "builtins.open",
+    new_callable=mock_open,
+    read_data='{"servers": [{"name": "main"}, {"name": "MAIN"}]}',
+)
+def test_new_config_rejects_duplicate_server_names(_mock_file: Mock) -> None:
+    with pytest.raises(ValueError, match="Duplicate server names"):
+        Config.from_file("file")
 
 
 @patch(
@@ -374,10 +425,10 @@ def test_new_config_with_endpoints(_mock_file: Mock) -> None:
     new_callable=mock_open,
     read_data='{"operations": [{"type": "run"}, {"type": "wait"}]}',
 )
-def test_new_config_without_endpoints(_mock_file: Mock) -> None:
+def test_new_config_without_servers(_mock_file: Mock) -> None:
     config = Config.from_file("file")
 
-    assert config.endpoints == []
+    assert config.servers == []
 
 
 def test_kill_from_config_with_signal() -> None:

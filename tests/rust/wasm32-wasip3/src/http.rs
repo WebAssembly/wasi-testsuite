@@ -16,14 +16,34 @@ wit_bindgen::generate!({
 
 use wasi::cli::environment;
 use wasi::http::client;
-use wasi::http::types::{Fields, Method, Request, Response, Scheme, StatusCode};
+use wasi::http::types::{ErrorCode, Fields, Method, Request, Response, Scheme, StatusCode};
 
-pub fn endpoint_authority() -> String {
+fn env_var(name: &str) -> String {
     environment::get_environment()
         .into_iter()
-        .find(|(name, _)| name == "HTTP_ENDPOINT")
+        .find(|(key, _)| key == name)
         .map(|(_, value)| value)
-        .expect("HTTP_ENDPOINT must be set by the test runner")
+        .unwrap_or_else(|| panic!("{name} must be set by the test runner"))
+}
+
+pub fn server_authority(name: &str) -> String {
+    env_var(&format!("HTTP_SERVER_{}", name.to_uppercase()))
+}
+
+pub fn endpoint_authority() -> String {
+    server_authority("main")
+}
+pub async fn try_send(authority: &str) -> Result<Response, ErrorCode> {
+    let (trailers_tx, trailers_rx) = wit_future::new(|| Ok(None));
+    drop(trailers_tx);
+
+    let (request, _sent) = Request::new(Fields::new(), None, trailers_rx, None);
+    request.set_method(&Method::Get).unwrap();
+    request.set_scheme(Some(&Scheme::Http)).unwrap();
+    request.set_authority(Some(authority)).unwrap();
+    request.set_path_with_query(Some("/")).unwrap();
+
+    client::send(request).await
 }
 
 pub async fn endpoint_request(method: &Method, path: &str) -> (StatusCode, Vec<u8>) {
