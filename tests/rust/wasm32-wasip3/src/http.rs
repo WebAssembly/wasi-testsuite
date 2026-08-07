@@ -47,13 +47,13 @@ pub async fn try_send(authority: &str) -> Result<Response, ErrorCode> {
 }
 
 pub async fn endpoint_request(method: &Method, path: &str) -> (StatusCode, Vec<u8>) {
-    let (status, _, body) = endpoint_request_with_headers(method, path, &[]).await;
+    let (status, _, body) = endpoint_request_with_headers(method, Some(path), &[]).await;
     (status, body)
 }
 
 pub async fn endpoint_request_with_headers(
     method: &Method,
-    path: &str,
+    path: Option<&str>,
     headers: &[(&str, &[u8])],
 ) -> (StatusCode, Vec<(String, Vec<u8>)>, Vec<u8>) {
     let (trailers_tx, trailers_rx) = wit_future::new(|| Ok(None));
@@ -68,7 +68,7 @@ pub async fn endpoint_request_with_headers(
     request.set_method(method).unwrap();
     request.set_scheme(Some(&Scheme::Http)).unwrap();
     request.set_authority(Some(&endpoint_authority())).unwrap();
-    request.set_path_with_query(Some(path)).unwrap();
+    request.set_path_with_query(path).unwrap();
 
     let response = client::send(request).await.expect("send should succeed");
     let status = response.get_status_code();
@@ -89,4 +89,14 @@ pub fn echoed(headers: &[(String, Vec<u8>)], name: &str) -> Vec<Vec<u8>> {
         .filter(|(header, _)| header.eq_ignore_ascii_case(&wanted))
         .map(|(_, value)| value.clone())
         .collect()
+}
+
+pub fn request_line(headers: &[(String, Vec<u8>)], name: &str) -> Vec<u8> {
+    let matches: Vec<_> = headers
+        .iter()
+        .filter(|(header, _)| header.eq_ignore_ascii_case(name))
+        .map(|(_, value)| value.clone())
+        .collect();
+    assert_eq!(matches.len(), 1, "{name} should be echoed exactly once");
+    matches.into_iter().next().unwrap()
 }

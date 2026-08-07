@@ -13,3 +13,10 @@ expected = "fail"
 [[suite.test]]
 name = "http-service-uri"
 expected = "fail"
+
+# `path-with-query: none` is documented as an empty path and query, but sending
+# one fails with `HTTP-request-URI-invalid`, see:
+# - https://github.com/WebAssembly/WASI/issues/949
+[[suite.test]]
+name = "http-client-path-none"
+expected = "fail"

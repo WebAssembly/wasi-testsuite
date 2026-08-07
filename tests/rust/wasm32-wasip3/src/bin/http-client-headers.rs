@@ -1,22 +1,12 @@
 use test_wasm32_wasip3::http::wasi::http::types::{ErrorCode, Fields, Method, Request, Response};
 use test_wasm32_wasip3::http::wit_future;
 use test_wasm32_wasip3::http::{echoed, endpoint_authority, endpoint_request_with_headers};
-use test_wasm32_wasip3::http::{export, exports::wasi::http::handler::Guest};
+use test_wasm32_wasip3::http::{export, exports::wasi::http::handler::Guest, request_line};
 
 const PATH: &str = "/echo-headers";
 
 struct Component;
 export!(Component);
-
-fn request_line(headers: &[(String, Vec<u8>)], name: &str) -> Vec<u8> {
-    let matches: Vec<_> = headers
-        .iter()
-        .filter(|(header, _)| header.eq_ignore_ascii_case(name))
-        .map(|(_, value)| value.clone())
-        .collect();
-    assert_eq!(matches.len(), 1, "{name} should be echoed exactly once");
-    matches.into_iter().next().unwrap()
-}
 
 fn combined(values: &[Vec<u8>]) -> String {
     values
@@ -30,7 +20,7 @@ impl Guest for Component {
     async fn handle(_request: Request) -> Result<Response, ErrorCode> {
         let (status, headers, body) = endpoint_request_with_headers(
             &Method::Get,
-            PATH,
+            Some(PATH),
             &[
                 ("x-single", b"one"),
                 ("x-multi", b"first"),
