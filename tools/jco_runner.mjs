@@ -75,7 +75,9 @@ async function main() {
     await mkdir(outputDir, { recursive: true });
 
     const { transpile } = await import(
-      pathToFileURL(join(jcoWorkspace, "node_modules", "@bytecodealliance", "jco", "src", "api.js"))
+      pathToFileURL(
+        join(jcoWorkspace, "node_modules", "@bytecodealliance", "jco", "dist", "api.js"),
+      )
     );
     const { files } = await transpile(await readFile(component), {
       name: moduleName,
