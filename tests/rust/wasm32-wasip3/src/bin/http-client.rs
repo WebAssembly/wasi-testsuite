@@ -1,18 +1,10 @@
-use test_wasm32_wasip3::http::wasi::cli::environment;
+use test_wasm32_wasip3::http::endpoint_authority;
 use test_wasm32_wasip3::http::wasi::http::client;
 use test_wasm32_wasip3::http::wasi::http::types::{
     ErrorCode, Fields, Method, Request, Response, Scheme,
 };
 use test_wasm32_wasip3::http::{export, exports::wasi::http::handler::Guest};
 use test_wasm32_wasip3::http::{wit_future, wit_stream};
-
-fn endpoint_authority() -> String {
-    environment::get_environment()
-        .into_iter()
-        .find(|(name, _)| name == "HTTP_ENDPOINT")
-        .map(|(_, value)| value)
-        .expect("HTTP_ENDPOINT must be set by the test runner")
-}
 
 async fn read_body(response: Response) -> Vec<u8> {
     let (_, result_rx) = wit_future::new(|| Ok(()));
