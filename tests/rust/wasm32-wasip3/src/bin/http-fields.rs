@@ -330,6 +330,67 @@ fn test_field_name_case_insensitivity() {
     );
 }
 
+fn test_forbidden_field_name_cased(name: &str) {
+    let fields = Fields::new();
+    assert_eq!(
+        fields.set(name, &[b"x".to_vec()]),
+        Err(HeaderError::Forbidden),
+        "set({name:?}) should be forbidden"
+    );
+    assert_eq!(
+        fields.append(name, b"x"),
+        Err(HeaderError::Forbidden),
+        "append({name:?}) should be forbidden"
+    );
+    assert_eq!(
+        Fields::from_list(&[(name.to_string(), b"x".to_vec())]).unwrap_err(),
+        HeaderError::Forbidden,
+        "from_list([{name:?}]) should be forbidden"
+    );
+    assert!(
+        !fields.has(name),
+        "forbidden field {name:?} must not be present"
+    );
+}
+
+fn title_case(name: &str) -> String {
+    name.split('-')
+        .map(|seg| {
+            let mut chars = seg.chars();
+            match chars.next() {
+                Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
+                None => String::new(),
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("-")
+}
+
+fn test_forbidden_field_name(name: &str) {
+    // Field names are case insensitive for equality checking purposes.
+    test_forbidden_field_name_cased(name);
+    test_forbidden_field_name_cased(&name.to_uppercase());
+    test_forbidden_field_name_cased(&title_case(name));
+}
+
+// The list of definitely forbidden field names is not in the spec yet.
+// See https://github.com/WebAssembly/WASI/issues/940
+fn test_forbidden_field_names() {
+    for name in [
+        "connection",
+        "keep-alive",
+        "proxy-authenticate",
+        "proxy-authorization",
+        "proxy-connection",
+        "transfer-encoding",
+        "upgrade",
+        "http2-settings",
+        "host",
+    ] {
+        test_forbidden_field_name(name);
+    }
+}
+
 struct Component;
 export!(Component);
 impl Guest for Component {
@@ -341,6 +402,7 @@ impl Guest for Component {
         test_invalid_field_values();
         test_valid_field_values();
         test_field_name_case_insensitivity();
+        test_forbidden_field_names();
         Ok(())
     }
 }
