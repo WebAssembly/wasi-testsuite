@@ -3,8 +3,9 @@
   "world": "wasi:http/service",
   "servers": [
     { "name": "main", "endpoints": [
-      { "method": "POST", "path": "/echo", "mode": "echo-body" }
-    ] }
+      { "method": "GET", "path": "/", "response": { "status": 200 } }
+    ] },
+    { "name": "dead", "kind": "closed" }
   ],
   "operations": [
     { "type": "run" },
