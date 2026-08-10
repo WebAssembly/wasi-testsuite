@@ -16,3 +16,9 @@ expected = "fail"
 [[suite.test]]
 name = "http-client-path-none"
 expected = "fail"
+
+# `new`'s transmission future reports `Ok` for a request that was never sent, see:
+# - https://github.com/bytecodealliance/wasmtime/issues/14112
+[[suite.test]]
+name = "http-client-sent"
+expected = "fail"
