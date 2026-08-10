@@ -5,7 +5,7 @@ load("@wasmono//toolchains/wasm:node.bzl", "NodeInfo")
 load("@wasmono//:defs.bzl", "host_arch", "host_os")
 load(":releases.bzl", "WAMR_RELEASES", "WASMEDGE_RELEASES", "WASMTIME_RELEASES", "WAZERO_RELEASES")
 
-DEFAULT_JCO_VERSION = "1.26.1"
+DEFAULT_JCO_VERSION = "1.27.0"
 DEFAULT_NODE_VERSION = "24.16.0"
 DEFAULT_WAMR_VERSION = "2.4.4"
 DEFAULT_WASMEDGE_VERSION = "0.17.0"
