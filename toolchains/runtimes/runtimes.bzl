@@ -5,7 +5,7 @@ load("@wasmono//toolchains/wasm:node.bzl", "NodeInfo")
 load("@wasmono//:defs.bzl", "host_arch", "host_os")
 load(":releases.bzl", "WAMR_RELEASES", "WASMEDGE_RELEASES", "WASMTIME_RELEASES", "WAZERO_RELEASES")
 
-DEFAULT_JCO_VERSION = "1.24.1"
+DEFAULT_JCO_VERSION = "1.27.0"
 DEFAULT_NODE_VERSION = "24.16.0"
 DEFAULT_WAMR_VERSION = "2.4.4"
 DEFAULT_WASMEDGE_VERSION = "0.17.0"
@@ -75,7 +75,7 @@ def _jco_runtime_command_impl(ctx: AnalysisContext) -> list[Provider]:
     jco_workspace = ctx.attrs.jco[DefaultInfo].default_outputs[0]
     jco_js = cmd_args(
         jco_workspace,
-        format = "{}/node_modules/@bytecodealliance/jco/src/jco.js",
+        format = "{}/node_modules/@bytecodealliance/jco/dist/jco.js",
     )
 
     run = cmd_args(
