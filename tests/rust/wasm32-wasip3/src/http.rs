@@ -46,16 +46,18 @@ pub async fn try_send(authority: &str) -> Result<Response, ErrorCode> {
     client::send(request).await
 }
 
-pub async fn endpoint_request(method: &Method, path: &str) -> (StatusCode, Vec<u8>) {
-    let (status, _, body) = endpoint_request_with_headers(method, Some(path), &[]).await;
-    (status, body)
+pub struct EndpointResponse {
+    pub status: StatusCode,
+    pub headers: Vec<(String, Vec<u8>)>,
+    pub body: Vec<u8>,
+    pub trailers: Option<Vec<(String, Vec<u8>)>>,
 }
 
-pub async fn endpoint_request_with_headers(
+pub async fn endpoint_request(
     method: &Method,
     path: Option<&str>,
     headers: &[(&str, &[u8])],
-) -> (StatusCode, Vec<(String, Vec<u8>)>, Vec<u8>) {
+) -> EndpointResponse {
     let (trailers_tx, trailers_rx) = wit_future::new(|| Ok(None));
     drop(trailers_tx);
 
@@ -72,14 +74,22 @@ pub async fn endpoint_request_with_headers(
 
     let response = client::send(request).await.expect("send should succeed");
     let status = response.get_status_code();
-    let response_headers = response.get_headers().copy_all();
+    let headers = response.get_headers().copy_all();
 
     let (_, result_rx) = wit_future::new(|| Ok(()));
     let (body_rx, trailers) = Response::consume_body(response, result_rx);
     let body = body_rx.collect().await;
-    assert!(trailers.await.unwrap().is_none());
+    let trailers = trailers
+        .await
+        .expect("trailers future should resolve")
+        .map(|trailers| trailers.copy_all());
 
-    (status, response_headers, body)
+    EndpointResponse {
+        status,
+        headers,
+        body,
+        trailers,
+    }
 }
 
 pub fn echoed(headers: &[(String, Vec<u8>)], name: &str) -> Vec<Vec<u8>> {

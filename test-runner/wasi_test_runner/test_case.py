@@ -298,6 +298,8 @@ class EndpointResponse(NamedTuple):
     status: int = 200
     headers: Dict[str, str] = {}
     body: str = ""
+    chunks: Optional[List[str]] = None
+    trailers: Dict[str, str] = {}
 
     @classmethod
     def from_config(cls: Type[Er], config: Any) -> Er:
@@ -307,7 +309,28 @@ class EndpointResponse(NamedTuple):
         if not isinstance(config, dict):
             raise ValueError("Endpoint response should be a str or an object")
         base = Response.from_config(config)
-        return cls(status=base.status, headers=base.headers, body=base.body)
+
+        chunks = config.get("chunks")
+        if chunks is not None:
+            if not isinstance(chunks, list) or not all(
+                    isinstance(chunk, str) for chunk in chunks):
+                raise ValueError(
+                    "Endpoint response chunks should be a list of str")
+            if "body" in config:
+                raise ValueError(
+                    "Endpoint response takes 'body' or 'chunks', not both")
+
+        trailers = config.get("trailers", {})
+        if not isinstance(trailers, dict) or not all(
+                isinstance(name, str) and isinstance(value, str)
+                for name, value in trailers.items()):
+            raise ValueError(
+                "Endpoint response trailers should be an object of str to str")
+        if trailers and chunks is None:
+            raise ValueError("Endpoint response trailers require 'chunks'")
+
+        return cls(status=base.status, headers=base.headers, body=base.body,
+                   chunks=chunks, trailers=trailers)
 
 
 Ep = TypeVar("Ep", bound="Endpoint")

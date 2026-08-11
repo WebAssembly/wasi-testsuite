@@ -1,6 +1,6 @@
 use test_wasm32_wasip3::http::wasi::http::types::{ErrorCode, Fields, Method, Request, Response};
 use test_wasm32_wasip3::http::wit_future;
-use test_wasm32_wasip3::http::{endpoint_request, endpoint_request_with_headers, request_line};
+use test_wasm32_wasip3::http::{endpoint_request, request_line};
 use test_wasm32_wasip3::http::{export, exports::wasi::http::handler::Guest};
 
 const PLAIN: &str = "/plain";
@@ -14,39 +14,45 @@ export!(Component);
 
 impl Guest for Component {
     async fn handle(_request: Request) -> Result<Response, ErrorCode> {
-        let (status, body) = endpoint_request(&Method::Get, PLAIN).await;
-        assert_eq!(status, 200, "{PLAIN} did not reach its route");
-        assert_eq!(body, b"plain");
+        let plain = endpoint_request(&Method::Get, Some(PLAIN), &[]).await;
+        assert_eq!(plain.status, 200, "{PLAIN} did not reach its route");
+        assert_eq!(plain.body, b"plain");
+        assert!(plain.trailers.is_none(), "no trailer section was sent");
 
-        let (status, _) = endpoint_request(&Method::Get, "/plain?x=1").await;
-        assert_eq!(status, 404, "the query should have reached the wire");
+        let extra_query = endpoint_request(&Method::Get, Some("/plain?x=1"), &[]).await;
+        assert_eq!(
+            extra_query.status, 404,
+            "the query should have reached the wire"
+        );
 
-        let (status, body) = endpoint_request(&Method::Get, QUERY).await;
-        assert_eq!(status, 200, "{QUERY} did not reach its route");
-        assert_eq!(body, b"query");
+        let query = endpoint_request(&Method::Get, Some(QUERY), &[]).await;
+        assert_eq!(query.status, 200, "{QUERY} did not reach its route");
+        assert_eq!(query.body, b"query");
 
-        let (status, _) = endpoint_request(&Method::Get, "/query").await;
-        assert_eq!(status, 404);
+        let no_query = endpoint_request(&Method::Get, Some("/query"), &[]).await;
+        assert_eq!(no_query.status, 404);
 
-        let (status, body) = endpoint_request(&Method::Get, MULTI).await;
-        assert_eq!(status, 200, "{MULTI} did not reach its route");
-        assert_eq!(body, b"multi");
-        let (status, _) = endpoint_request(&Method::Get, "/multi?b=2&a=1").await;
-        assert_eq!(status, 404, "parameters should not be reordered");
+        let multi = endpoint_request(&Method::Get, Some(MULTI), &[]).await;
+        assert_eq!(multi.status, 200, "{MULTI} did not reach its route");
+        assert_eq!(multi.body, b"multi");
+        let reordered = endpoint_request(&Method::Get, Some("/multi?b=2&a=1"), &[]).await;
+        assert_eq!(reordered.status, 404, "parameters should not be reordered");
 
-        let (status, body) = endpoint_request(&Method::Get, ENCODED).await;
-        assert_eq!(status, 200, "{ENCODED} did not reach its route");
-        assert_eq!(body, b"encoded");
+        let encoded = endpoint_request(&Method::Get, Some(ENCODED), &[]).await;
+        assert_eq!(encoded.status, 200, "{ENCODED} did not reach its route");
+        assert_eq!(encoded.body, b"encoded");
 
         // See: https://github.com/WebAssembly/WASI/issues/780.
-        let (status, _, body) = endpoint_request_with_headers(&Method::Get, Some(""), &[]).await;
-        assert_eq!(status, 200, "the empty path should be sent as /");
-        assert_eq!(body, b"root");
+        let empty = endpoint_request(&Method::Get, Some(""), &[]).await;
+        assert_eq!(empty.status, 200, "the empty path should be sent as /");
+        assert_eq!(empty.body, b"root");
 
-        let (status, headers, _) =
-            endpoint_request_with_headers(&Method::Get, Some(ECHO), &[]).await;
-        assert_eq!(status, 200);
-        assert_eq!(request_line(&headers, "x-request-path"), ECHO.as_bytes());
+        let echo = endpoint_request(&Method::Get, Some(ECHO), &[]).await;
+        assert_eq!(echo.status, 200);
+        assert_eq!(
+            request_line(&echo.headers, "x-request-path"),
+            ECHO.as_bytes()
+        );
 
         let (trailers_tx, trailers_rx) = wit_future::new(|| Ok(None));
         drop(trailers_tx);

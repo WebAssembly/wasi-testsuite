@@ -8,23 +8,24 @@ export!(Component);
 
 impl Guest for Component {
     async fn handle(_request: Request) -> Result<Response, ErrorCode> {
-        let (status, body) = endpoint_request(&Method::Get, "/ok").await;
-        assert_eq!(status, 200);
-        assert!(body.is_empty());
+        let ok = endpoint_request(&Method::Get, Some("/ok"), &[]).await;
+        assert_eq!(ok.status, 200);
+        assert!(ok.body.is_empty());
+        assert!(ok.trailers.is_none(), "no trailer section was sent");
 
-        let (status, body) = endpoint_request(&Method::Get, "/created").await;
-        assert_eq!(status, 201);
-        assert_eq!(body, b"made".to_vec());
+        let created = endpoint_request(&Method::Get, Some("/created"), &[]).await;
+        assert_eq!(created.status, 201);
+        assert_eq!(created.body, b"made".to_vec());
 
-        let (status, _) = endpoint_request(&Method::Get, "/teapot").await;
-        assert_eq!(status, 418);
+        let teapot = endpoint_request(&Method::Get, Some("/teapot"), &[]).await;
+        assert_eq!(teapot.status, 418);
 
-        let (status, body) = endpoint_request(&Method::Get, "/boom").await;
-        assert_eq!(status, 500);
-        assert_eq!(body, b"nope".to_vec());
+        let boom = endpoint_request(&Method::Get, Some("/boom"), &[]).await;
+        assert_eq!(boom.status, 500);
+        assert_eq!(boom.body, b"nope".to_vec());
 
-        let (status, _) = endpoint_request(&Method::Get, "/unrouted").await;
-        assert_eq!(status, 404);
+        let missing = endpoint_request(&Method::Get, Some("/unrouted"), &[]).await;
+        assert_eq!(missing.status, 404);
 
         let (trailers_tx, trailers_rx) = wit_future::new(|| Ok(None));
         drop(trailers_tx);
