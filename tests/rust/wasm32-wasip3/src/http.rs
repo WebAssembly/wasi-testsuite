@@ -93,7 +93,15 @@ pub async fn endpoint_request(
 }
 
 pub fn echoed(headers: &[(String, Vec<u8>)], name: &str) -> Vec<Vec<u8>> {
-    let wanted = format!("x-echo-{name}");
+    reflected(headers, "x-echo-", name)
+}
+
+pub fn echoed_trailer(headers: &[(String, Vec<u8>)], name: &str) -> Vec<Vec<u8>> {
+    reflected(headers, "x-trailer-", name)
+}
+
+fn reflected(headers: &[(String, Vec<u8>)], prefix: &str, name: &str) -> Vec<Vec<u8>> {
+    let wanted = format!("{prefix}{name}");
     headers
         .iter()
         .filter(|(header, _)| header.eq_ignore_ascii_case(&wanted))
