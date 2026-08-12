@@ -53,6 +53,67 @@ pub struct EndpointResponse {
     pub trailers: Option<Vec<(String, Vec<u8>)>>,
 }
 
+pub async fn send_with_trailers(
+    path: &str,
+    body: &[u8],
+    trailers: &[(&str, &[u8])],
+    outcome: Result<(), ErrorCode>,
+) -> Result<Response, ErrorCode> {
+    let headers = Fields::new();
+    let names: Vec<&str> = trailers.iter().map(|(name, _)| *name).collect();
+    if !names.is_empty() {
+        headers
+            .append("trailer", names.join(", ").as_bytes())
+            .unwrap();
+    }
+
+    let resolved = outcome.map(|()| {
+        let fields = Fields::new();
+        for (name, value) in trailers {
+            fields.append(name, value).unwrap();
+        }
+        Some(fields)
+    });
+
+    let (mut body_tx, body_rx) = wit_stream::new();
+    let (trailers_tx, trailers_rx) = wit_future::new(|| Ok(None));
+
+    let (request, _sent) = Request::new(headers, Some(body_rx), trailers_rx, None);
+    request.set_method(&Method::Post).unwrap();
+    request.set_scheme(Some(&Scheme::Http)).unwrap();
+    request.set_authority(Some(&endpoint_authority())).unwrap();
+    request.set_path_with_query(Some(path)).unwrap();
+
+    let payload = body.to_vec();
+    wit_bindgen::spawn_local(async move {
+        let remaining = body_tx.write_all(payload).await;
+        assert!(remaining.is_empty());
+        drop(body_tx);
+        _ = trailers_tx.write(resolved).await;
+    });
+    client::send(request).await
+}
+
+pub async fn consume_response(response: Response) -> EndpointResponse {
+    let status = response.get_status_code();
+    let headers = response.get_headers().copy_all();
+
+    let (_, result_rx) = wit_future::new(|| Ok(()));
+    let (body_rx, trailers) = Response::consume_body(response, result_rx);
+    let body = body_rx.collect().await;
+    let trailers = trailers
+        .await
+        .expect("trailers future should resolve")
+        .map(|trailers| trailers.copy_all());
+
+    EndpointResponse {
+        status,
+        headers,
+        body,
+        trailers,
+    }
+}
+
 pub async fn endpoint_request(
     method: &Method,
     path: Option<&str>,
@@ -73,23 +134,7 @@ pub async fn endpoint_request(
     request.set_path_with_query(path).unwrap();
 
     let response = client::send(request).await.expect("send should succeed");
-    let status = response.get_status_code();
-    let headers = response.get_headers().copy_all();
-
-    let (_, result_rx) = wit_future::new(|| Ok(()));
-    let (body_rx, trailers) = Response::consume_body(response, result_rx);
-    let body = body_rx.collect().await;
-    let trailers = trailers
-        .await
-        .expect("trailers future should resolve")
-        .map(|trailers| trailers.copy_all());
-
-    EndpointResponse {
-        status,
-        headers,
-        body,
-        trailers,
-    }
+    consume_response(response).await
 }
 
 pub fn echoed(headers: &[(String, Vec<u8>)], name: &str) -> Vec<Vec<u8>> {
