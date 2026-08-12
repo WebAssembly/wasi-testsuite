@@ -1,3 +1,5 @@
+import socket
+import threading
 from typing import Any
 from pathlib import Path
 from unittest.mock import ANY, MagicMock, Mock, patch, mock_open
@@ -162,3 +164,77 @@ def test_runner_should_use_path_for_name_if_manifest_does_not_exist() -> None:
     suite = tsr.run_tests_from_test_suite("my-path", Mock(), [], [])
 
     assert suite.meta.name == "my-path"
+
+
+def _serve_one_request(endpoint: tc.Endpoint, request: bytes) -> bytes:
+    # The endpoint server is private to the runner; these tests drive it over a
+    # real socket because its parsing is the thing under test.
+    # pylint: disable-msg=protected-access
+    server = tsr._EndpointServer(("127.0.0.1", 0), tsr._EndpointRequestHandler)
+    server.routes[(endpoint.method, endpoint.path)] = endpoint
+    host, port = server.server_address
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        with socket.create_connection((host, port)) as sock:
+            sock.sendall(request)
+            sock.shutdown(socket.SHUT_WR)
+            received = b""
+            while chunk := sock.recv(4096):
+                received += chunk
+        return received
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def test_endpoint_server_reads_chunked_body_and_trailers() -> None:
+    endpoint = tc.Endpoint.from_config(
+        {"method": "POST", "path": "/echo", "mode": "echo-headers"})
+    response = _serve_one_request(endpoint, (
+        b"POST /echo HTTP/1.1\r\n"
+        b"Host: example.com\r\n"
+        b"Transfer-Encoding: chunked\r\n"
+        b"\r\n"
+        b"4\r\nping\r\n"
+        b"5;ext=1\r\n-pong\r\n"
+        b"0\r\n"
+        b"x-checksum: abc123\r\n"
+        b"\r\n"
+    )).decode("utf-8")
+
+    assert "x-trailer-x-checksum: abc123" in response
+    assert "x-echo-transfer-encoding: chunked" in response
+
+
+def test_endpoint_server_echoes_chunked_body() -> None:
+    endpoint = tc.Endpoint.from_config(
+        {"method": "POST", "path": "/echo", "mode": "echo-body"})
+    response = _serve_one_request(endpoint, (
+        b"POST /echo HTTP/1.1\r\n"
+        b"Host: example.com\r\n"
+        b"Transfer-Encoding: chunked\r\n"
+        b"\r\n"
+        b"4\r\nping\r\n"
+        b"5\r\n-pong\r\n"
+        b"0\r\n"
+        b"\r\n"
+    )).decode("utf-8")
+
+    assert response.endswith("ping-pong")
+
+
+def test_endpoint_server_sends_chunked_response_with_trailers() -> None:
+    endpoint = tc.Endpoint.from_config({
+        "method": "GET", "path": "/chunked",
+        "response": {"status": 200, "chunks": ["one", "two"],
+                     "trailers": {"x-checksum": "abc"}},
+    })
+    response = _serve_one_request(endpoint, (
+        b"GET /chunked HTTP/1.1\r\nHost: example.com\r\n\r\n"
+    )).decode("utf-8")
+
+    assert "Transfer-Encoding: chunked" in response
+    assert "Trailer: x-checksum" in response
+    assert "Content-Length" not in response
+    # Two chunks, the terminating chunk, then the trailer section.
+    assert "3\r\none\r\n3\r\ntwo\r\n0\r\nx-checksum: abc\r\n\r\n" in response
