@@ -252,6 +252,50 @@ def test_endpoint_response_from_config_object() -> None:
     assert response.body == "nope"
 
 
+def test_endpoint_response_from_config_defaults_to_unchunked() -> None:
+    response = EndpointResponse.from_config({"body": "hello"})
+
+    assert response.chunks is None
+    assert response.trailers == {}
+
+
+def test_endpoint_response_from_config_chunks_and_trailers() -> None:
+    response = EndpointResponse.from_config({
+        "chunks": ["one", "two"],
+        "trailers": {"x-checksum": "abc"},
+    })
+
+    assert response.chunks == ["one", "two"]
+    assert response.trailers == {"x-checksum": "abc"}
+    assert response.body == ""
+
+
+def test_endpoint_response_from_config_rejects_non_list_chunks() -> None:
+    with pytest.raises(ValueError, match="chunks should be a list of str"):
+        EndpointResponse.from_config({"chunks": "one"})
+
+
+def test_endpoint_response_from_config_rejects_non_str_chunk() -> None:
+    with pytest.raises(ValueError, match="chunks should be a list of str"):
+        EndpointResponse.from_config({"chunks": ["one", 2]})
+
+
+def test_endpoint_response_from_config_rejects_body_with_chunks() -> None:
+    with pytest.raises(ValueError, match="'body' or 'chunks', not both"):
+        EndpointResponse.from_config({"body": "hello", "chunks": ["one"]})
+
+
+def test_endpoint_response_from_config_rejects_non_str_trailers() -> None:
+    with pytest.raises(ValueError, match="trailers should be an object"):
+        EndpointResponse.from_config({"chunks": ["one"], "trailers": {"a": 1}})
+
+
+def test_endpoint_response_from_config_rejects_trailers_without_chunks() -> None:
+    # HTTP/1.1 can only carry a trailer section in a chunked body.
+    with pytest.raises(ValueError, match="trailers require 'chunks'"):
+        EndpointResponse.from_config({"body": "hi", "trailers": {"a": "b"}})
+
+
 def test_endpoint_response_from_config_rejects_non_str_non_dict() -> None:
     with pytest.raises(ValueError, match="should be a str or an object"):
         EndpointResponse.from_config(42)

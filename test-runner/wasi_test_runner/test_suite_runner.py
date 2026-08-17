@@ -46,6 +46,16 @@ class _EndpointServer(ThreadingHTTPServer):
 
 
 class _EndpointRequestHandler(BaseHTTPRequestHandler):
+    # Chunked transfer encoding, and therefore trailers, needs HTTP/1.1.
+    protocol_version = "HTTP/1.1"
+
+    def _close_after_reply(self) -> None:
+        # Ensure one connection per request. `close_connection` is defined by
+        # `BaseHTTPRequestHandler`.
+        # pylint: disable-msg=attribute-defined-outside-init
+        self.close_connection = True
+        self.send_header("Connection", "close")
+
     def _dispatch(self) -> None:
         length = int(self.headers.get("Content-Length") or 0)
         body = self.rfile.read(length) if length else b""
@@ -59,8 +69,15 @@ class _EndpointRequestHandler(BaseHTTPRequestHandler):
         else:
             response = endpoint.response
             assert response is not None
-            self._reply(response.status, list(response.headers.items()),
-                        response.body.encode("utf-8"))
+            headers = list(response.headers.items())
+            if response.chunks is None:
+                self._reply(response.status, headers,
+                            response.body.encode("utf-8"))
+            else:
+                self._reply_chunked(
+                    response.status, headers,
+                    [chunk.encode("utf-8") for chunk in response.chunks],
+                    response.trailers)
 
     def _echoed_headers(self) -> List[Tuple[str, str]]:
         echoed = [("x-request-method", self.command),
@@ -84,9 +101,30 @@ class _EndpointRequestHandler(BaseHTTPRequestHandler):
         for name, value in headers:
             self.send_header(name, value)
         self.send_header("Content-Length", str(len(body)))
+        self._close_after_reply()
         self.end_headers()
         if self.command != "HEAD":
             self.wfile.write(body)
+
+    def _reply_chunked(self, status: int, headers: List[Tuple[str, str]],
+                       chunks: List[bytes], trailers: Dict[str, str]) -> None:
+        # No `Content-Length`: the chunk framing delimits the body instead.
+        self.send_response(status)
+        for name, value in headers:
+            self.send_header(name, value)
+        self.send_header("Transfer-Encoding", "chunked")
+        if trailers:
+            self.send_header("Trailer", ", ".join(trailers))
+        self._close_after_reply()
+        self.end_headers()
+        if self.command == "HEAD":
+            return
+        for chunk in chunks:
+            self.wfile.write(b"%x\r\n%s\r\n" % (len(chunk), chunk))
+        self.wfile.write(b"0\r\n")
+        for name, value in trailers.items():
+            self.wfile.write(f"{name}: {value}\r\n".encode("utf-8"))  # noqa: E231
+        self.wfile.write(b"\r\n")
 
     def log_message(self, *_args: Any) -> None:
         # Avoiding polluting stderr.

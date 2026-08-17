@@ -27,16 +27,16 @@ impl Guest for Component {
                 Method::Options => "OPTIONS",
                 other => panic!("unexpected method {other:?}"),
             };
-            let (status, body) = endpoint_request(&method, PATH).await;
-            assert_eq!(status, 200, "{expected} did not reach its route");
-            assert_eq!(body, expected.as_bytes().to_vec());
+            let response = endpoint_request(&method, Some(PATH), &[]).await;
+            assert_eq!(response.status, 200, "{expected} did not reach its route");
+            assert_eq!(response.body, expected.as_bytes().to_vec());
         }
 
-        let (status, _) = endpoint_request(&Method::Head, PATH).await;
-        assert_eq!(status, 200, "HEAD did not reach its route");
+        let head = endpoint_request(&Method::Head, Some(PATH), &[]).await;
+        assert_eq!(head.status, 200, "HEAD did not reach its route");
 
-        let (status, _) = endpoint_request(&Method::Get, "/unrouted").await;
-        assert_eq!(status, 404);
+        let missing = endpoint_request(&Method::Get, Some("/unrouted"), &[]).await;
+        assert_eq!(missing.status, 404);
 
         let (trailers_tx, trailers_rx) = wit_future::new(|| Ok(None));
         drop(trailers_tx);

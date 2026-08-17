@@ -1,6 +1,6 @@
 use test_wasm32_wasip3::http::wasi::http::types::{ErrorCode, Fields, Method, Request, Response};
 use test_wasm32_wasip3::http::wit_future;
-use test_wasm32_wasip3::http::{echoed, endpoint_authority, endpoint_request_with_headers};
+use test_wasm32_wasip3::http::{echoed, endpoint_authority, endpoint_request};
 use test_wasm32_wasip3::http::{export, exports::wasi::http::handler::Guest, request_line};
 
 const PATH: &str = "/echo-headers";
@@ -18,7 +18,7 @@ fn combined(values: &[Vec<u8>]) -> String {
 
 impl Guest for Component {
     async fn handle(_request: Request) -> Result<Response, ErrorCode> {
-        let (status, headers, body) = endpoint_request_with_headers(
+        let response = endpoint_request(
             &Method::Get,
             Some(PATH),
             &[
@@ -28,25 +28,26 @@ impl Guest for Component {
             ],
         )
         .await;
-        assert_eq!(status, 200);
-        assert!(body.is_empty());
+        let headers = &response.headers;
+        assert_eq!(response.status, 200);
+        assert!(response.body.is_empty());
 
-        assert_eq!(echoed(&headers, "x-single"), [b"one".to_vec()]);
+        assert_eq!(echoed(headers, "x-single"), [b"one".to_vec()]);
 
-        assert_eq!(combined(&echoed(&headers, "x-multi")), "first, second");
+        assert_eq!(combined(&echoed(headers, "x-multi")), "first, second");
 
         assert_eq!(
-            echoed(&headers, "host"),
+            echoed(headers, "host"),
             [endpoint_authority().into_bytes()],
             "authority should reach the wire as Host"
         );
 
         // The server reflects the method and path through these headers.
-        assert_eq!(request_line(&headers, "x-request-method"), b"GET");
-        assert_eq!(request_line(&headers, "x-request-path"), PATH.as_bytes());
+        assert_eq!(request_line(headers, "x-request-method"), b"GET");
+        assert_eq!(request_line(headers, "x-request-path"), PATH.as_bytes());
 
         // Headers not sent by the client are not expected.
-        assert!(echoed(&headers, "x-absent").is_empty());
+        assert!(echoed(headers, "x-absent").is_empty());
 
         let (trailers_tx, trailers_rx) = wit_future::new(|| Ok(None));
         drop(trailers_tx);
