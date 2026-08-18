@@ -21,6 +21,9 @@ HTTP_METHODS = {"GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"}
 # Prefix under which request headers are echoed back as response headers.
 ECHO_HEADER_PREFIX = "x-echo-"
 
+# Prefix under which request trailers are echoed back as response headers.
+TRAILER_HEADER_PREFIX = "x-trailer-"
+
 # Server names travel to the guest inside an environment variable name.
 SERVER_NAME_RE = re.compile(r"[A-Za-z0-9_]+")
 

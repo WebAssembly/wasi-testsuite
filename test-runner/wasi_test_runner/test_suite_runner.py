@@ -18,7 +18,7 @@ from .runtime_adapter import RuntimeAdapter
 from .test_case import (
     Result, Failure, WasiVersion, Config, Outcome,
     TestCase, TestCaseRunnerBase, TestCaseValidator,
-    Endpoint, EndpointMode, ServerKind, ECHO_HEADER_PREFIX,
+    Endpoint, EndpointMode, ServerKind, ECHO_HEADER_PREFIX, TRAILER_HEADER_PREFIX,
     # Operation types
     Run, Read, Write, Wait, Send, Recv, Connect, Request, Kill
 )
@@ -56,16 +56,47 @@ class _EndpointRequestHandler(BaseHTTPRequestHandler):
         self.close_connection = True
         self.send_header("Connection", "close")
 
-    def _dispatch(self) -> None:
+    def _read_body(self) -> Tuple[bytes, Dict[str, str]]:
+        if "chunked" in (self.headers.get("Transfer-Encoding") or "").lower():
+            return self._read_chunked()
         length = int(self.headers.get("Content-Length") or 0)
-        body = self.rfile.read(length) if length else b""
+        return (self.rfile.read(length) if length else b""), {}
+
+    def _read_chunked(self) -> Tuple[bytes, Dict[str, str]]:
+        # `http.server` doesn't provide any builtin utilities for trailers.
+        body = b""
+        while True:
+            line = self.rfile.readline()
+            if not line:
+                return body, {}
+            # A chunk size may carry extensions: `4;name=value`.
+            size = int(line.split(b";")[0], 16)
+            if size == 0:
+                break
+            body += self.rfile.read(size)
+            self.rfile.read(2)  # the CRLF terminating each chunk
+        return body, self._read_trailers()
+
+    def _read_trailers(self) -> Dict[str, str]:
+        # Trailers sit after the terminating chunk, spelled like headers and
+        # ended by a blank line.
+        trailers: Dict[str, str] = {}
+        while True:
+            line = self.rfile.readline()
+            if not line or line in (b"\r\n", b"\n"):
+                return trailers
+            name, _, value = line.decode("utf-8").partition(":")
+            trailers[name.strip().lower()] = value.strip()
+
+    def _dispatch(self) -> None:
+        body, trailers = self._read_body()
         endpoint = self.server.routes.get((self.command, self.path))  # type: ignore[attr-defined]
         if endpoint is None:
             self._reply(404, [], b"")
         elif endpoint.mode is EndpointMode.ECHO_BODY:
             self._reply(200, [], body)
         elif endpoint.mode is EndpointMode.ECHO_HEADERS:
-            self._reply(200, self._echoed_headers(), b"")
+            self._reply(200, self._echoed_headers(trailers), b"")
         else:
             response = endpoint.response
             assert response is not None
@@ -79,13 +110,15 @@ class _EndpointRequestHandler(BaseHTTPRequestHandler):
                     [chunk.encode("utf-8") for chunk in response.chunks],
                     response.trailers)
 
-    def _echoed_headers(self) -> List[Tuple[str, str]]:
+    def _echoed_headers(self, trailers: Dict[str, str]) -> List[Tuple[str, str]]:
         echoed = [("x-request-method", self.command),
                   ("x-request-path", self.path)]
 
         for name in dict.fromkeys(key.lower() for key in self.headers.keys()):
             for value in self.headers.get_all(name, []):
                 echoed.append((f"{ECHO_HEADER_PREFIX}{name}", value))
+        for name, value in trailers.items():
+            echoed.append((f"{TRAILER_HEADER_PREFIX}{name}", value))
         return echoed
 
     do_GET = _dispatch
