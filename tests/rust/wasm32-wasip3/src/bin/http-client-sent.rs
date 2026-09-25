@@ -3,7 +3,7 @@ use test_wasm32_wasip3::http::wasi::http::types::{
     ErrorCode, Fields, Method, Request, Response, Scheme,
 };
 use test_wasm32_wasip3::http::wit_future;
-use test_wasm32_wasip3::http::{export, exports::wasi::http::handler::Guest};
+use test_wasm32_wasip3::http::{export, exports::wasi::http::handler::Guest, server_authority};
 
 struct Component;
 export!(Component);
@@ -11,6 +11,7 @@ export!(Component);
 impl Guest for Component {
     async fn handle(_request: Request) -> Result<Response, ErrorCode> {
         // See https://github.com/bytecodealliance/wasmtime/issues/14112.
+        // The JSON fixture uses a 64-byte DNS label to fail resolution locally.
         let (trailers_tx, trailers_rx) = wit_future::new(|| Ok(None));
         drop(trailers_tx);
 
@@ -18,7 +19,7 @@ impl Guest for Component {
         request.set_method(&Method::Get).unwrap();
         request.set_scheme(Some(&Scheme::Http)).unwrap();
         request
-            .set_authority(Some("nonexistent.invalid:80"))
+            .set_authority(Some(&server_authority("unresolvable")))
             .unwrap();
         request.set_path_with_query(Some("/")).unwrap();
 

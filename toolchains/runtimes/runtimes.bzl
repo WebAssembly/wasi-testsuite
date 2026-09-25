@@ -5,11 +5,11 @@ load("@wasmono//toolchains/wasm:node.bzl", "NodeInfo")
 load("@wasmono//:defs.bzl", "host_arch", "host_os")
 load(":releases.bzl", "WAMR_RELEASES", "WASMEDGE_RELEASES", "WASMTIME_RELEASES", "WAZERO_RELEASES")
 
-DEFAULT_JCO_VERSION = "1.27.0"
-DEFAULT_NODE_VERSION = "24.16.0"
-DEFAULT_WAMR_VERSION = "2.4.4"
-DEFAULT_WASMEDGE_VERSION = "0.17.0"
-DEFAULT_WASMTIME_VERSION = "46.0.1"
+DEFAULT_JCO_VERSION = "1.35.0"
+DEFAULT_NODE_VERSION = "26.8.2"
+DEFAULT_WAMR_VERSION = "2.4.5"
+DEFAULT_WASMEDGE_VERSION = "0.17.1"
+DEFAULT_WASMTIME_VERSION = "49.0.1"
 DEFAULT_WAZERO_VERSION = "1.12.0"
 
 def _runtime_platform() -> str:
@@ -80,7 +80,6 @@ def _jco_runtime_command_impl(ctx: AnalysisContext) -> list[Provider]:
 
     run = cmd_args(
         node_info.node,
-        "--experimental-wasm-jspi",
         ctx.attrs.runner,
         "--jco",
         jco_js,

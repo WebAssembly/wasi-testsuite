@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { mkdir, rm, symlink, writeFile } from "node:fs/promises";
+import { findPackageJSON } from "node:module";
 import { tmpdir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
 import { Readable } from "node:stream";
@@ -103,16 +104,19 @@ async function main() {
     );
 
     await writeFile(join(outputDir, "package.json"), JSON.stringify({ type: "module" }));
-    await ensurePackageLink(
-      outputDir,
-      "preview2-shim",
-      join(jcoWorkspace, "node_modules", "@bytecodealliance", "preview2-shim"),
+
+    const preview3Shim = join(jcoWorkspace, "node_modules", "@bytecodealliance", "preview3-shim");
+    // Both shims must share P2 resource classes even when npm nests dependencies.
+    const preview2Package = findPackageJSON(
+      "@bytecodealliance/preview2-shim",
+      pathToFileURL(join(preview3Shim, "package.json")),
     );
-    await ensurePackageLink(
-      outputDir,
-      "preview3-shim",
-      join(jcoWorkspace, "node_modules", "@bytecodealliance", "preview3-shim"),
-    );
+    if (!preview2Package) {
+      throw new Error("could not resolve preview3-shim's preview2-shim dependency");
+    }
+
+    await ensurePackageLink(outputDir, "preview2-shim", dirname(preview2Package));
+    await ensurePackageLink(outputDir, "preview3-shim", preview3Shim);
 
     const shimSetup = join(outputDir, "__wasi_shim_setup.mjs");
     await writeFile(
@@ -121,6 +125,7 @@ async function main() {
             export * as cli from "@bytecodealliance/preview3-shim/cli";
             export * as p2cli from "@bytecodealliance/preview2-shim/cli";
             export * as p2io from "@bytecodealliance/preview2-shim/io";
+            export * as p2clocks from "@bytecodealliance/preview2-shim/clocks";
             export * as p3clocks from "@bytecodealliance/preview3-shim/clocks";
             export * as p2fs from "@bytecodealliance/preview2-shim/filesystem";
             export * as p3fs from "@bytecodealliance/preview3-shim/filesystem";
@@ -136,6 +141,7 @@ async function main() {
       p2cli,
       p2io,
       p2fs,
+      p2clocks,
       p3clocks,
       p3fs,
       p3http,
@@ -180,8 +186,12 @@ async function main() {
       "wasi:cli/terminal-stderr": p2cli.terminalStderr,
       "wasi:cli/terminal-stdin": p2cli.terminalStdin,
       "wasi:cli/terminal-stdout": p2cli.terminalStdout,
-      "wasi:clocks/monotonic-clock": p3clocks.monotonicClock,
+      "wasi:clocks/monotonic-clock": {
+        ...p2clocks.monotonicClock,
+        ...p3clocks.monotonicClock,
+      },
       "wasi:clocks/system-clock": p3clocks.systemClock,
+      "wasi:clocks/wall-clock": p2clocks.wallClock,
       "wasi:filesystem/preopens": p3fs.preopens,
       "wasi:filesystem/types": p3fs.types,
       "wasi:http/outgoing-handler": p3http.client,
