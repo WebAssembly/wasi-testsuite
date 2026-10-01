@@ -7,8 +7,8 @@ Node distribution, and exposes them as runnable targets, e.g.
 
 load("@wasmono//toolchains/wasm:node.bzl", "NodeInfo")
 
-OXLINT_VERSION = "1.69.0"
-OXFMT_VERSION = "0.54.0"
+OXLINT_VERSION = "1.85.0"
+OXFMT_VERSION = "0.70.0"
 
 def _install_oxc_impl(ctx: AnalysisContext) -> list[Provider]:
     node_info = ctx.attrs.node[NodeInfo]

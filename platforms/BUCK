@@ -3,8 +3,8 @@ load(":defs.bzl", "transition_to_platform")
 platform(
     name = "wasm32_wasip1",
     constraint_values = [
-        "config//cpu/constraints:wasm32",
         "config//os/constraints:wasi",
+        "wasmono//wasm/constraints:wasm32",
         "wasmono//wasm/constraints:wasip1",
     ],
 )
@@ -18,8 +18,8 @@ transition_to_platform(
 platform(
     name = "wasm32_wasip2",
     constraint_values = [
-        "config//cpu/constraints:wasm32",
         "config//os/constraints:wasi",
+        "wasmono//wasm/constraints:wasm32",
         "wasmono//wasm/constraints:wasip2",
     ],
 )

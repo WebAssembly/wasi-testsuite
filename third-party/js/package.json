@@ -1,6 +1,7 @@
 {
   "private": true,
   "dependencies": {
-    "@bytecodealliance/jco": "1.27.0"
+    "@bytecodealliance/jco": "1.35.0",
+    "@bytecodealliance/preview3-shim": "0.7.0"
   }
 }

@@ -12,12 +12,17 @@ export!(Component);
 
 const TRAILERS: &[(&str, &[u8])] = &[("x-checksum", b"abc123"), ("x-parts", b"1")];
 
+/// Drain the echoed response before awaiting request transmission completion.
 async fn echo_with_trailers(path: &str, body: &[u8]) -> EndpointResponse {
-    let response = send_with_trailers(path, body, TRAILERS, Ok(()))
+    let (response, sent) = send_with_trailers(path, body, TRAILERS, Ok(()))
         .await
         .expect("send should succeed");
+
     let response = consume_response(response).await;
     assert!(response.trailers.is_none());
+
+    sent.await.expect("request transmission should succeed");
+
     response
 }
 

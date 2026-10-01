@@ -18,7 +18,8 @@ impl Guest for Component {
             .await
             .expect_err("send to a closed port should fail");
 
-        try_send("nonexistent.invalid:80")
+        // The JSON fixture uses a 64-byte DNS label to fail resolution locally.
+        try_send(&server_authority("unresolvable"))
             .await
             .expect_err("send to an unresolvable authority should fail");
 

@@ -8,7 +8,10 @@
     { "name": "dead", "kind": "closed" }
   ],
   "operations": [
-    { "type": "run" },
+    { "type": "run",
+      "env": {
+        "HTTP_SERVER_UNRESOLVABLE": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef.invalid:80"
+      } },
     { "type": "request",
       "method": "GET",
       "path": "/",

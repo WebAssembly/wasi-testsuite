@@ -1,69 +1,69 @@
 """Release metadata for WASI runtime binaries."""
 
 WASMTIME_RELEASES = {
-   "46.0.1": {
+    "49.0.1": {
         "aarch64-linux": {
             "url": (
                 "https://github.com/bytecodealliance/wasmtime/releases/" +
-                "download/v46.0.1/wasmtime-v46.0.1-aarch64-linux.tar.xz"
+                "download/v49.0.1/wasmtime-v49.0.1-aarch64-linux.tar.xz"
             ),
-            "shasum": "071c4def2a08f0ebc95c52dfd4f2886eb697ba495804217cf76e13b09d70a1be",
-            "prefix": "wasmtime-v46.0.1-aarch64-linux",
+            "shasum": "7607529c40fed69c0f5d2a6fafa8c560b9e3c18ded31d8f1b13098afe49b7480",
+            "prefix": "wasmtime-v49.0.1-aarch64-linux",
             "binary": "wasmtime",
         },
         "aarch64-macos": {
             "url": (
                 "https://github.com/bytecodealliance/wasmtime/releases/" +
-                "download/v46.0.1/wasmtime-v46.0.1-aarch64-macos.tar.xz"
+                "download/v49.0.1/wasmtime-v49.0.1-aarch64-macos.tar.xz"
             ),
-            "shasum": "acee50be70dbe90b0ab2ac7db1321fc44715153a1b1cc58291c97b6d7cffc558",
-            "prefix": "wasmtime-v46.0.1-aarch64-macos",
+            "shasum": "93dde14d4efb20046e5af75517ac6a7f2246f6c2370fecff8f68839d4a9028f7",
+            "prefix": "wasmtime-v49.0.1-aarch64-macos",
             "binary": "wasmtime",
         },
         "aarch64-windows": {
             "url": (
                 "https://github.com/bytecodealliance/wasmtime/releases/" +
-                "download/v46.0.1/wasmtime-v46.0.1-aarch64-windows.zip"
+                "download/v49.0.1/wasmtime-v49.0.1-aarch64-windows.zip"
             ),
-            "shasum": "65631cfcb5a5f34d10a6ff87dda52cb17722847cb9ffed00633bf8313a3231ee",
-            "prefix": "wasmtime-v46.0.1-aarch64-windows",
+            "shasum": "98c4b6efc086198df195564573904ef0b0bcd435ab15a5469094c953b4b981bc",
+            "prefix": "wasmtime-v49.0.1-aarch64-windows",
             "binary": "wasmtime",
         },
         "x86_64-linux": {
             "url": (
                 "https://github.com/bytecodealliance/wasmtime/releases/" +
-                "download/v46.0.1/wasmtime-v46.0.1-x86_64-linux.tar.xz"
+                "download/v49.0.1/wasmtime-v49.0.1-x86_64-linux.tar.xz"
             ),
-            "shasum": "9ae0b17ea298bcc52277a8208d6ab7fae8e1a89579672f9d82f9d86c116edb62",
-            "prefix": "wasmtime-v46.0.1-x86_64-linux",
+            "shasum": "c71f7e0d30a92e418f0d17db7c6d8f6664c1ad764340a1278678f4209deab534",
+            "prefix": "wasmtime-v49.0.1-x86_64-linux",
             "binary": "wasmtime",
         },
         "x86_64-macos": {
             "url": (
                 "https://github.com/bytecodealliance/wasmtime/releases/" +
-                "download/v46.0.1/wasmtime-v46.0.1-x86_64-macos.tar.xz"
+                "download/v49.0.1/wasmtime-v49.0.1-x86_64-macos.tar.xz"
             ),
-            "shasum": "0513db67e7089c7e5f743a01427782bc4def83854222f4bc9b1d75f0b925240b",
-            "prefix": "wasmtime-v46.0.1-x86_64-macos",
+            "shasum": "56355136c4eaba17ef50b0e35e9774e25950333ba007c2a29c45d0906600e827",
+            "prefix": "wasmtime-v49.0.1-x86_64-macos",
             "binary": "wasmtime",
         },
         "x86_64-windows": {
             "url": (
                 "https://github.com/bytecodealliance/wasmtime/releases/" +
-                "download/v46.0.1/wasmtime-v46.0.1-x86_64-windows.zip"
+                "download/v49.0.1/wasmtime-v49.0.1-x86_64-windows.zip"
             ),
-            "shasum": "99f038066b16cb3aaf63c1d282a9d7ba7befafbadf7aa8827cc4c712d96bc31a",
-            "prefix": "wasmtime-v46.0.1-x86_64-windows",
+            "shasum": "db0dd3dd77696fa189b08e256a50ddbe46d10a4d1e6c862d8d268ad0abc8c2c1",
+            "prefix": "wasmtime-v49.0.1-x86_64-windows",
             "binary": "wasmtime",
         },
     },
 }
 
 WAMR_RELEASES = {
-    "2.4.4": {
+    "2.4.5": {
         "x86_64-linux": {
-            "url": "https://github.com/bytecodealliance/wasm-micro-runtime/releases/download/WAMR-2.4.4/iwasm-2.4.4-x86_64-ubuntu-22.04.tar.gz",
-            "shasum": "ec60ff8daed26319dfc4371843c56ac2dfadd20e2218cbbca97aecb8b390b7a8",
+            "url": "https://github.com/wasm-micro-runtime/wasm-micro-runtime/releases/download/WAMR-2.4.5/iwasm-2.4.5-x86_64-ubuntu-22.04.tar.gz",
+            "shasum": "61e9d4c77e8f7b06d5cea657b2c319b9be5d51ec51ad8f6f576af84cecd391a3",
             "binary": "iwasm",
         },
     },
@@ -100,30 +100,30 @@ WAZERO_RELEASES = {
 }
 
 WASMEDGE_RELEASES = {
-    "0.17.0": {
+    "0.17.1": {
         "aarch64-linux": {
-            "url": "https://github.com/WasmEdge/WasmEdge/releases/download/0.17.0/WasmEdge-0.17.0-manylinux_2_28_aarch64.tar.gz",
-            "shasum": "6d3aa5a43fd0998b11812e99b46e90a282f3caaacc9cfef14b67f3438b63e804",
+            "url": "https://github.com/WasmEdge/WasmEdge/releases/download/0.17.1/WasmEdge-0.17.1-manylinux_2_28_aarch64.tar.gz",
+            "shasum": "6d7762429083e787ccbddf629868bb59de4325ccdcc31d9f7bd240adcdd9fe9d",
             "binary": "bin/wasmedge",
         },
         "aarch64-macos": {
-            "url": "https://github.com/WasmEdge/WasmEdge/releases/download/0.17.0/WasmEdge-0.17.0-darwin_arm64.tar.gz",
-            "shasum": "ae97ff792ac1bf7bcf703b20926b9bac168e5b6260930d13a156dc19e68a67c5",
+            "url": "https://github.com/WasmEdge/WasmEdge/releases/download/0.17.1/WasmEdge-0.17.1-darwin_arm64.tar.gz",
+            "shasum": "7f6810f0676f8405586a3edb350ce9a6eb256ef7118f2e327f131b7833d0033e",
             "binary": "bin/wasmedge",
         },
         "x86_64-linux": {
-            "url": "https://github.com/WasmEdge/WasmEdge/releases/download/0.17.0/WasmEdge-0.17.0-manylinux_2_28_x86_64.tar.gz",
-            "shasum": "5d8165559c553eacc9b87db1799c2204e056db8609bedbf61eb29f8a21a42993",
+            "url": "https://github.com/WasmEdge/WasmEdge/releases/download/0.17.1/WasmEdge-0.17.1-manylinux_2_28_x86_64.tar.gz",
+            "shasum": "27a1abec072ddf45b40e2e81e33c1e5fe9b241f31fd1bbf0182f05097489a07a",
             "binary": "bin/wasmedge",
         },
         "x86_64-macos": {
-            "url": "https://github.com/WasmEdge/WasmEdge/releases/download/0.17.0/WasmEdge-0.17.0-darwin_x86_64.tar.gz",
-            "shasum": "5742f7d19bbdb983f4df57114b085f908bae06f705ea3e167f802a66bd9e0342",
+            "url": "https://github.com/WasmEdge/WasmEdge/releases/download/0.17.1/WasmEdge-0.17.1-darwin_x86_64.tar.gz",
+            "shasum": "e96d10da0dfe560ff17775cf4a205ed43cd855dafbb4056ea908865066666660",
             "binary": "bin/wasmedge",
         },
         "x86_64-windows": {
-            "url": "https://github.com/WasmEdge/WasmEdge/releases/download/0.17.0/WasmEdge-0.17.0-windows.zip",
-            "shasum": "9d38f0f8a8211c9f4a355e7c7e825e4545f3a12908de7f4eec2aa8e84fb593a6",
+            "url": "https://github.com/WasmEdge/WasmEdge/releases/download/0.17.1/WasmEdge-0.17.1-windows.zip",
+            "shasum": "299a73d8b8a4de90ed6f9ace6832bb06eb8d852e02db2b34360a4199905e895f",
             "binary": "bin/wasmedge",
         },
     },

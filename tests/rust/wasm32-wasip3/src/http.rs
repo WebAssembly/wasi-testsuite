@@ -17,6 +17,7 @@ wit_bindgen::generate!({
 use wasi::cli::environment;
 use wasi::http::client;
 use wasi::http::types::{ErrorCode, Fields, Method, Request, Response, Scheme, StatusCode};
+use wit_bindgen::rt::async_support::FutureReader;
 
 fn env_var(name: &str) -> String {
     environment::get_environment()
@@ -26,6 +27,7 @@ fn env_var(name: &str) -> String {
         .unwrap_or_else(|| panic!("{name} must be set by the test runner"))
 }
 
+/// Read a named authority supplied by the test configuration or server fixtures.
 pub fn server_authority(name: &str) -> String {
     env_var(&format!("HTTP_SERVER_{}", name.to_uppercase()))
 }
@@ -33,6 +35,8 @@ pub fn server_authority(name: &str) -> String {
 pub fn endpoint_authority() -> String {
     server_authority("main")
 }
+
+/// Send a GET request to the supplied authority.
 pub async fn try_send(authority: &str) -> Result<Response, ErrorCode> {
     let (trailers_tx, trailers_rx) = wit_future::new(|| Ok(None));
     drop(trailers_tx);
@@ -53,14 +57,19 @@ pub struct EndpointResponse {
     pub trailers: Option<Vec<(String, Vec<u8>)>>,
 }
 
+/// Send a request while concurrently writing its body and trailers.
+///
+/// Return the response and transmission future together. The caller must keep
+/// that future alive while consuming the response, then await its result.
 pub async fn send_with_trailers(
     path: &str,
     body: &[u8],
     trailers: &[(&str, &[u8])],
     outcome: Result<(), ErrorCode>,
-) -> Result<Response, ErrorCode> {
+) -> Result<(Response, FutureReader<Result<(), ErrorCode>>), ErrorCode> {
     let headers = Fields::new();
     let names: Vec<&str> = trailers.iter().map(|(name, _)| *name).collect();
+
     if !names.is_empty() {
         headers
             .append("trailer", names.join(", ").as_bytes())
@@ -69,16 +78,18 @@ pub async fn send_with_trailers(
 
     let resolved = outcome.map(|()| {
         let fields = Fields::new();
+
         for (name, value) in trailers {
             fields.append(name, value).unwrap();
         }
+
         Some(fields)
     });
 
     let (mut body_tx, body_rx) = wit_stream::new();
     let (trailers_tx, trailers_rx) = wit_future::new(|| Ok(None));
 
-    let (request, _sent) = Request::new(headers, Some(body_rx), trailers_rx, None);
+    let (request, sent) = Request::new(headers, Some(body_rx), trailers_rx, None);
     request.set_method(&Method::Post).unwrap();
     request.set_scheme(Some(&Scheme::Http)).unwrap();
     request.set_authority(Some(&endpoint_authority())).unwrap();
@@ -91,7 +102,9 @@ pub async fn send_with_trailers(
         drop(body_tx);
         _ = trailers_tx.write(resolved).await;
     });
-    client::send(request).await
+    let response = client::send(request).await?;
+
+    Ok((response, sent))
 }
 
 pub async fn consume_response(response: Response) -> EndpointResponse {
