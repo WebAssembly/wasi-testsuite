@@ -1,6 +1,6 @@
-use test_wasm32_wasip3::http::send_with_trailers;
 use test_wasm32_wasip3::http::wasi::http::types::{ErrorCode, Fields, Request, Response};
 use test_wasm32_wasip3::http::wit_future;
+use test_wasm32_wasip3::http::{consume_response, send_with_trailers};
 use test_wasm32_wasip3::http::{export, exports::wasi::http::handler::Guest};
 
 const ECHO_BODY: &str = "/echo-body";
@@ -12,10 +12,14 @@ export!(Component);
 
 impl Guest for Component {
     async fn handle(_request: Request) -> Result<Response, ErrorCode> {
-        let response = send_with_trailers(ECHO_BODY, BODY, TRAILERS, Ok(()))
+        let (response, sent) = send_with_trailers(ECHO_BODY, BODY, TRAILERS, Ok(()))
             .await
             .expect("send should succeed when the trailers resolve");
-        assert_eq!(response.get_status_code(), 200);
+
+        let response = consume_response(response).await;
+        assert_eq!(response.status, 200);
+
+        sent.await.expect("request transmission should succeed");
 
         let aborted = send_with_trailers(
             ECHO_BODY,
