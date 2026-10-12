@@ -92,7 +92,16 @@ async fn test_mkdir_rmdir(dir: &Descriptor) {
     if has_symlink {
         // FIXME: https://github.com/bytecodealliance/wasmtime/issues/12178
         // assert_eq!(rmdir("parent.cleanup").await, Err(ErrorCode::NotDirectory));
-        assert_eq!(rmdir("parent.cleanup/").await, Err(ErrorCode::NotPermitted));
+        // POSIX follows the symlink because of the trailing slash, so the
+        // sandbox rejects the escape. Linux fails without following it.
+        let link_result = rmdir("parent.cleanup/").await;
+        assert!(
+            matches!(
+                link_result,
+                Err(ErrorCode::NotPermitted | ErrorCode::NotDirectory)
+            ),
+            "bad result: {link_result:?}"
+        );
     }
 
     mkdir("child.cleanup").await.unwrap();
