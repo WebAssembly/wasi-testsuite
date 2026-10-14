@@ -138,19 +138,18 @@ fn is_valid_path_char(ch: char) -> bool {
 fn test_path_with_query(request: &Request) {
     request.set_scheme(Some(&Scheme::Http)).unwrap();
     request.set_method(&Method::Get).unwrap();
-    for abs in ["/", "/a/b/c", "/a/../../bar", "/?foo"] {
+    for abs in ["/", "/a/b/c", "/a/../../bar", "/?foo", "?foo", "//hi"] {
         request
             .set_path_with_query(Some(&abs.to_string()))
             .expect(abs);
         assert_eq!(request.get_path_with_query(), Some(abs.to_string()));
     }
 
-    // https://github.com/WebAssembly/wasi-http/issues/178#issuecomment-3359974132
-    for rel in ["a/b/c", "../..", "?foo"] {
-        request
-            .set_path_with_query(Some(&rel.to_string()))
-            .expect(rel);
-        assert_eq!(request.get_path_with_query(), Some(rel.to_string()));
+    for rel in ["a/b/c", "../..", "http://example.com"] {
+        assert!(
+            request.set_path_with_query(Some(&rel.to_string())).is_err(),
+            "expected {rel} to fail",
+        );
     }
 
     request.set_path_with_query(Some(&"".to_string())).unwrap();
