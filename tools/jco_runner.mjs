@@ -6,7 +6,7 @@ import { basename, dirname, join, resolve } from "node:path";
 import { Readable } from "node:stream";
 import { pathToFileURL } from "node:url";
 
-const WASI_CLI_RUN_EXPORT = "wasi:cli/run@0.3.0";
+const WASI_CLI_RUN_EXPORT = "wasi:cli/run@0.3.2";
 
 function parseArgs(argv) {
   const options = {};
