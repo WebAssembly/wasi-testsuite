@@ -10,6 +10,7 @@ versions are supported by a WASI runtime and what the version of the
 runtime itself is.
 
 The WASI test runner includes adapters for
+[endive](https://endive.run),
 [pywasm](https://github.com/mohanson/pywasm),
 [wamr](https://groups.google.com/g/wamr-dev),
 [wasmedge](https://wasmedge.org), [wasmtime](https://wasmtime.dev),
@@ -17,6 +18,12 @@ The WASI test runner includes adapters for
 [wizard](https://github.com/titzer/wizard-engine/), and
 [zwasm](https://github.com/zwasm/zwasm).  Contributions of
 adapters for other runtimes are welcome.
+
+The endive adapter runs [`tools/EndiveRunner.java`](../tools/EndiveRunner.java)
+with [jbang](https://www.jbang.dev), so it needs `jbang` and `java` on the
+`PATH`; set `ENDIVE` to use another launch command.  The runner copies the
+test directory into an in-memory [ZeroFs](https://github.com/roastedroot/zerofs)
+filesystem, the setup endive recommends for WASI.
 
 ## Writing your own adapter
 

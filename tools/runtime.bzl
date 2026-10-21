@@ -6,6 +6,10 @@ filter, and Buck labels. Language packages should depend on this provider
 through `wasi_test`.
 """
 
+ENDIVE_COMPATIBLE_WITH = [
+    "config//os/constraints:linux",
+]
+
 WAMR_COMPATIBLE_WITH = [
     "config//os/constraints:linux",
     "config//cpu/constraints:x86_64",

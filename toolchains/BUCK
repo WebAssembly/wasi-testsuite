@@ -33,6 +33,7 @@ alias(name = "wasmedge_runtime", actual = "//runtimes:wasmedge_runtime", visibil
 alias(name = "wazero_runtime", actual = "//runtimes:wazero_runtime", visibility = ["PUBLIC"])
 alias(name = "wamr_runtime", actual = "//runtimes:wamr_runtime", visibility = ["PUBLIC"])
 alias(name = "jco_runtime", actual = "//runtimes:jco_runtime", visibility = ["PUBLIC"])
+alias(name = "endive_runtime", actual = "//runtimes:endive_runtime", visibility = ["PUBLIC"])
 
 # Shared Node distribution, used by both the jco runtime and AssemblyScript.
 download_node(name = "node_dist", version = DEFAULT_NODE_VERSION)

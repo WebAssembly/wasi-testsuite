@@ -3,8 +3,16 @@
 load("@prelude//utils:expect.bzl", "expect")
 load("@wasmono//toolchains/wasm:node.bzl", "NodeInfo")
 load("@wasmono//:defs.bzl", "host_arch", "host_os")
-load(":releases.bzl", "WAMR_RELEASES", "WASMEDGE_RELEASES", "WASMTIME_RELEASES", "WAZERO_RELEASES")
+load(
+    ":releases.bzl",
+    "JBANG_RELEASES",
+    "WAMR_RELEASES",
+    "WASMEDGE_RELEASES",
+    "WASMTIME_RELEASES",
+    "WAZERO_RELEASES",
+)
 
+DEFAULT_JBANG_VERSION = "0.142.0"
 DEFAULT_JCO_VERSION = "1.35.0"
 DEFAULT_NODE_VERSION = "26.8.2"
 DEFAULT_WAMR_VERSION = "2.4.5"
@@ -120,6 +128,57 @@ def jco_runtime_command(
         **kwargs
     )
 
+def _endive_runtime_command_impl(ctx: AnalysisContext) -> list[Provider]:
+    jar = ctx.actions.declare_output("endive-runner.jar")
+    ctx.actions.run(
+        cmd_args(
+            ctx.attrs.jbang[RunInfo],
+            "--quiet",
+            "export",
+            "fatjar",
+            "--force",
+            "--output",
+            jar.as_output(),
+            ctx.attrs.runner,
+        ),
+        category = "jbang_export",
+        # jbang resolves the endive jars from Maven Central.
+        local_only = True,
+    )
+
+    return [
+        DefaultInfo(default_output = jar),
+        RunInfo(args = cmd_args("java", "-jar", jar)),
+    ]
+
+_endive_runtime_command = rule(
+    impl = _endive_runtime_command_impl,
+    attrs = {
+        "jbang": attrs.exec_dep(providers = [RunInfo]),
+        "runner": attrs.source(),
+    },
+)
+
+def endive_runtime_command(
+        name: str,
+        jbang: str,
+        runner: str,
+        target_compatible_with = [],
+        visibility = None):
+    """Build the endive jbang runner into a fat jar and run it with `java -jar`."""
+    kwargs = {}
+    if target_compatible_with:
+        kwargs["target_compatible_with"] = target_compatible_with
+    if visibility != None:
+        kwargs["visibility"] = visibility
+
+    _endive_runtime_command(
+        name = name,
+        jbang = jbang,
+        runner = runner,
+        **kwargs
+    )
+
 def _download_runtime(
         name: str,
         releases,
@@ -171,3 +230,35 @@ def download_wasmedge_runtime(
         target_compatible_with = []):
     """Download a prebuilt WasmEdge runtime."""
     _download_runtime(name, WASMEDGE_RELEASES, "wasmedge", version, target_compatible_with)
+
+def download_jbang(
+        name: str,
+        version: str = DEFAULT_JBANG_VERSION,
+        target_compatible_with = []):
+    """Download jbang, used to build the endive runner."""
+    expect(
+        version in JBANG_RELEASES,
+        "Unknown jbang version '{}'. Available: {}",
+        version,
+        ", ".join(JBANG_RELEASES.keys()),
+    )
+    release = JBANG_RELEASES[version]
+    kwargs = {}
+    if target_compatible_with:
+        kwargs["target_compatible_with"] = target_compatible_with
+
+    native.http_archive(
+        name = name + "-archive",
+        urls = [release["url"]],
+        sha256 = release["shasum"],
+        **kwargs
+    )
+
+    _runtime_distribution(
+        name = name,
+        dist = ":" + name + "-archive",
+        binary = release["binary"],
+        prefix = release["prefix"],
+        visibility = ["PUBLIC"],
+        **kwargs
+    )

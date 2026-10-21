@@ -116,7 +116,7 @@ test-all:
 # Run additional Buck runtime suites.
 [group('test')]
 test-extra-runtimes:
-    {{buck}} test //tests:wazero //tests:wasmedge //tests:wamr
+    {{buck}} test //tests:wazero //tests:wasmedge //tests:wamr //tests:endive
 
 # Run one Buck test target, e.g. `just test-one //tests/c:lseek_wasmtime`.
 [group('test')]

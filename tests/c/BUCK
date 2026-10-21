@@ -1,6 +1,6 @@
 load(":defs.bzl", "c_test", "c_tests_for_runtime")
 load("//tools:conformance.bzl", "wasi_manifest", "wasi_suite")
-load("//tools:runtime.bzl", "WAMR_COMPATIBLE_WITH")
+load("//tools:runtime.bzl", "ENDIVE_COMPATIBLE_WITH", "WAMR_COMPATIBLE_WITH")
 
 _WASI_C = wasi_manifest(
     name = "WASI C tests",
@@ -68,5 +68,18 @@ wasi_suite(
         target_compatible_with = WAMR_COMPATIBLE_WITH,
     ),
     target_compatible_with = WAMR_COMPATIBLE_WITH,
+    visibility = ["//tests/..."],
+)
+
+wasi_suite(
+    name = "endive",
+    tests = c_tests_for_runtime(
+        tests = _C_TESTS,
+        name = "endive",
+        runtime = "toolchains//:endive_runtime",
+        manifest = _WASI_C,
+        target_compatible_with = ENDIVE_COMPATIBLE_WITH,
+    ),
+    target_compatible_with = ENDIVE_COMPATIBLE_WITH,
     visibility = ["//tests/..."],
 )
