@@ -41,6 +41,12 @@ export_file(
 )
 
 export_file(
+    name = "endive_linux",
+    src = "endive/linux.toml",
+    visibility = ["PUBLIC"],
+)
+
+export_file(
     name = "jco_linux",
     src = "jco/linux.toml",
     visibility = ["PUBLIC"],

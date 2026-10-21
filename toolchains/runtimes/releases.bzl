@@ -128,3 +128,13 @@ WASMEDGE_RELEASES = {
         },
     },
 }
+
+# Platform independent; needs `java` on the PATH.
+JBANG_RELEASES = {
+    "0.142.0": {
+        "url": "https://github.com/jbangdev/jbang/releases/download/v0.142.0/jbang-0.142.0.tar",
+        "shasum": "43aaeb9bc30d9331ed57952a872b80dab3dafe8e927f0f7a90a3c8e67d08eaac",
+        "prefix": "jbang-0.142.0",
+        "binary": "bin/jbang",
+    },
+}
