@@ -3,8 +3,8 @@ wit_bindgen::generate!({
 	package wasi-testsuite:test;
 
 	world http-test {
-	    include wasi:http/service@0.3.0;
-	    import wasi:cli/environment@0.3.0;
+	    include wasi:http/service@0.3.2;
+	    import wasi:cli/environment@0.3.2;
 	}
     ",
     additional_derives: [PartialEq, Eq, Hash, Clone],
