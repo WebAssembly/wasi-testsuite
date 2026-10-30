@@ -17,3 +17,9 @@ export_file(
     src = "jco_runner.mjs",
     visibility = ["toolchains//..."],
 )
+
+export_file(
+    name = "EndiveRunner.java",
+    src = "EndiveRunner.java",
+    visibility = ["toolchains//..."],
+)

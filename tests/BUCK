@@ -1,6 +1,6 @@
 load("//tools:conformance.bzl", "wasi_suite")
 load("//tools:dist.bzl", "wasi_dist")
-load("//tools:runtime.bzl", "WAMR_COMPATIBLE_WITH")
+load("//tools:runtime.bzl", "ENDIVE_COMPATIBLE_WITH", "WAMR_COMPATIBLE_WITH")
 
 wasi_suite(
     name = "wasmtime",
@@ -38,6 +38,16 @@ wasi_suite(
         "//tests/assemblyscript/wasm32-wasip1:wamr",
     ],
     target_compatible_with = WAMR_COMPATIBLE_WITH,
+)
+
+wasi_suite(
+    name = "endive",
+    tests = [
+        "//tests/c:endive",
+        "//tests/rust/wasm32-wasip1:endive",
+        "//tests/assemblyscript/wasm32-wasip1:endive",
+    ],
+    target_compatible_with = ENDIVE_COMPATIBLE_WITH,
 )
 
 wasi_suite(
