@@ -128,3 +128,37 @@ WASMEDGE_RELEASES = {
         },
     },
 }
+
+JBANG_RELEASES = {
+    "0.142.0": {
+        "default": {
+            "url": "https://github.com/jbangdev/jbang/releases/download/v0.142.0/jbang-0.142.0.tar",
+            "shasum": "43aaeb9bc30d9331ed57952a872b80dab3dafe8e927f0f7a90a3c8e67d08eaac",
+            "prefix": "jbang-0.142.0",
+            "binary": "bin/jbang",
+        },
+    },
+}
+
+JDK_RELEASES = {
+    "21.0.13+9": {
+        "aarch64-linux": {
+            "url": (
+                "https://github.com/adoptium/temurin21-binaries/releases/download/" +
+                "jdk-21.0.13%2B9/OpenJDK21U-jdk_aarch64_linux_hotspot_21.0.13_9.tar.gz"
+            ),
+            "shasum": "e3522e707fc7dbe2a72c30746b1e7068301a0213ecd213d4491f35a14eb55578",
+            "prefix": "jdk-21.0.13+9",
+            "binary": "bin/java",
+        },
+        "x86_64-linux": {
+            "url": (
+                "https://github.com/adoptium/temurin21-binaries/releases/download/" +
+                "jdk-21.0.13%2B9/OpenJDK21U-jdk_x64_linux_hotspot_21.0.13_9.tar.gz"
+            ),
+            "shasum": "d7f5d5cf865a2902b70ff549b97586a7d3f234e016f041ab447ea740c7d66d1c",
+            "prefix": "jdk-21.0.13+9",
+            "binary": "bin/java",
+        },
+    },
+}

@@ -1,0 +1,37 @@
+version = 1
+
+[[suite]]
+name = "WASI C tests [wasm32-wasip1]"
+
+# Java rejects opening a file with both O_APPEND and O_TRUNC
+[[suite.test]]
+name = "pwrite-with-append"
+expected = "fail"
+
+[[suite]]
+name = "WASI Rust tests [wasm32-wasip1]"
+
+# Java does not support READ together with APPEND
+[[suite.test]]
+name = "fd_flags_set"
+expected = "fail"
+
+# hard link to a dangling symlink fails
+[[suite.test]]
+name = "path_link"
+expected = "fail"
+
+# dangling symlink to a path with a trailing slash returns EXIST instead of NOENT
+[[suite.test]]
+name = "path_symlink_trailing_slashes"
+expected = "fail"
+
+# path_filestat_set_times on a symlink does not change its mtim
+[[suite.test]]
+name = "symlink_filestat"
+expected = "fail"
+
+# fd_fdstat_set_rights is not implemented
+[[suite.test]]
+name = "truncation_rights"
+expected = "fail"
