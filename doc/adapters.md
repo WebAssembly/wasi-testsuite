@@ -21,7 +21,8 @@ adapters for other runtimes are welcome.
 
 The endive adapter runs [`tools/EndiveRunner.java`](../tools/EndiveRunner.java)
 with [jbang](https://www.jbang.dev), so it needs `jbang` and `java` on the
-`PATH`; set `ENDIVE` to use another launch command.  The runner copies the
+`PATH`; set `ENDIVE` to use another launch command.  The Buck targets
+download a pinned jbang and JDK instead.  The runner copies the
 test directory into an in-memory [ZeroFs](https://github.com/roastedroot/zerofs)
 filesystem, the setup endive recommends for WASI.
 

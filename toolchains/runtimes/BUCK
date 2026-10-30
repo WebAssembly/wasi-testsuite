@@ -17,11 +17,13 @@ load(
     ":runtimes.bzl",
     "DEFAULT_JBANG_VERSION",
     "DEFAULT_JCO_VERSION",
+    "DEFAULT_JDK_VERSION",
     "DEFAULT_WAMR_VERSION",
     "DEFAULT_WASMEDGE_VERSION",
     "DEFAULT_WASMTIME_VERSION",
     "DEFAULT_WAZERO_VERSION",
     "download_jbang",
+    "download_jdk",
     "download_wamr_runtime",
     "download_wasmedge_runtime",
     "download_wasmtime_runtime",
@@ -135,16 +137,23 @@ wasi_runtime(
     visibility = ["PUBLIC"],
 )
 
-# Endive, run through a jbang-built runner jar. Needs `java` on the PATH.
+# Endive, run through a jbang-built runner jar on a pinned JDK.
 download_jbang(
     name = "jbang_dist",
     version = DEFAULT_JBANG_VERSION,
     target_compatible_with = ENDIVE_COMPATIBLE_WITH,
 )
 
+download_jdk(
+    name = "jdk_dist",
+    version = DEFAULT_JDK_VERSION,
+    target_compatible_with = ENDIVE_COMPATIBLE_WITH,
+)
+
 endive_runtime_command(
     name = "endive_command",
     jbang = ":jbang_dist",
+    jdk = ":jdk_dist",
     runner = "root//tools:EndiveRunner.java",
     target_compatible_with = ENDIVE_COMPATIBLE_WITH,
 )
