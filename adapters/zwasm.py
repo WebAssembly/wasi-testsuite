@@ -22,7 +22,7 @@ def get_version() -> str:
 
 
 def get_wasi_versions() -> List[str]:
-    return ["wasm32-wasip1"]
+    return ["wasm32-wasip1", "wasm32-wasip3"]
 
 
 def get_wasi_worlds() -> List[str]:
@@ -46,6 +46,11 @@ def compute_argv(test_path: str,
 
     if root:
         argv += ["--dir", f"{root}:/"]  # noqa: E231
+
+    # Components are denied the host network unless it is granted.
+    if wasi_version == "wasm32-wasip3" and \
+            ("sockets" in proposals or "http" in proposals):
+        argv += ["--allow-network"]
 
     argv += [test_path]
 
