@@ -22,11 +22,11 @@ def get_version() -> str:
 
 
 def get_wasi_versions() -> List[str]:
-    return ["wasm32-wasip1"]
+    return ["wasm32-wasip1", "wasm32-wasip3"]
 
 
 def get_wasi_worlds() -> List[str]:
-    return ["wasi:cli/command"]
+    return ["wasi:cli/command", "wasi:http/service"]
 
 
 def compute_argv(test_path: str,
@@ -36,9 +36,9 @@ def compute_argv(test_path: str,
                  wasi_version: str) -> List[str]:
 
     argv = []
-    # zwasm parses options per subcommand, so `run` goes directly after the
-    # executable and ahead of anything the user put in ZWASM.
-    argv += ZWASM[0:1] + ["run"] + ZWASM[1:]
+    # zwasm parses options per subcommand, so the subcommand goes directly
+    # after the executable and ahead of anything the user put in ZWASM.
+    argv += ZWASM[0:1] + _subcommand(wasi_world) + ZWASM[1:]
     args, env, root = args_env_root
 
     for k, v in env.items():
@@ -47,7 +47,24 @@ def compute_argv(test_path: str,
     if root:
         argv += ["--dir", f"{root}:/"]  # noqa: E231
 
+    # Components are denied the host network unless it is granted.
+    if wasi_version == "wasm32-wasip3" and \
+            ("sockets" in proposals or "http" in proposals):
+        argv += ["--allow-network"]
+
     argv += [test_path]
 
     argv += args
     return argv
+
+
+def _subcommand(wasi_world: str) -> List[str]:
+    match wasi_world:
+        case "wasi:cli/command":
+            return ["run"]
+        case "wasi:http/service":
+            # `zwasm serve` prints `Serving HTTP on http://host:port/` as its
+            # first stderr line and exits 0 on SIGINT, as the runner expects.
+            return ["serve", "--addr=127.0.0.1:0"]
+        case _:
+            raise ValueError(f"unsupported world {wasi_world}")
