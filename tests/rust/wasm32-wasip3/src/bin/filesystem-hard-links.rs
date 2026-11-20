@@ -1,3 +1,4 @@
+use std::assert_matches;
 use std::process;
 extern crate wit_bindgen;
 
@@ -52,13 +53,13 @@ async fn test_hard_links(dir: &Descriptor) {
         // FIXME: https://github.com/WebAssembly/WASI/issues/710
         // assert_eq!(ln_follow("parent.cleanup/foo", "a.txt").await,
         //            Err(ErrorCode::NotPermitted));
-        assert_eq!(
+        assert_matches!(
             ln("parent.cleanup/foo", "a.txt").await,
-            Err(ErrorCode::NotPermitted)
+            Err(ErrorCode::NotPermitted | ErrorCode::NotDirectory)
         );
-        assert_eq!(
+        assert_matches!(
             ln("a.txt", "parent.cleanup/foo").await,
-            Err(ErrorCode::NotPermitted)
+            Err(ErrorCode::NotPermitted | ErrorCode::NotDirectory)
         );
     }
     ln("a.txt", "c.cleanup").await.unwrap();

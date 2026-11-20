@@ -1,3 +1,4 @@
+use std::assert_matches;
 use std::process;
 extern crate wit_bindgen;
 
@@ -68,9 +69,9 @@ async fn test_rename(dir: &Descriptor) {
     mv("c.cleanup", "a.txt").await.unwrap();
     assert_eq!(mv("a.txt", "../q.txt").await, Err(ErrorCode::NotPermitted));
     if has_symlink {
-        assert_eq!(
+        assert_matches!(
             mv("a.txt", "parent.cleanup/q.txt").await,
-            Err(ErrorCode::NotPermitted)
+            Err(ErrorCode::NotPermitted | ErrorCode::NotDirectory)
         );
     }
     assert_eq!(

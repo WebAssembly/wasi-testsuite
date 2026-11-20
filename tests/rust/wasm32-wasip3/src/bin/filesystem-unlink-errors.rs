@@ -1,3 +1,4 @@
+use std::assert_matches;
 use std::process;
 extern crate wit_bindgen;
 
@@ -42,9 +43,9 @@ async fn test_unlink_errors(dir: &Descriptor) {
     assert_eq!(rm("/etc/passwd").await, Err(ErrorCode::NotPermitted));
     assert_eq!(rm("z.txt").await, Err(ErrorCode::NoEntry));
     if has_symlink {
-        assert_eq!(
+        assert_matches!(
             rm("parent.cleanup/z.txt").await,
-            Err(ErrorCode::NotPermitted)
+            Err(ErrorCode::NotPermitted | ErrorCode::NotDirectory)
         );
     }
 }

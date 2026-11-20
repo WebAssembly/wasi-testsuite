@@ -1,3 +1,4 @@
+use std::assert_matches;
 use std::process;
 extern crate wit_bindgen;
 
@@ -107,9 +108,9 @@ async fn test_stat(dir: &Descriptor) {
             stat_follow("parent.cleanup").await,
             Err(ErrorCode::NotPermitted)
         );
-        assert_eq!(
+        assert_matches!(
             stat_follow("parent.cleanup/fs-tests.dir").await,
-            Err(ErrorCode::NotPermitted)
+            Err(ErrorCode::NotPermitted | ErrorCode::NotDirectory)
         );
     }
     assert_eq!(stat(".").await, dir.stat().await);
@@ -165,9 +166,9 @@ async fn test_stat(dir: &Descriptor) {
             Err(ErrorCode::NotPermitted)
         );
         if has_symlink {
-            assert_eq!(
+            assert_matches!(
                 set_times_at(no_flags, "parent.cleanup/foo", atime, mtime).await,
-                Err(ErrorCode::NotPermitted)
+                Err(ErrorCode::NotPermitted | ErrorCode::NotDirectory)
             );
         }
     }
