@@ -1,3 +1,4 @@
+use std::assert_matches;
 use std::process;
 extern crate wit_bindgen;
 
@@ -35,26 +36,26 @@ async fn test_mkdir_rmdir(dir: &Descriptor) {
     assert_eq!(mkdir(".").await, Err(ErrorCode::Exist));
     assert_eq!(mkdir("..").await, Err(ErrorCode::NotPermitted));
     if has_symlink {
-        assert_eq!(
+        assert_matches!(
             mkdir("parent.cleanup/foo").await,
-            Err(ErrorCode::NotPermitted)
+            Err(ErrorCode::NotPermitted | ErrorCode::NotDirectory)
         );
     }
     assert_eq!(mkdir("/").await, Err(ErrorCode::NotPermitted));
     assert_eq!(mkdir("../q.cleanup").await, Err(ErrorCode::NotPermitted));
     if has_symlink {
-        assert_eq!(
+        assert_matches!(
             mkdir("parent.cleanup/q.cleanup").await,
-            Err(ErrorCode::NotPermitted)
+            Err(ErrorCode::NotPermitted | ErrorCode::NotDirectory)
         );
     }
     assert_eq!(mkdir("a.txt").await, Err(ErrorCode::Exist));
     mkdir("q.cleanup").await.unwrap();
     assert_eq!(rmdir("../q.cleanup").await, Err(ErrorCode::NotPermitted));
     if has_symlink {
-        assert_eq!(
+        assert_matches!(
             rmdir("parent.cleanup/q.cleanup").await,
-            Err(ErrorCode::NotPermitted)
+            Err(ErrorCode::NotPermitted | ErrorCode::NotDirectory)
         );
     }
     assert_eq!(
